@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CARUNO — Maquette magasin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F4F1;--surface:#FFFFFF;--soft:#FAFAF8;--ink:#17191E;--muted:#4B5060;--line:#DADBD6;--line2:#ECECE8;
+  --dark:#17191E;--dark2:#23262E;--dark-ink:#E4E5EA;
+  --accent:#C2410C;--accent-hover:#9A3412;--accent-weak:#FBEADF;--accent-ink:#7C2D12;
+  --ok:#14532D;--ok-bg:#E9F6EE;--warn:#9A3412;--warn-bg:#FFF4E5;--bad:#991B1B;--bad-bg:#FDECEC;--info:#1E3A8A;--info-bg:#E8EEFC;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}
+h1{font-size:26px;margin:0;line-height:1.2}h2{font-size:17px;margin:0}h3{font-size:15px;margin:0}
+.mono{font-family:var(--mono);font-size:13px}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.right{text-align:right}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* shell */
+.ribbon{background:#FFF4E5;color:#5C2A06;font-size:13px;padding:6px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #F1C48B}
+.ribbon button{background:none;border:0;text-decoration:underline;cursor:pointer;color:#5C2A06;padding:4px}
+.shell{display:flex;min-height:calc(100vh - 31px)}
+.side{width:236px;flex:none;background:var(--dark);color:#fff;display:flex;flex-direction:column;padding:16px 12px;gap:4px;position:sticky;top:0;height:calc(100vh - 31px);overflow-y:auto}
+.brand{display:flex;flex-direction:column;gap:2px;padding:4px 10px 18px}
+.brand b{font-size:21px;letter-spacing:.09em}.brand span{font-size:12px;color:#C9CBD2}
+.nav a{display:flex;align-items:center;gap:12px;color:var(--dark-ink);text-decoration:none;padding:0 12px;min-height:44px;border-radius:9px;font-size:15px}
+.nav a:hover{background:var(--dark2);color:#fff}
+.nav a[aria-current="page"]{background:var(--accent);color:#fff;font-weight:600}
+.nav svg{flex:none}
+.side .me{margin-top:auto;border-top:1px solid #33363F;padding:12px 10px 0;display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:#3A3E48;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
+.main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.topbar{display:none}
+.content{width:100%;max-width:1480px;margin:0 auto;padding:22px;display:flex;flex-direction:column;gap:18px}
+.bottomnav{display:none}
+.drawer-bg{display:none}
+@media (max-width:900px){
+  .side{display:none}
+  .side.open{display:flex;position:fixed;z-index:40;left:0;top:0;height:100vh}
+  .drawer-bg.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:39}
+  .topbar{display:flex;align-items:center;gap:10px;background:var(--dark);color:#fff;padding:8px 12px;position:sticky;top:0;z-index:20}
+  .topbar b{letter-spacing:.08em;font-size:18px}
+  .topbar .icon-btn{background:var(--dark2);color:#fff;border:0}
+  .content{padding:14px 14px 96px}
+  .bottomnav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:20;padding:4px 4px 10px}
+  .bottomnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;font-size:11px;color:var(--muted);text-decoration:none}
+  .bottomnav a[aria-current="page"]{color:var(--accent);font-weight:700}
+  h1{font-size:22px}
+}
+
+/* components */
+.page-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.page-head .sub{font-size:14px;color:var(--muted);margin-top:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:#B9BAB3;color:var(--ink)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff}
+.btn-dark{background:var(--dark);border-color:var(--dark);color:#fff;font-weight:600}
+.btn-dark:hover{background:#000;color:#fff}
+.btn-outline{border-color:var(--ink);font-weight:600}
+.btn-lg{min-height:54px;font-size:17px;font-weight:700;border-radius:12px}
+.btn:disabled{background:#E4E4DF;border-color:#E4E4DF;color:var(--muted);cursor:not-allowed}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.card-pad{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.card-head{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;align-items:start}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.b-ok{background:var(--ok-bg);color:var(--ok)}.b-warn{background:var(--warn-bg);color:var(--warn)}.b-bad{background:var(--bad-bg);color:var(--bad)}.b-info{background:var(--info-bg);color:var(--info)}.b-grey{background:#ECECE8;color:#3D414C}.b-accent{background:var(--accent-weak);color:var(--accent-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #CFD0CA;background:#fff;cursor:pointer;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{min-height:46px;padding:0 14px;border:0;background:none;cursor:pointer;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 280px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #CFD0CA;border-radius:10px;padding:0 12px;min-height:46px}
+.search input{border:0;outline:none;flex:1 1 auto;min-width:0;background:transparent;font-size:15px;height:44px}
+.search.big{border:2px solid var(--ink);min-height:56px;border-radius:12px}
+.search.big input{font-size:17px}
+select,.input,textarea{min-height:44px;border:1px solid #CFD0CA;border-radius:10px;background:#fff;padding:0 12px;font-size:15px}
+textarea{padding:10px 12px;min-height:88px;resize:vertical}
+.input.num{text-align:right}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field .lbl{font-size:13px;font-weight:600;color:#3D414C}
+.field .hint{font-size:12px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 16px}
+.form-section{display:flex;flex-direction:column;gap:12px}
+.form-section h2{padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.table-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse}
+table.t th{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:11px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+table.t tr.click{cursor:pointer}
+table.t tr.click:hover td{background:#FBFBF9}
+table.t td a.rowlink{color:var(--ink);text-decoration:none;font-weight:600}
+table.t td a.rowlink:hover{text-decoration:underline}
+.thumb{width:44px;height:44px;border-radius:8px;background:#EEEEEA;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.cellpart{display:flex;align-items:center;gap:12px}
+.cellpart .t1{font-weight:600}.cellpart .t2{font-size:13px;color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.kpi{display:flex;flex-direction:column;gap:6px;padding:16px 18px}
+.kpi .v{font-size:28px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:14px;color:var(--muted)}.kpi .s{font-size:13px;color:var(--muted)}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;font-size:14px}
+.alert svg{flex:none;margin-top:1px}
+.a-warn{background:var(--warn-bg);color:#5C2A06}.a-info{background:var(--info-bg);color:var(--info)}.a-ok{background:var(--ok-bg);color:var(--ok)}.a-bad{background:var(--bad-bg);color:var(--bad)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.meter{height:12px;border-radius:999px;background:#ECECE8;overflow:hidden}.meter>div{height:100%;border-radius:999px}
+.qty{display:inline-flex;align-items:center;border:1px solid #CFD0CA;border-radius:10px;background:#fff}
+.qty button{width:42px;height:42px;border:0;background:none;font-size:20px;cursor:pointer}
+.qty span{min-width:26px;text-align:center;font-weight:600}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.photo{position:relative;aspect-ratio:1;border-radius:10px;background:#EEEEEA;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);text-align:center;border:2px solid transparent}
+.photo.main{border-color:var(--accent)}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo .tag{position:absolute;left:4px;top:4px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px}
+.photo .ops{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(23,25,30,.75)}
+.photo .ops button{flex:1;border:0;background:none;color:#fff;font-size:11px;min-height:28px;cursor:pointer}
+.photo-add{border:2px dashed #8A8F9C;background:#fff;cursor:pointer;color:var(--ink);font-weight:600;flex-direction:column;gap:4px}
+.photo-add input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.big-photo{aspect-ratio:4/3;border-radius:12px;background:#EEEEEA;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);overflow:hidden}
+.big-photo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.bars{height:58px;background:repeating-linear-gradient(90deg,#000 0 2px,#fff 2px 4px,#000 4px 5px,#fff 5px 8px,#000 8px 11px,#fff 11px 12px)}
+.label-prev{width:300px;max-width:100%;border:1px dashed #8A8F9C;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:60;background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;max-width:min(560px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.2)}
+@media (max-width:900px){.toast{bottom:84px}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:16px;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column}
+.modal header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.modal .body{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.modal footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.cam{position:relative;border-radius:18px;background:#2B2F38;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cam .frame{width:min(280px,80%);height:140px;border:3px solid #fff;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.cam .beam{width:88%;height:3px;border-radius:2px;background:var(--accent)}
+.cam .beam.ok{background:#22C55E}
+.cam .hint{position:absolute;top:12px;left:0;right:0;text-align:center;color:#E4E5EA;font-size:14px}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--dark)}
+.login .box{width:min(440px,100%);display:flex;flex-direction:column;gap:22px;color:#fff}
+.login .acc{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.login .acc button{min-height:56px;border-radius:12px;border:1px solid #4A4E59;background:var(--dark2);color:#fff;text-align:left;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
+.login .acc button[aria-pressed="true"]{border:2px solid var(--accent);background:#2E1E16}
+.login .acc small{color:#C9CBD2;font-size:12px}
+.login input{background:var(--dark2);border-color:#4A4E59;color:#fff}
+.login label{color:var(--dark-ink)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===================================================================
+   CARUNO — maquette autonome du front magasin de pièces auto.
+   Données de test fictives, gardées dans le navigateur (localStorage).
+   Rien n'est envoyé à Dolibarr.
+   =================================================================== */
+'use strict';
+const KEY = 'caruno-maquette-v1';
+const TODAY = '2026-11-01';
+const STOCK_MODE = 'bill'; // profil magasin : bill | shipment
+const LEVELS = ['Public', 'Garage', 'Revendeur'];
+const CAT_LEVEL = { Particulier: 0, Garage: 1, Revendeur: 2 };
+const FAMILIES = ['Moteur', 'Filtration', 'Freinage', 'Embrayage et transmission', 'Suspension et direction', 'Électricité et électronique', 'Refroidissement et climatisation', 'Carrosserie et accessoires'];
+const WAREHOUSES = ['Magasin', 'Réserve'];
+const ROLES = { vendeur: 'Vendeur', magasinier: 'Magasinier', comptable: 'Comptable', responsable: 'Responsable', gerant: 'Gérant' };
+const SEE_COST = ['gerant', 'responsable', 'comptable'];
+const EDIT_PARTS = ['magasinier', 'responsable', 'gerant'];
+const BELOW_FLOOR = ['gerant'];
+
+/* ---------- icons ---------- */
+const P = {
+  caisse: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/>',
+  pieces: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/>',
+  stock: '<path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-8h10v8"/><path d="M7 17h10"/>',
+  clients: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6.5 6.5 0 0 1 3.5 6"/>',
+  ventes: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
+  achats: '<path d="M1 4h13v12H1z"/><path d="M14 9h4l4 4v3h-8"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/>',
+  scanner: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8"/><path d="M10 8v8"/><path d="M13 8v8"/><path d="M17 8v8"/>',
+  tableau: '<path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M11 11v7"/><path d="M15 7v11"/><path d="M19 12v6"/>',
+  utilisateurs: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  warn: '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v5h1"/>',
+  menu: '<path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+  file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'
+};
+function ic(name, size, color) {
+  return '<svg aria-hidden="true" width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="' + (color || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + P[name] + '</svg>';
+}
+
+/* ---------- seed data ---------- */
+function seed() {
+  const part = (id, name, brand, ref, oem, ean, fam, type, mag, res, locM, locR, prices, floor, cost, seuil, souhaite, sups) => ({
+    id, name, brand, ref, oem, ean, fam, type, stock: { 'Magasin': mag, 'Réserve': res }, loc: { 'Magasin': locM, 'Réserve': locR },
+    prices, floor, cost, seuil, souhaite, sups, photos: [], tva: 19
+  });
+  return {
+    parts: [
+      part(1, 'Filtre à huile', 'MANN-FILTER', 'HU 6002 z', '03L115562', '4011558041516', 'Filtration', 'filtre-huile', 14, 30, 'A2-04', 'R-11', [1850, 1600, 1450], 1300, 1100, 10, 40, [{ sid: 's1', ref: 'DA-HU6002Z', price: 1100, delay: 2 }]),
+      part(2, 'Filtre à huile', 'BOSCH', '1 457 429 192', '03L115562', '4047024393416', 'Filtration', 'filtre-huile', 6, 0, 'A2-05', 'R-11', [1700, 1480, 1350], 1200, 980, 6, 20, [{ sid: 's2', ref: 'PAO-1457429192', price: 980, delay: 5 }]),
+      part(3, 'Filtre à huile', 'PURFLUX', 'L358A', '03L115562', '3286061234567', 'Filtration', 'filtre-huile', 0, 12, 'A2-06', 'R-12', [1550, 1350, 1250], 1100, 900, 6, 20, [{ sid: 's1', ref: 'DA-L358A', price: 900, delay: 2 }]),
+      part(4, 'Plaquettes de frein avant', 'TRW', 'GDB2042', '5Q0698151', '3322938380541', 'Freinage', 'plaquettes-frein-avant', 8, 4, 'B1-12', 'R-03', [6900, 6200, 5700], 5200, 4300, 5, 16, [{ sid: 's1', ref: 'DA-TRW-2042', price: 4300, delay: 2 }, { sid: 's2', ref: 'PAO-GDB2042', price: 4450, delay: 5 }]),
+      part(5, 'Disques de frein avant (paire)', 'BREMBO', '09.C547.11', '5Q0615301F', '8020584054711', 'Freinage', 'disques-frein-avant', 3, 2, 'B1-02', 'R-04', [14500, 13200, 12400], 11000, 9800, 6, 10, [{ sid: 's1', ref: 'DA-BRE-C547', price: 9800, delay: 3 }]),
+      part(6, 'Kit distribution + pompe à eau', 'GATES', 'KP15656XS', '04L198119A', '5414465123456', 'Moteur', 'kit-distribution', 2, 1, 'C3-01', 'R-20', [24800, 22900, 21500], 19500, 17600, 4, 6, [{ sid: 's1', ref: 'DA-KP15656', price: 17600, delay: 3 }]),
+      part(7, "Bougie d'allumage", 'NGK', 'PFR6Q', '101905601F', '0087295135463', 'Moteur', 'bougie-allumage', 40, 60, 'D1-08', 'R-30', [1200, 1050, 950], 850, 700, 20, 120, [{ sid: 's3', ref: 'IAS-PFR6Q', price: 700, delay: 7 }]),
+      part(8, 'Amortisseur avant', 'SACHS', '317 545', '5Q0413031', '4013872123456', 'Suspension et direction', 'amortisseur-avant', 4, 0, 'E2-03', 'R-40', [11900, 10900, 10200], 9000, 8100, 4, 8, [{ sid: 's2', ref: 'PAO-317545', price: 8050, delay: 5 }]),
+      part(9, 'Batterie 70 Ah 760 A', 'VARTA', 'E39', '000915105DH', '4016987144540', 'Électricité et électronique', 'batterie', 5, 3, 'F1-01', 'R-50', [22500, 21000, 19900], 18500, 17200, 4, 10, [{ sid: 's3', ref: 'IAS-VARTA-E39', price: 17200, delay: 7 }]),
+      part(10, 'Ampoule H7 12 V 55 W', 'OSRAM', '64210', 'N10721702', '4050300525095', 'Électricité et électronique', 'ampoule', 2, 0, 'D4-15', 'R-31', [650, 560, 500], 420, 380, 10, 30, [{ sid: 's1', ref: 'DA-OS-64210', price: 380, delay: 2 }]),
+      part(11, 'Plaquettes de frein avant', 'BOSCH', '0 986 494 721', '5Q0698151', '3165143604125', 'Freinage', 'plaquettes-frein-avant', 3, 0, 'B1-13', 'R-03', [6600, 5950, 5500], 5000, 4150, 4, 8, [{ sid: 's2', ref: 'PAO-0986494721', price: 4150, delay: 5 }]),
+      part(12, 'Plaquettes de frein avant', 'FERODO', 'FDB4407', '5Q0698151', '5413209123456', 'Freinage', 'plaquettes-frein-avant', 0, 0, 'B1-14', 'R-03', [5950, 5400, 5000], 4500, 3900, 4, 8, [{ sid: 's2', ref: 'PAO-FDB4407', price: 3900, delay: 5 }])
+    ],
+    suppliers: [
+      { id: 's1', name: 'Distri-Auto Alger', town: 'Alger', phone: '+213 21 00 00 01', email: 'commandes@distri-auto.invalid' },
+      { id: 's2', name: 'Pièces Auto Oran', town: 'Oran', phone: '+213 41 00 00 02', email: 'contact@pao.invalid' },
+      { id: 's3', name: 'Import Auto Sétif', town: 'Sétif', phone: '+213 36 00 00 03', email: 'ventes@ias.invalid' }
+    ],
+    clients: [
+      { id: 'c', name: 'Client comptoir', cat: 'Particulier', phone: '', town: '', fixed: true },
+      { id: 'g', name: 'Garage El Amel', cat: 'Garage', phone: '+213 550 00 00 01', town: 'Bab Ezzouar', rc: 'DEV-16-0000001', nif: 'DEV-000000000000001', terms: '30 jours fin de mois', remise: 3, plafond: 250000 },
+      { id: 'o', name: 'Garage Ouled Fayet', cat: 'Garage', phone: '+213 550 00 00 02', town: 'Ouled Fayet', rc: 'DEV-16-0000002', nif: 'DEV-000000000000002', terms: '30 jours', remise: 0, plafond: 150000 },
+      { id: 'h', name: 'Auto Service Chéraga', cat: 'Garage', phone: '+213 550 00 00 03', town: 'Chéraga', rc: 'DEV-16-0000003', nif: 'DEV-000000000000003', terms: 'Comptant', remise: 0, plafond: 0 },
+      { id: 'r', name: 'Auto Pièces Benali', cat: 'Revendeur', phone: '+213 550 00 00 04', town: 'Blida', rc: 'DEV-09-0000004', nif: 'DEV-000000000000004', terms: '45 jours', remise: 5, plafond: 500000 },
+      { id: 'm', name: 'Mourad Hamidi', cat: 'Particulier', phone: '+213 660 00 00 05', town: 'Kouba' }
+    ],
+    docs: [
+      { ref: 'PR2610-0051', type: 'devis', client: 'g', date: '2026-10-28', status: 'envoye', ttc: 59024, desc: '2 × kit distribution Gates KP15656XS', lines: [{ pid: 6, qty: 2, price: 24800 }] },
+      { ref: 'PR2611-0003', type: 'devis', client: 'g', date: '2026-11-01', status: 'brouillon', ttc: 44268, desc: '6 × plaquettes avant TRW GDB2042', lines: [{ pid: 4, qty: 6, price: 6200 }] },
+      { ref: 'PR2610-0049', type: 'devis', client: 'm', date: '2026-10-26', status: 'refuse', ttc: 34510, desc: 'Disques + plaquettes avant', lines: [{ pid: 5, qty: 1, price: 14500 }, { pid: 4, qty: 1, price: 6900 }, { pid: 10, qty: 2, price: 650 }] },
+      { ref: 'CO2610-0088', type: 'commande', client: 'g', date: '2026-10-30', status: 'prete', ttc: 31900, desc: 'Filtres, bougies, ampoules (14 lignes)' },
+      { ref: 'CO2611-0002', type: 'commande', client: 'g', date: '2026-11-01', status: 'validee', ttc: 25942, desc: '2 × amortisseur avant Sachs', lines: [{ pid: 8, qty: 2, price: 10900 }] },
+      { ref: 'CO2610-0090', type: 'commande', client: 'r', date: '2026-10-31', status: 'prete', ttc: 64200, desc: 'Réassort filtration (30 lignes)' },
+      { ref: 'FA2609-0311', type: 'facture', client: 'g', date: '2026-09-15', due: '2026-09-30', status: 'impayee', ttc: 33500, paid: 0, desc: 'Livraison du 15/09' },
+      { ref: 'FA2610-0377', type: 'facture', client: 'g', date: '2026-10-05', due: '2026-10-20', status: 'impayee', ttc: 54700, paid: 0, desc: 'Livraison du 05/10' },
+      { ref: 'FA2610-0402', type: 'facture', client: 'g', date: '2026-10-24', due: '2026-11-30', status: 'impayee', ttc: 98200, paid: 0, desc: 'Livraison du 24/10' },
+      { ref: 'FA2610-0398', type: 'facture', client: 'r', date: '2026-10-20', due: '2026-12-04', status: 'impayee', ttc: 42000, paid: 0, desc: 'Réassort freinage' },
+      { ref: 'FA2610-0365', type: 'facture', client: 'o', date: '2026-09-25', due: '2026-10-25', status: 'partielle', ttc: 91800, paid: 40000, desc: 'Commande CO2609-0071' },
+      { ref: 'FA2610-0412', type: 'facture', client: 'c', date: '2026-10-31', status: 'payee', ttc: 8211, paid: 8211, desc: 'Vente comptoir', lines: [{ pid: 4, qty: 1, price: 6900 }] },
+      { ref: 'FA2611-0087', type: 'facture', client: 'c', date: '2026-11-01', status: 'impayee', ttc: 8211, paid: 0, desc: 'Vente comptoir interrompue (poste Comptoir 2)', lines: [{ pid: 4, qty: 1, price: 6900 }], pendingSale: 'V-0142' }
+    ],
+    pos: [
+      { ref: 'CF2610-0014', supplier: 's1', date: '2026-10-29', status: 'reception', bl: null, lines: [
+        { pid: 4, qty: 6, rec: 5, done: 0, price: 4300 }, { pid: 1, qty: 20, rec: 20, done: 0, price: 1100 }, { pid: 7, qty: 8, rec: 0, done: 0, price: 700 },
+        { pid: 10, qty: 5, rec: 6, done: 0, price: 380 }, { pid: 5, qty: 3, rec: 3, done: 0, price: 9800 }] },
+      { ref: 'CF2610-0015', supplier: 's2', date: '2026-10-31', status: 'envoyee', bl: null, lines: [{ pid: 8, qty: 4, rec: 0, done: 0, price: 8050 }, { pid: 12, qty: 8, rec: 0, done: 0, price: 3900 }] },
+      { ref: 'CF2611-0001', supplier: 's3', date: '2026-11-01', status: 'brouillon', bl: null, lines: [{ pid: 9, qty: 4, rec: 0, done: 0, price: 17200 }] }
+    ],
+    moves: [
+      { date: '2026-10-31 18:12', pid: 4, label: 'Vente comptoir — FA2610-0412', qty: -1, wh: 'Magasin', user: 'dev.vendeur' },
+      { date: '2026-10-30 09:40', pid: 4, label: 'Réception CF2610-0011 (Distri-Auto Alger)', qty: 6, wh: 'Magasin', user: 'dev.magasinier' },
+      { date: '2026-10-28 16:05', pid: 4, label: 'Transfert Réserve → Magasin', qty: 2, wh: 'Magasin', user: 'dev.magasinier' },
+      { date: '2026-10-28 16:05', pid: 4, label: 'Transfert Réserve → Magasin', qty: -2, wh: 'Réserve', user: 'dev.magasinier' },
+      { date: '2026-10-25 11:30', pid: 4, label: 'Correction inventaire (casier B1)', qty: -1, wh: 'Magasin', user: 'dev.responsable' },
+      { date: '2026-10-31 10:02', pid: 1, label: 'Vente comptoir — FA2610-0409', qty: -2, wh: 'Magasin', user: 'dev.vendeur' },
+      { date: '2026-10-30 15:20', pid: 10, label: 'Vente comptoir — FA2610-0405', qty: -4, wh: 'Magasin', user: 'dev.vendeur' }
+    ],
+    users: [
+      { login: 'dev.vendeur', name: 'Yacine B.', role: 'vendeur', email: 'dev.vendeur@hanout-vw.invalid', active: true },
+      { login: 'dev.magasinier', name: 'Karim M.', role: 'magasinier', email: 'dev.magasinier@hanout-vw.invalid', active: true },
+      { login: 'dev.comptable', name: 'Leïla S.', role: 'comptable', email: 'dev.comptable@hanout-vw.invalid', active: true },
+      { login: 'dev.responsable', name: 'Nadia R.', role: 'responsable', email: 'dev.responsable@hanout-vw.invalid', active: true },
+      { login: 'dev.gerant', name: 'Samir K.', role: 'gerant', email: 'dev.gerant@hanout-vw.invalid', active: true }
+    ],
+    day: { base: 140139, count: 31, cash: 103789, cheque: 21350, virement: 15000, sellers: { 'dev.vendeur': [60000, 14], 'dev.responsable': [28750, 6], 'dev.gerant': [51389, 11] }, orphans: 2 },
+    counters: { PR: 3, CO: 2, FA: 90, CF: 1, V: 142, AV: 0 }
+  };
+}
+
+/* ---------- state ---------- */
+const S = { db: load(), user: loadUser(), ui: { caisse: null, modal: null, toast: '', drawer: false, form: {}, formKey: '' } };
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.parts) return v; } catch (e) {} return seed(); }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S.db)); }
+  catch (e) { try { const c = JSON.parse(JSON.stringify(S.db)); c.parts.forEach((p) => { p.photos = []; }); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e2) {} }
+}
+function loadUser() { try { return JSON.parse(sessionStorage.getItem(KEY + '-user')); } catch (e) { return null; } }
+function saveUser() { try { sessionStorage.setItem(KEY + '-user', JSON.stringify(S.user)); } catch (e) {} }
+
+/* ---------- helpers ---------- */
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n) => Math.round(n || 0).toLocaleString('fr-FR') + ' DA';
+const ttc = (ht) => Math.round(ht * 1.19);
+const norm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s.\-]/g, '');
+const dateFr = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
+const nowStr = () => { const d = new Date(); return TODAY + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+const part = (id) => S.db.parts.find((p) => p.id === Number(id));
+const client = (id) => S.db.clients.find((c) => c.id === id);
+const supplier = (id) => S.db.suppliers.find((s) => s.id === id);
+const doc = (ref) => S.db.docs.find((d) => d.ref === ref);
+const po = (ref) => S.db.pos.find((d) => d.ref === ref);
+const lvl = (c) => CAT_LEVEL[(c || {}).cat] || 0;
+const total = (p) => p.stock['Magasin'] + p.stock['Réserve'];
+const role = () => S.user ? S.user.role : '';
+const seeCost = () => SEE_COST.indexOf(role()) !== -1;
+const can = (list) => list.indexOf(role()) !== -1;
+function nextRef(prefix) { S.db.counters[prefix] = (S.db.counters[prefix] || 0) + 1; return prefix + (prefix === 'V' ? '-' : '2611-') + String(S.db.counters[prefix]).padStart(4, '0'); }
+function search(q, list) { const n = norm(q); return n ? list.filter((p) => [p.name, p.brand, p.ref, p.oem, p.ean, p.fam, p.type].some((f) => norm(f).indexOf(n) !== -1)) : list; }
+function encours(cid) { return S.db.docs.filter((d) => d.type === 'facture' && d.client === cid && d.status !== 'payee' && d.status !== 'brouillon').reduce((t, d) => t + d.ttc - (d.paid || 0), 0); }
+function move(pid, label, qty, wh) { S.db.moves.unshift({ date: nowStr(), pid: Number(pid), label, qty, wh, user: S.user.login }); part(pid).stock[wh] += qty; }
+function stockBadge(p) {
+  const t = total(p);
+  if (t === 0) return '<span class="badge b-bad">Rupture</span>';
+  if (p.stock['Magasin'] === 0) return '<span class="badge b-warn">Réserve seulement</span>';
+  if (t < p.seuil) return '<span class="badge b-warn">Stock bas · ' + t + '</span>';
+  return '<span class="badge b-ok">En stock · ' + t + '</span>';
+}
+function thumb(p, size) {
+  const s = size || 44;
+  return '<span class="thumb" style="width:' + s + 'px;height:' + s + 'px">' + (p.photos && p.photos[0] ? '<img alt="" src="' + p.photos[0].url + '">' : ic('pieces', Math.round(s / 2), '#8A8F9C')) + '</span>';
+}
+const STATUS = {
+  devis: { brouillon: ['Brouillon', 'b-grey'], envoye: ['Envoyé', 'b-info'], accepte: ['Accepté', 'b-ok'], refuse: ['Refusé', 'b-bad'] },
+  commande: { brouillon: ['Brouillon', 'b-grey'], validee: ['À préparer', 'b-warn'], prete: ['Prête', 'b-ok'], facturee: ['Facturée', 'b-grey'] },
+  facture: { brouillon: ['Brouillon', 'b-grey'], impayee: ['Impayée', 'b-warn'], partielle: ['Partielle', 'b-warn'], payee: ['Payée', 'b-ok'] },
+  po: { brouillon: ['Brouillon', 'b-grey'], envoyee: ['Envoyée', 'b-info'], reception: ['En réception', 'b-warn'], recue: ['Reçue', 'b-ok'] }
+};
+function statusBadge(type, d) {
+  let s = STATUS[type][d.status] || [d.status, 'b-grey'];
+  if (type === 'facture' && d.status !== 'payee' && d.due && d.due < TODAY) s = ['En retard', 'b-bad'];
+  return '<span class="badge ' + s[1] + '">' + s[0] + '</span>';
+}
+const TYPE_LABEL = { devis: 'Devis', commande: 'Commande', facture: 'Facture' };
+function toast(msg) { S.ui.toast = msg; clearTimeout(toast.t); toast.t = setTimeout(() => { S.ui.toast = ''; render(); }, 4200); }
+function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+function setForm(key, values) { if (S.ui.formKey !== key) { S.ui.formKey = key; S.ui.form = values; } return S.ui.form; }
+function fv(name) { const v = S.ui.form[name]; return v == null ? '' : v; }
+
+/* ---------- navigation ---------- */
+const NAV = [
+  { id: 'caisse', label: 'Caisse', roles: ['vendeur', 'responsable', 'gerant'] },
+  { id: 'pieces', label: 'Pièces', roles: ['vendeur', 'magasinier', 'comptable', 'responsable', 'gerant'] },
+  { id: 'stock', label: 'Stock', roles: ['magasinier', 'comptable', 'responsable', 'gerant'] },
+  { id: 'clients', label: 'Clients', roles: ['vendeur', 'comptable', 'responsable', 'gerant'] },
+  { id: 'ventes', label: 'Ventes', roles: ['vendeur', 'comptable', 'responsable', 'gerant'] },
+  { id: 'achats', label: 'Achats', roles: ['magasinier', 'comptable', 'responsable', 'gerant'] },
+  { id: 'scanner', label: 'Scanner', roles: ['vendeur', 'magasinier', 'responsable', 'gerant'] },
+  { id: 'tableau', label: 'Tableau de bord', roles: ['comptable', 'responsable', 'gerant'] },
+  { id: 'utilisateurs', label: 'Utilisateurs', roles: ['gerant'] }
+];
+const HOME = { vendeur: 'caisse', magasinier: 'stock', comptable: 'tableau', responsable: 'tableau', gerant: 'tableau' };
+const allowed = () => NAV.filter((n) => n.roles.indexOf(role()) !== -1);
+
+function shell(active, html) {
+  const items = allowed();
+  const link = (n) => '<a href="#/' + n.id + '"' + (n.id === active ? ' aria-current="page"' : '') + '>' + ic(n.id, 20) + '<span>' + n.label + '</span></a>';
+  const u = S.user;
+  const initials = u.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const bottom = items.slice(0, 4).map((n) => '<a href="#/' + n.id + '"' + (n.id === active ? ' aria-current="page"' : '') + '>' + ic(n.id, 22) + '<span>' + (n.id === 'tableau' ? 'Bord' : n.label) + '</span></a>').join('') +
+    '<a href="#" data-action="drawer">' + ic('more', 22) + '<span>Plus</span></a>';
+  return '<div class="ribbon"><strong>Maquette</strong><span>Données de test fictives, rien n’est envoyé à Dolibarr.</span><span>Mode de stock : sortie à la validation de la facture.</span><button type="button" data-action="reset">Réinitialiser les données</button></div>' +
+    '<div class="shell">' +
+    '<div class="drawer-bg' + (S.ui.drawer ? ' open' : '') + '" data-action="drawer"></div>' +
+    '<aside class="side' + (S.ui.drawer ? ' open' : '') + '" aria-label="Menu">' +
+      '<div class="brand"><b>CARUNO</b><span>HANOUT VW (DEV)</span></div>' +
+      '<nav class="nav" aria-label="Navigation principale">' + items.map(link).join('') + '</nav>' +
+      '<a class="me" href="#/profil"><span class="avatar">' + esc(initials) + '</span><span style="display:flex;flex-direction:column;line-height:1.25"><b style="font-size:14px">' + esc(u.name) + '</b><span style="font-size:12px;color:#C9CBD2">' + ROLES[u.role] + ' · ' + esc(u.login) + '</span></span></a>' +
+    '</aside>' +
+    '<div class="main">' +
+      '<div class="topbar"><button class="icon-btn" type="button" data-action="drawer" aria-label="Ouvrir le menu">' + ic('menu') + '</button><b>CARUNO</b><span style="font-size:12px;color:#C9CBD2;flex:1">HANOUT VW</span><a class="avatar" href="#/profil" aria-label="Mon profil" style="text-decoration:none">' + esc(initials) + '</a></div>' +
+      '<main class="content" id="content">' + html + '</main>' +
+    '</div></div>' +
+    '<nav class="bottomnav" aria-label="Navigation mobile">' + bottom + '</nav>';
+}
+function head(title, sub, actions, back) {
+  return '<div class="page-head"><div>' + (back ? '<a href="' + back[0] + '" style="display:inline-flex;align-items:center;gap:4px;font-size:14px;margin-bottom:6px">' + ic('back', 16) + esc(back[1]) + '</a>' : '') +
+    '<h1>' + title + '</h1>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>' + (actions ? '<div class="actions">' + actions + '</div>' : '') + '</div>';
+}
+function tabs(list, current, action) {
+  return '<div class="tabs" role="tablist">' + list.map((t) => '<button type="button" role="tab" class="tab" aria-selected="' + (t[0] === current) + '" data-action="' + action + '" data-arg="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
+}
+
+/* =================================================================== LOGIN */
+function viewLogin() {
+  const pick = S.ui.loginPick || 'dev.vendeur';
+  return '<div class="login"><div class="box">' +
+    '<div><div style="font-weight:700;font-size:34px;letter-spacing:.1em">CARUNO</div><div style="color:#C9CBD2;margin-top:4px">Gestion du magasin de pièces · HANOUT VW (DEV)</div></div>' +
+    '<form data-submit="login" style="display:flex;flex-direction:column;gap:16px">' +
+      '<div class="field"><span class="lbl" style="color:#E4E5EA">Compte de test</span><div class="acc">' +
+      S.db.users.filter((u) => u.active).map((u) => '<button type="button" data-action="loginPick" data-arg="' + u.login + '" aria-pressed="' + (u.login === pick) + '"><b>' + esc(u.name) + '</b><small>' + ROLES[u.role] + ' · ' + u.login + '</small></button>').join('') +
+      '</div></div>' +
+      '<div class="field"><label for="pw">Mot de passe</label><input class="input" id="pw" type="password" value="maquette" autocomplete="current-password"></div>' +
+      '<button class="btn btn-primary btn-lg" type="submit">Se connecter</button>' +
+    '</form>' +
+    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">En production : identifiant et mot de passe Dolibarr du magasin (POST /login). Les menus et les prix visibles dépendent du rôle.</p>' +
+    '</div></div>';
+}
+
+/* =================================================================== CAISSE */
+function caisseState() {
+  if (!S.ui.caisse) S.ui.caisse = { ref: nextRef('V'), q: '03L115562', fam: 'Tous', client: 'c', lines: [{ pid: 1, qty: 1 }, { pid: 4, qty: 1 }], remise: 0, mode: 'especes', given: '12000', done: null };
+  return S.ui.caisse;
+}
+function caisseTotals(st) {
+  const c = client(st.client), L = lvl(c);
+  const lines = st.lines.map((l) => { const p = part(l.pid); const unit = Math.round(p.prices[L] * (1 - st.remise / 100)); return { l, p, unit, sum: unit * l.qty, below: unit < p.floor }; });
+  const ht = lines.reduce((t, x) => t + x.sum, 0), cost = lines.reduce((t, x) => t + x.p.cost * x.l.qty, 0);
+  return { c, L, lines, ht, cost, ttc: ttc(ht), below: lines.some((x) => x.below) };
+}
+function viewCaisse() {
+  const st = caisseState(), T = caisseTotals(st);
+  const pending = S.db.docs.find((d) => d.pendingSale && d.status !== 'payee');
+  const famList = ['Tous', 'Moteur', 'Filtration', 'Freinage', 'Suspension et direction', 'Électricité et électronique'];
+  let res = search(st.q, S.db.parts).filter((p) => st.fam === 'Tous' || p.fam === st.fam);
+  const oemHits = S.db.parts.filter((p) => st.q && norm(p.oem) === norm(st.q));
+  const banner = pending ? '<div class="alert a-warn" role="status">' + ic('warn', 20, '#9A3412') + '<div style="flex:1 1 auto"><strong>Vente ' + pending.pendingSale + ' interrompue</strong> sur le poste Comptoir 2 : facture ' + pending.ref + ' validée (stock déjà sorti), encaissement non enregistré, reste ' + fmt(pending.ttc - pending.paid) + '.</div><button class="btn btn-dark" type="button" data-action="resumeSale" data-arg="' + pending.ref + '">Reprendre l’encaissement</button></div>' : '';
+
+  const left = '<section aria-label="Recherche de pièces" style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px">' +
+    '<div class="toolbar"><label class="search big" for="caisse-q">' + ic('search', 22, '#4B5060') + '<span class="sr">Rechercher une pièce</span><input id="caisse-q" type="search" autocomplete="off" placeholder="Référence, OEM, marque, désignation… ou douchette" value="' + esc(st.q) + '" data-input="caisseQ" data-enter="caisseEnter"></label>' +
+    '<button class="btn" type="button" data-action="caisseScan" style="min-height:56px">' + ic('scanner', 22) + 'Simuler un scan</button></div>' +
+    '<div class="chips" role="group" aria-label="Familles">' + famList.map((f) => '<button class="chip" type="button" data-action="caisseFam" data-arg="' + esc(f) + '" aria-pressed="' + (st.fam === f) + '">' + esc(f.split(' et ')[0]) + '</button>').join('') + '</div>' +
+    (oemHits.length > 1 ? '<div class="card card-pad" style="flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:12px 14px"><strong>Équivalences OEM</strong><span class="mono" style="background:#F0F0EC;padding:2px 8px;border-radius:6px">' + esc(oemHits[0].oem) + '</span><span class="muted" style="font-size:14px">' + oemHits.length + ' marques pour la même pièce, ' + oemHits.filter((p) => p.stock['Magasin'] > 0).length + ' disponibles au magasin</span></div>' : '') +
+    '<div class="card" style="overflow:hidden"><div class="card-head"><strong>' + res.length + ' pièce' + (res.length > 1 ? 's' : '') + '</strong><span class="muted" style="font-size:13px">Prix HT · niveau <b style="color:var(--ink)">' + LEVELS[T.L] + '</b></span></div>' +
+    '<div class="table-wrap"><table class="t" style="min-width:' + (seeCost() ? 700 : 620) + 'px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th>Stock</th>' + (seeCost() ? '<th class="right">Coût PMP</th>' : '') + '<th class="right">Prix</th><th class="right"><span class="sr">Action</span></th></tr></thead><tbody>' +
+    (res.length ? res.map((p) => {
+      const off = p.stock['Magasin'] === 0;
+      return '<tr><td><div class="cellpart">' + thumb(p) + '<div><a class="rowlink" href="#/pieces/' + p.id + '">' + esc(p.name) + '</a><div class="t2">' + esc(p.brand) + ' · ' + esc(p.fam) + '</div></div></div></td>' +
+        '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">OEM ' + esc(p.oem) + '</div></td>' +
+        '<td>' + stockBadge(p) + '<div class="muted" style="font-size:12px;margin-top:4px;white-space:nowrap">Mag. ' + p.stock['Magasin'] + ' · Rés. ' + p.stock['Réserve'] + ' · <span class="mono" style="font-size:12px">' + esc(p.loc['Magasin']) + '</span></div></td>' +
+        (seeCost() ? '<td class="right num muted">' + fmt(p.cost) + '</td>' : '') +
+        '<td class="right num"><b>' + fmt(p.prices[T.L]) + '</b></td>' +
+        '<td class="right">' + (off ? (p.stock['Réserve'] > 0 ? '<button class="btn" type="button" data-action="modalTransfer" data-arg="' + p.id + '">Transférer</button>' : '<a class="btn" href="#/pieces/' + p.id + '">Équivalences</a>') : '<button class="btn btn-primary" type="button" data-action="caisseAdd" data-arg="' + p.id + '" aria-label="Ajouter ' + esc(p.brand + ' ' + p.ref) + '">Ajouter</button>') + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">Aucune pièce. Essayez la référence OEM ou une autre marque.</td></tr>') +
+    '</tbody></table></div></div></section>';
+
+  let right;
+  if (st.done) {
+    const d = doc(st.done);
+    right = '<div class="card-pad" style="padding:22px 20px;gap:16px"><div style="display:flex;gap:12px;align-items:center"><span class="avatar" style="background:var(--ok-bg)">' + ic('check', 24, '#15803D') + '</span><div><div style="font-weight:700;font-size:18px">Vente encaissée</div><div class="muted">Facture ' + d.ref + ' · ' + fmt(d.ttc) + '</div></div></div>' +
+      '<ol class="steps"><li>Facture créée (réf. externe ' + esc(d.saleRef) + ')</li><li>Facture validée : stock sorti du Magasin</li><li>Paiement ' + esc(d.mode) + ' enregistré en Caisse' + (d.rendu ? ', rendu ' + fmt(d.rendu) : '') + '</li></ol>' +
+      '<div class="actions"><button class="btn btn-outline" type="button" data-action="toast" data-arg="Ticket envoyé à l’imprimante (maquette)">Imprimer le ticket</button><a class="btn btn-outline" href="#/ventes/' + d.ref + '">Voir la facture</a></div>' +
+      '<button class="btn btn-primary btn-lg" type="button" data-action="caisseNew">Nouvelle vente</button></div>';
+  } else {
+    const given = parseInt(String(st.given).replace(/\D/g, ''), 10) || 0, rendu = given - T.ttc;
+    const blockFloor = T.below && !can(BELOW_FLOOR);
+    const ok = st.lines.length > 0 && (st.mode !== 'especes' || rendu >= 0) && !blockFloor;
+    const enc = encours(st.client);
+    right = '<div style="padding:16px 18px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Vente ' + st.ref + '</h2><span class="muted" style="font-size:13px">Entrepôt : Magasin</span></div>' +
+      '<div class="field"><label for="caisse-client">Client</label><div style="display:flex;gap:8px"><select id="caisse-client" data-change="caisseClient" style="flex:1">' + S.db.clients.map((c) => '<option value="' + c.id + '"' + (c.id === st.client ? ' selected' : '') + '>' + esc(c.name) + ' — ' + c.cat + '</option>').join('') + '</select><a class="icon-btn" href="#/clients/nouveau" aria-label="Nouveau client">' + ic('plus') + '</a></div></div>' +
+      '<div class="muted" style="font-size:13px">' + T.c.cat + ' → prix niveau ' + (T.L + 1) + ' (' + LEVELS[T.L] + ')' + (T.c.plafond ? ' · encours ' + fmt(enc) + ' / ' + fmt(T.c.plafond) : '') + '</div>' +
+      (T.c.plafond && enc + T.ttc > T.c.plafond * 0.8 ? '<div class="alert a-warn" style="padding:8px 10px">' + ic('warn', 18, '#9A3412') + 'Après cette vente, l’encours atteindra ' + fmt(enc + T.ttc) + ' (plafond ' + fmt(T.c.plafond) + ').</div>' : '') +
+      '</div>' +
+      '<div style="padding:4px 18px">' + (st.lines.length ? T.lines.map((x, i) => '<div style="display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">' + esc(x.p.name) + '</div><div class="muted" style="font-size:12px">' + esc(x.p.brand + ' ' + x.p.ref) + ' · ' + fmt(x.unit) + ' HT' + (x.below ? ' · <span style="color:var(--bad);font-weight:600">sous le plancher</span>' : '') + '</div></div>' +
+        '<div class="qty"><button type="button" data-action="caisseQty" data-arg="' + i + ':-1" aria-label="Diminuer">−</button><span class="num">' + x.l.qty + '</span><button type="button" data-action="caisseQty" data-arg="' + i + ':1" aria-label="Augmenter"' + (x.l.qty >= x.p.stock['Magasin'] ? ' disabled' : '') + '>+</button></div>' +
+        '<span class="num right" style="width:96px;font-weight:600;font-size:14px">' + fmt(x.sum) + '</span></div>').join('') : '<p class="empty">Panier vide. Recherchez ou scannez une pièce.</p>') + '</div>' +
+      '<div style="padding:12px 18px;display:flex;flex-direction:column;gap:6px;font-size:14px" class="num">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><label for="caisse-remise" class="muted">Remise %</label><input id="caisse-remise" class="input num" style="width:90px" inputmode="numeric" value="' + st.remise + '" data-input="caisseRemise"></div>' +
+      '<div style="display:flex;justify-content:space-between"><span class="muted">Total HT</span><span>' + fmt(T.ht) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span class="muted">TVA 19 %</span><span>' + fmt(T.ttc - T.ht) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line2);padding-top:6px"><b>Total TTC</b><span style="font-size:26px;font-weight:700">' + fmt(T.ttc) + '</span></div>' +
+      (seeCost() ? '<div style="display:flex;justify-content:space-between;color:var(--ok)"><span>Marge estimée</span><span>' + fmt(T.ht - T.cost) + ' (' + (T.ht ? Math.round((T.ht - T.cost) / T.ht * 100) : 0) + ' %)</span></div>' : '') +
+      (blockFloor ? '<div class="alert a-bad" style="padding:8px 10px">' + ic('warn', 18) + 'Remise sous le prix plancher : seul le gérant peut valider.</div>' : '') +
+      '</div>' +
+      '<div style="padding:12px 18px 18px;border-top:1px solid var(--line2);background:var(--soft);display:flex;flex-direction:column;gap:12px;border-radius:0 0 14px 14px">' +
+      '<div role="group" aria-label="Mode de paiement" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">' + [['especes', 'Espèces'], ['cheque', 'Chèque'], ['virement', 'Virement'], ['credit', 'À crédit']].map((m) => '<button type="button" class="chip" style="border-radius:10px;padding:0 4px" data-action="caisseMode" data-arg="' + m[0] + '" aria-pressed="' + (st.mode === m[0]) + '">' + m[1] + '</button>').join('') + '</div>' +
+      (st.mode === 'especes' ? '<div style="display:flex;gap:10px;align-items:center"><label for="caisse-given" class="muted">Reçu</label><input id="caisse-given" class="input num" style="flex:1" inputmode="numeric" value="' + esc(st.given) + '" data-input="caisseGiven"><b class="num" style="color:' + (rendu >= 0 ? 'var(--ok)' : 'var(--bad)') + '">' + (rendu >= 0 ? 'Rendu ' + fmt(rendu) : 'Manque ' + fmt(-rendu)) + '</b></div>' : '') +
+      (st.mode === 'credit' && st.client === 'c' ? '<div class="alert a-info" style="padding:8px 10px">' + ic('info', 18) + 'Choisissez un client pro pour une vente à crédit.</div>' : '') +
+      '<button class="btn btn-primary btn-lg" type="button" data-action="caissePay"' + (ok && !(st.mode === 'credit' && st.client === 'c') ? '' : ' disabled') + '>' + (st.mode === 'credit' ? 'Valider la facture ' : 'Encaisser ') + fmt(T.ttc) + '</button></div>';
+  }
+  return head('Caisse', 'Vente comptoir', '<a class="btn" href="#/ventes/nouveau/devis">' + ic('plus', 18) + 'Devis</a><a class="btn" href="#/ventes" data-action="ventesTab" data-arg="facture">Factures</a>') +
+    banner + '<div class="row">' + left + '<aside class="card" aria-label="Vente en cours" style="flex:1 1 380px;max-width:100%">' + right + '</aside></div>';
+}
+
+/* =================================================================== PIÈCES */
+function viewPieces() {
+  const f = S.ui.pf || (S.ui.pf = { q: '', fam: '', st: '' });
+  let list = search(f.q, S.db.parts).filter((p) => (!f.fam || p.fam === f.fam) &&
+    (!f.st || (f.st === 'alerte' ? total(p) < p.seuil : (f.st === 'rupture' ? total(p) === 0 : total(p) >= p.seuil))));
+  return head('Pièces', S.db.parts.length + ' références · ' + S.db.parts.filter((p) => total(p) < p.seuil).length + ' sous le seuil d’alerte',
+    (can(EDIT_PARTS) ? '<a class="btn btn-primary" href="#/pieces/nouveau">' + ic('plus', 18) + 'Nouvelle pièce</a>' : '') + (can(['gerant', 'comptable']) ? '<button class="btn" type="button" data-action="toast" data-arg="Export CSV généré (maquette)">Exporter</button>' : '')) +
+    '<div class="toolbar"><label class="search" for="pf-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="pf-q" type="search" placeholder="Référence, OEM, marque, EAN, désignation…" value="' + esc(f.q) + '" data-input="pfQ"></label>' +
+    '<label class="sr" for="pf-fam">Famille</label><select id="pf-fam" data-change="pfFam"><option value="">Toutes les familles</option>' + FAMILIES.map((x) => '<option' + (x === f.fam ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>' +
+    '<label class="sr" for="pf-st">État du stock</label><select id="pf-st" data-change="pfSt"><option value="">Tous les stocks</option><option value="ok"' + (f.st === 'ok' ? ' selected' : '') + '>En stock</option><option value="alerte"' + (f.st === 'alerte' ? ' selected' : '') + '>Sous le seuil</option><option value="rupture"' + (f.st === 'rupture' ? ' selected' : '') + '>En rupture</option></select></div>' +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:' + (seeCost() ? 1000 : 900) + 'px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th>Famille</th><th>Empl.</th><th class="right">Magasin</th><th class="right">Réserve</th><th>État</th><th class="right">Public HT</th>' + (seeCost() ? '<th class="right">Coût PMP</th>' : '') + '</tr></thead><tbody>' +
+    (list.length ? list.map((p) => '<tr class="click" data-action="go" data-arg="#/pieces/' + p.id + '"><td><div class="cellpart">' + thumb(p) + '<div><a class="rowlink" href="#/pieces/' + p.id + '">' + esc(p.name) + '</a><div class="t2">' + esc(p.brand) + '</div></div></div></td>' +
+      '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">' + esc(p.oem) + '</div></td><td style="font-size:14px">' + esc(p.fam) + '</td><td class="mono">' + esc(p.loc['Magasin']) + '</td>' +
+      '<td class="right num"><b>' + p.stock['Magasin'] + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td><td>' + stockBadge(p) + '</td><td class="right num">' + fmt(p.prices[0]) + '</td>' +
+      (seeCost() ? '<td class="right num muted">' + fmt(p.cost) + '</td>' : '') + '</tr>').join('') : '<tr><td colspan="9" class="empty">Aucune pièce ne correspond.</td></tr>') +
+    '</tbody></table></div></div>';
+}
+
+function viewPiece(id) {
+  const p = part(id);
+  if (!p) return head('Pièce introuvable', '', '', ['#/pieces', 'Pièces']);
+  const eq = S.db.parts.filter((x) => x.oem === p.oem);
+  const moves = S.db.moves.filter((m) => m.pid === p.id).slice(0, 8);
+  const photos = p.photos || [];
+  return head(esc(p.name),
+    '<span class="badge b-grey" style="background:var(--ink);color:#fff">' + esc(p.brand) + '</span> <span class="mono">Réf. ' + esc(p.ref) + '</span> · <span class="mono">OEM ' + esc(p.oem) + '</span> · <span class="mono">EAN ' + esc(p.ean) + '</span> · <span class="badge b-info">Type CARUNO : ' + esc(p.type) + '</span>',
+    (can(['vendeur', 'responsable', 'gerant']) ? '<button class="btn btn-primary" type="button" data-action="caisseAddGo" data-arg="' + p.id + '">Ajouter à la vente</button>' : '') +
+    '<button class="btn" type="button" data-action="modalLabel" data-arg="' + p.id + '">Étiquette</button>' +
+    (can(EDIT_PARTS) ? '<a class="btn btn-outline" href="#/pieces/' + p.id + '/modifier">Modifier</a>' : ''), ['#/pieces', 'Pièces · ' + p.fam]) +
+    '<div class="row">' +
+    '<section class="card card-pad" aria-label="Photos" style="flex:1 1 340px;max-width:100%">' +
+      '<div class="big-photo">' + (photos[0] ? '<img alt="Photo principale de la pièce" src="' + photos[0].url + '">' : ic('camera', 44, '#8A8F9C') + '<span>Aucune photo</span>') + '</div>' +
+      '<div class="photos">' + photoTiles(photos, 'piecePhoto:' + p.id) + photoAdd('photoPiece', String(p.id)) + '</div>' +
+      '<span class="muted" style="font-size:13px">Sur téléphone, « Ajouter » ouvre l’appareil photo. Chaque photo est réduite avant l’envoi.</span>' +
+    '</section>' +
+    '<div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:18px">' +
+      '<div class="grid-auto">' +
+        '<section class="card card-pad"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Stock</h2>' + stockBadge(p) + '</div>' +
+          WAREHOUSES.map((w) => '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line2)"><div><b>' + w + '</b><div class="mono muted">' + esc(p.loc[w]) + '</div></div><span style="font-size:24px;font-weight:700" class="num">' + p.stock[w] + '</span></div>').join('') +
+          '<span class="muted" style="font-size:13px">Seuil d’alerte ' + p.seuil + ' · stock souhaité ' + p.souhaite + '</span>' +
+          (can(['magasinier', 'responsable', 'gerant']) ? '<div class="actions"><button class="btn btn-outline" type="button" data-action="modalTransfer" data-arg="' + p.id + '" style="flex:1">Transférer</button><button class="btn" type="button" data-action="modalCorrect" data-arg="' + p.id + '" style="flex:1">Corriger</button></div>' : '') +
+        '</section>' +
+        '<section class="card card-pad"><h2>Prix de vente</h2><table class="t"><thead><tr><th>Niveau</th><th class="right">HT</th><th class="right">TTC</th></tr></thead><tbody>' +
+          LEVELS.map((l, i) => '<tr><td>' + (i + 1) + ' · ' + l + '</td><td class="right num">' + fmt(p.prices[i]) + '</td><td class="right num"><b>' + fmt(ttc(p.prices[i])) + '</b></td></tr>').join('') + '</tbody></table>' +
+          '<span class="muted" style="font-size:13px">Prix plancher ' + fmt(p.floor) + ' HT · TVA ' + p.tva + ' %</span>' +
+          (seeCost() ? '<div class="alert a-ok" style="flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;width:100%"><span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div><div style="display:flex;justify-content:space-between;width:100%"><span>Marges</span><span>' + p.prices.map((x) => Math.round((x - p.cost) / x * 100) + ' %').join(' · ') + '</span></div></div>' : '<span class="muted" style="font-size:13px">Coût et marge masqués pour votre rôle.</span>') +
+        '</section>' +
+      '</div>' +
+      '<section class="card" style="overflow:hidden"><div class="card-head"><h2>Équivalences</h2><span class="muted" style="font-size:14px">même OEM <span class="mono" style="color:var(--ink)">' + esc(p.oem) + '</span></span></div><div class="table-wrap"><table class="t" style="min-width:620px"><thead><tr><th>Marque</th><th>Référence</th><th>Stock</th><th class="right">Public HT</th><th></th></tr></thead><tbody>' +
+        eq.map((x) => '<tr><td><b>' + esc(x.brand) + '</b></td><td class="mono">' + esc(x.ref) + '</td><td>' + stockBadge(x) + '</td><td class="right num">' + fmt(x.prices[0]) + '</td><td class="right">' + (x.id === p.id ? '<span class="muted" style="font-size:13px">Cette pièce</span>' : '<a href="#/pieces/' + x.id + '">Voir</a>') + '</td></tr>').join('') +
+      '</tbody></table></div></section>' +
+      (seeCost() ? '<section class="card" style="overflow:hidden"><div class="card-head"><h2>Fournisseurs</h2></div><div class="table-wrap"><table class="t" style="min-width:560px"><thead><tr><th>Fournisseur</th><th>Réf. fournisseur</th><th class="right">Achat HT</th><th class="right">Délai</th></tr></thead><tbody>' +
+        p.sups.map((s) => '<tr><td><b>' + esc(supplier(s.sid).name) + '</b></td><td class="mono">' + esc(s.ref) + '</td><td class="right num">' + fmt(s.price) + '</td><td class="right">' + s.delay + ' j</td></tr>').join('') + '</tbody></table></div></section>' : '') +
+      '<section class="card" style="overflow:hidden"><div class="card-head"><h2>Mouvements récents</h2>' + (can(['magasinier', 'comptable', 'responsable', 'gerant']) ? '<a href="#/stock" data-action="stockTabGo" data-arg="mouvements">Tous les mouvements</a>' : '') + '</div><div class="table-wrap"><table class="t" style="min-width:640px"><tbody>' +
+        (moves.length ? moves.map((m) => '<tr><td class="muted num">' + dateFr(m.date.slice(0, 10)) + ' ' + m.date.slice(11) + '</td><td>' + esc(m.label) + '</td><td class="num" style="font-weight:700;color:' + (m.qty < 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (m.qty > 0 ? '+' : '−') + Math.abs(m.qty) + '</td><td>' + m.wh + '</td><td class="mono muted">' + m.user + '</td></tr>').join('') : '<tr><td class="empty">Aucun mouvement.</td></tr>') +
+      '</tbody></table></div></section>' +
+    '</div></div>';
+}
+function photoTiles(photos, actionArg) {
+  return photos.map((ph, i) => '<div class="photo' + (i === 0 ? ' main' : '') + '"><img alt="Photo ' + (i + 1) + '" src="' + ph.url + '">' + (i === 0 ? '<span class="tag">Principale</span>' : '') +
+    '<div class="ops">' + (i ? '<button type="button" data-action="photoMain" data-arg="' + actionArg + ':' + i + '">Principale</button>' : '') + '<button type="button" data-action="photoDel" data-arg="' + actionArg + ':' + i + '">Supprimer</button></div></div>').join('');
+}
+function photoAdd(change, arg) {
+  return '<label class="photo photo-add">' + ic('camera', 22) + '<span>Ajouter</span><input type="file" accept="image/*" capture="environment" multiple data-change="' + change + '" data-arg="' + arg + '" aria-label="Ajouter des photos"></label>';
+}
+
+function viewPieceForm(id) {
+  const p = id ? part(id) : null;
+  if (!can(EDIT_PARTS)) return denied();
+  const f = setForm('piece:' + (id || 'new'), p ? {
+    name: p.name, brand: p.brand, ref: p.ref, oem: p.oem, ean: p.ean, fam: p.fam, type: p.type, locM: p.loc['Magasin'], locR: p.loc['Réserve'],
+    p0: p.prices[0], p1: p.prices[1], p2: p.prices[2], floor: p.floor, tva: p.tva, seuil: p.seuil, souhaite: p.souhaite,
+    sid: p.sups[0] ? p.sups[0].sid : 's1', sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.sups[0] ? p.sups[0].price : '', photos: (p.photos || []).slice(), initQty: ''
+  } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', locM: '', locR: '', p0: '', p1: '', p2: '', floor: '', tva: 19, seuil: 4, souhaite: 8, sid: 's1', sref: '', sprice: '', photos: [], initQty: '' });
+  const inp = (name, label, opts) => { opts = opts || {}; return '<div class="field"' + (opts.span ? ' style="grid-column:1/-1"' : '') + '><label for="f-' + name + '">' + label + (opts.req ? ' *' : '') + '</label>' +
+    (opts.wrap ? '<div style="display:flex;gap:8px">' : '') + '<input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="f-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.num ? ' inputmode="numeric"' : '') + (opts.req ? ' required' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' style="flex:1">' + (opts.wrap || '') + (opts.wrap ? '</div>' : '') +
+    (opts.hint ? '<span class="hint">' + opts.hint + '</span>' : '') + '</div>'; };
+  const pr = [0, 1, 2].map((i) => Number(fv('p' + i)) || 0);
+  return head(p ? 'Modifier la pièce' : 'Nouvelle pièce', p ? esc(p.brand + ' ' + p.ref) : 'Les champs * sont obligatoires', '', p ? ['#/pieces/' + p.id, 'Retour à la fiche'] : ['#/pieces', 'Pièces']) +
+    '<form class="card card-pad" data-form="piece" data-submit="savePiece" data-arg="' + (id || '') + '" style="gap:22px">' +
+    '<div class="form-section"><h2>Identification</h2><div class="form-grid">' +
+      inp('name', 'Désignation', { req: true, ph: 'Plaquettes de frein avant' }) + inp('brand', 'Marque', { req: true, ph: 'TRW' }) + inp('ref', 'Référence fabricant', { req: true, mono: true }) +
+      inp('oem', 'Référence OEM', { mono: true, hint: 'Sans espaces ni points : sert aux équivalences' }) +
+      inp('ean', 'Code-barres EAN', { mono: true, wrap: '<button class="btn" type="button" data-action="formScanEan">' + ic('scanner', 18) + 'Scanner</button>' }) +
+      '<div class="field"><label for="f-fam">Famille *</label><select id="f-fam" name="fam">' + FAMILIES.map((x) => '<option' + (x === fv('fam') ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div>' +
+      inp('type', 'Type de pièce CARUNO', { mono: true, ph: 'plaquettes-frein-avant', hint: 'Vocabulaire commun, prépare le futur catalogue' }) +
+    '</div></div>' +
+    '<div class="form-section"><h2>Photos</h2><div class="photos">' + photoTiles(fv('photos') || [], 'formPhoto:x') + photoAdd('photoForm', 'x') + '</div>' +
+      ((fv('photos') || []).length ? '<span class="hint">' + fv('photos').map((x) => x.kb + ' Ko').join(' · ') + ' après réduction</span>' : '<span class="hint">Prenez la pièce sur un fond uni : face, dos, boîte, étiquette fabricant.</span>') + '</div>' +
+    '<div class="form-section"><h2>Prix de vente HT</h2><div class="form-grid">' +
+      LEVELS.map((l, i) => inp('p' + i, (i + 1) + ' · ' + l, { req: i === 0, num: true, hint: pr[i] ? 'TTC ' + fmt(ttc(pr[i])) : '' })).join('') +
+      inp('floor', 'Prix plancher', { num: true, hint: 'Remise en dessous : gérant seulement' }) +
+      '<div class="field"><label for="f-tva">TVA</label><select id="f-tva" name="tva">' + [19, 9, 0].map((t) => '<option value="' + t + '"' + (Number(fv('tva')) === t ? ' selected' : '') + '>' + t + ' %</option>').join('') + '</select></div>' +
+    '</div></div>' +
+    '<div class="form-section"><h2>Stock</h2><div class="form-grid">' +
+      inp('locM', 'Emplacement Magasin', { mono: true, ph: 'B1-12' }) + inp('locR', 'Emplacement Réserve', { mono: true, ph: 'R-03' }) +
+      inp('seuil', 'Seuil d’alerte', { num: true }) + inp('souhaite', 'Stock souhaité', { num: true }) +
+      (p ? '' : inp('initQty', 'Stock initial en Magasin', { num: true, hint: 'Crée un mouvement « stock initial ». Sinon, passer par une réception.' })) +
+    '</div></div>' +
+    (seeCost() || role() === 'magasinier' ? '<div class="form-section"><h2>Fournisseur principal</h2><div class="form-grid">' +
+      '<div class="field"><label for="f-sid">Fournisseur</label><select id="f-sid" name="sid">' + S.db.suppliers.map((s) => '<option value="' + s.id + '"' + (s.id === fv('sid') ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select></div>' +
+      inp('sref', 'Référence fournisseur', { mono: true }) + inp('sprice', 'Prix d’achat HT', { num: true }) + '</div></div>' : '') +
+    '<div class="actions" style="justify-content:flex-end"><a class="btn" href="' + (p ? '#/pieces/' + p.id : '#/pieces') + '">Annuler</a><button class="btn btn-primary" type="submit">' + (p ? 'Enregistrer' : 'Créer la pièce') + '</button></div>' +
+    '</form>';
+}
+
+/* =================================================================== STOCK */
+function viewStock() {
+  const tab = S.ui.stockTab || 'alertes';
+  const alerts = S.db.parts.filter((p) => total(p) < p.seuil);
+  let body = '';
+  if (tab === 'alertes') {
+    body = '<div class="card" style="overflow:hidden"><div class="card-head"><h2>' + alerts.length + ' pièces sous le seuil</h2>' + (can(['magasinier', 'responsable', 'gerant']) ? '<button class="btn btn-primary" type="button" data-action="prepareOrders">Préparer les commandes fournisseurs</button>' : '') + '</div>' +
+      '<div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Pièce</th><th>Réf.</th><th class="right">Stock</th><th class="right">Seuil</th><th class="right">À commander</th><th>Fournisseur</th></tr></thead><tbody>' +
+      alerts.map((p) => '<tr class="click" data-action="go" data-arg="#/pieces/' + p.id + '"><td><div class="cellpart">' + thumb(p, 36) + '<div><a class="rowlink" href="#/pieces/' + p.id + '">' + esc(p.name) + '</a><div class="t2">' + esc(p.brand) + '</div></div></div></td><td class="mono">' + esc(p.ref) + '</td>' +
+        '<td class="right num" style="font-weight:700;color:' + (total(p) ? 'var(--warn)' : 'var(--bad)') + '">' + total(p) + '</td><td class="right num muted">' + p.seuil + '</td><td class="right num"><b>' + Math.max(p.souhaite - total(p), 0) + '</b></td><td>' + esc(supplier(p.sups[0].sid).name) + (seeCost() ? ' · ' + fmt(p.sups[0].price) : '') + '</td></tr>').join('') +
+      '</tbody></table></div></div>';
+  } else if (tab === 'mouvements') {
+    const t = S.ui.mvType || '';
+    const list = S.db.moves.filter((m) => !t || (t === 'vente' ? /Vente|Facture/.test(m.label) : t === 'reception' ? /Réception/.test(m.label) : t === 'transfert' ? /Transfert/.test(m.label) : /Correction|initial|Inventaire/.test(m.label)));
+    body = '<div class="toolbar"><label class="sr" for="mv-type">Type</label><select id="mv-type" data-change="mvType"><option value="">Tous les mouvements</option>' + [['vente', 'Ventes'], ['reception', 'Réceptions'], ['transfert', 'Transferts'], ['correction', 'Corrections et inventaires']].map((o) => '<option value="' + o[0] + '"' + (t === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
+      '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Date</th><th>Pièce</th><th>Motif</th><th class="right">Qté</th><th>Entrepôt</th><th>Utilisateur</th></tr></thead><tbody>' +
+      list.map((m) => { const p = part(m.pid); return '<tr><td class="num muted">' + dateFr(m.date.slice(0, 10)) + ' ' + m.date.slice(11) + '</td><td><a href="#/pieces/' + p.id + '">' + esc(p.brand + ' ' + p.ref) + '</a></td><td>' + esc(m.label) + '</td><td class="right num" style="font-weight:700;color:' + (m.qty < 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (m.qty > 0 ? '+' : '−') + Math.abs(m.qty) + '</td><td>' + m.wh + '</td><td class="mono muted">' + m.user + '</td></tr>'; }).join('') +
+      '</tbody></table></div></div>';
+  } else if (tab === 'transfert') {
+    const f = setForm('transfer', { pid: '4', from: 'Réserve', to: 'Magasin', qty: '1' });
+    body = '<form class="card card-pad" data-form="transfer" data-submit="transfer" style="max-width:640px"><h2>Transfert entre entrepôts</h2><div class="form-grid">' +
+      '<div class="field" style="grid-column:1/-1"><label for="t-pid">Pièce</label><select id="t-pid" name="pid">' + S.db.parts.map((p) => '<option value="' + p.id + '"' + (String(p.id) === String(f.pid) ? ' selected' : '') + '>' + esc(p.brand + ' ' + p.ref + ' — ' + p.name) + ' (Mag. ' + p.stock['Magasin'] + ' / Rés. ' + p.stock['Réserve'] + ')</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="t-from">De</label><select id="t-from" name="from">' + WAREHOUSES.map((w) => '<option' + (w === f.from ? ' selected' : '') + '>' + w + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="t-to">Vers</label><select id="t-to" name="to">' + WAREHOUSES.map((w) => '<option' + (w === f.to ? ' selected' : '') + '>' + w + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="t-qty">Quantité</label><input class="input num" id="t-qty" name="qty" inputmode="numeric" value="' + esc(f.qty) + '"></div></div>' +
+      '<div class="actions" style="justify-content:flex-end"><button class="btn btn-primary" type="submit">Transférer</button></div></form>';
+  } else {
+    const fam = S.ui.invFam || 'Freinage';
+    const list = S.db.parts.filter((p) => p.fam === fam);
+    const counts = S.ui.inv || (S.ui.inv = {});
+    body = '<div class="toolbar"><label for="inv-fam" class="muted">Famille à compter</label><select id="inv-fam" data-change="invFam">' + FAMILIES.map((x) => '<option' + (x === fam ? ' selected' : '') + '>' + x + '</option>').join('') + '</select><a class="btn" href="#/scanner" data-action="scanMode" data-arg="count">' + ic('scanner', 18) + 'Compter au scan</a></div>' +
+      '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:720px"><thead><tr><th>Pièce</th><th>Emplacement</th><th class="right">Attendu (Magasin)</th><th class="right">Compté</th><th class="right">Écart</th></tr></thead><tbody>' +
+      list.map((p) => { const c = counts[p.id]; const gap = c === undefined || c === '' ? null : Number(c) - p.stock['Magasin'];
+        return '<tr><td><b>' + esc(p.name) + '</b> <span class="muted">· ' + esc(p.brand + ' ' + p.ref) + '</span></td><td class="mono">' + esc(p.loc['Magasin']) + '</td><td class="right num">' + p.stock['Magasin'] + '</td>' +
+          '<td class="right"><label class="sr" for="inv-' + p.id + '">Compté ' + esc(p.ref) + '</label><input class="input num" style="width:90px" id="inv-' + p.id + '" inputmode="numeric" value="' + esc(c === undefined ? '' : c) + '" data-input="invCount" data-arg="' + p.id + '"></td>' +
+          '<td class="right num" style="font-weight:700;color:' + (gap === null ? 'var(--muted)' : gap === 0 ? 'var(--ok)' : 'var(--warn)') + '">' + (gap === null ? '—' : gap === 0 ? 'OK' : (gap > 0 ? '+' : '−') + Math.abs(gap)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><div style="display:flex;justify-content:flex-end;padding:12px 18px"><button class="btn btn-primary" type="button" data-action="applyInventory">Appliquer les écarts</button></div></div>';
+  }
+  return head('Stock', 'Magasin et Réserve · ' + S.db.parts.reduce((t, p) => t + total(p), 0) + ' pièces' + (seeCost() ? ' · valeur ' + fmt(S.db.parts.reduce((t, p) => t + total(p) * p.cost, 0)) + ' au PMP' : ''), '<a class="btn" href="#/achats">Réceptions</a>') +
+    tabs([['alertes', 'Alertes (' + alerts.length + ')'], ['mouvements', 'Mouvements'], ['transfert', 'Transfert'], ['inventaire', 'Inventaire']], tab, 'stockTab') + body;
+}
+
+/* =================================================================== CLIENTS */
+function viewClients() {
+  const f = S.ui.cf || (S.ui.cf = { q: '', cat: '' });
+  const list = S.db.clients.filter((c) => (!f.cat || c.cat === f.cat) && (!f.q || norm(c.name + c.town + c.phone).indexOf(norm(f.q)) !== -1));
+  return head('Clients', S.db.clients.length + ' clients · encours total ' + fmt(S.db.clients.reduce((t, c) => t + encours(c.id), 0)), '<a class="btn btn-primary" href="#/clients/nouveau">' + ic('plus', 18) + 'Nouveau client</a>') +
+    '<div class="toolbar"><label class="search" for="cf-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="cf-q" type="search" placeholder="Nom, ville, téléphone…" value="' + esc(f.q) + '" data-input="cfQ"></label>' +
+    '<div class="chips" role="group" aria-label="Catégorie">' + [['', 'Tous'], ['Particulier', 'Particuliers'], ['Garage', 'Garages'], ['Revendeur', 'Revendeurs']].map((c) => '<button class="chip" type="button" data-action="cfCat" data-arg="' + c[0] + '" aria-pressed="' + (f.cat === c[0]) + '">' + c[1] + '</button>').join('') + '</div></div>' +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Client</th><th>Catégorie</th><th>Ville</th><th>Téléphone</th><th class="right">Encours</th><th class="right">Plafond</th><th></th></tr></thead><tbody>' +
+    list.map((c) => { const e = encours(c.id); const warn = c.plafond && e > c.plafond * 0.8;
+      return '<tr class="click" data-action="go" data-arg="#/clients/' + c.id + '"><td><a class="rowlink" href="#/clients/' + c.id + '">' + esc(c.name) + '</a></td><td><span class="badge ' + (c.cat === 'Particulier' ? 'b-grey' : 'b-accent') + '">' + c.cat + ' · niv. ' + (lvl(c) + 1) + '</span></td><td>' + esc(c.town || '—') + '</td><td class="num">' + esc(c.phone || '—') + '</td>' +
+        '<td class="right num"><b>' + (e ? fmt(e) : '—') + '</b></td><td class="right num muted">' + (c.plafond ? fmt(c.plafond) : '—') + '</td><td>' + (warn ? '<span class="badge b-warn">' + ic('warn', 14) + 'Proche du plafond</span>' : '') + '</td></tr>'; }).join('') +
+    '</tbody></table></div></div>';
+}
+function viewClient(id) {
+  const c = client(id);
+  if (!c) return head('Client introuvable', '', '', ['#/clients', 'Clients']);
+  const docs = S.db.docs.filter((d) => d.client === c.id);
+  const unpaid = docs.filter((d) => d.type === 'facture' && d.status !== 'payee' && d.status !== 'brouillon').sort((a, b) => a.date < b.date ? -1 : 1);
+  const e = encours(c.id), pct = c.plafond ? Math.min(100, Math.round(e / c.plafond * 100)) : 0;
+  const late = unpaid.filter((d) => d.due && d.due < TODAY).reduce((t, d) => t + d.ttc - d.paid, 0);
+  const col = (title, list) => '<div style="background:#EBEBE6;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><h3>' + title + '</h3><span class="muted num" style="font-size:13px">' + list.length + ' · ' + fmt(list.reduce((t, d) => t + d.ttc - (d.paid || 0), 0)) + '</span></div>' +
+    (list.length ? list.map((d) => '<a href="#/ventes/' + d.ref + '" class="card" style="padding:12px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink)"><div style="display:flex;justify-content:space-between;gap:8px"><span class="mono" style="font-weight:500">' + d.ref + '</span>' + statusBadge(d.type, d) + '</div><span style="font-size:14px">' + esc(d.desc) + '</span><b class="num">' + fmt(d.ttc - (d.paid || 0)) + '</b></a>').join('') : '<span class="muted" style="font-size:14px;padding:4px">Rien en cours.</span>') + '</div>';
+  return head(esc(c.name), '<span class="badge ' + (c.cat === 'Particulier' ? 'b-grey' : 'b-accent') + '">' + c.cat + ' → prix niveau ' + (lvl(c) + 1) + '</span> ' + esc([c.town, c.phone, c.terms ? 'Paiement ' + c.terms : '', c.remise ? 'Remise ' + c.remise + ' %' : ''].filter(Boolean).join(' · ')) + (c.rc ? '<br><span class="mono">RC ' + esc(c.rc) + ' · NIF ' + esc(c.nif) + '</span>' : ''),
+    '<a class="btn btn-primary" href="#/ventes/nouveau/devis?client=' + c.id + '">' + ic('plus', 18) + 'Devis</a><a class="btn" href="#/ventes/nouveau/commande?client=' + c.id + '">Commande</a><button class="btn" type="button" data-action="caisseFor" data-arg="' + c.id + '">Vente comptoir</button>' +
+    (unpaid.length ? '<button class="btn btn-dark" type="button" data-action="modalSettle" data-arg="' + c.id + '">Encaisser un règlement</button>' : '') + (c.fixed ? '' : '<a class="btn" href="#/clients/' + c.id + '/modifier">Modifier</a>'), ['#/clients', 'Clients']) +
+    '<div class="grid-auto">' +
+      '<section class="card card-pad"><h2>Encours</h2><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:32px;font-weight:700" class="num">' + fmt(e) + '</span>' + (c.plafond ? '<span class="muted">sur un plafond de ' + fmt(c.plafond) + '</span>' : '<span class="muted">pas de crédit autorisé</span>') + '</div>' +
+        (c.plafond ? '<div class="meter" role="img" aria-label="Encours à ' + pct + ' % du plafond"><div style="width:' + pct + '%;background:' + (pct > 80 ? '#B45309' : '#15803D') + '"></div></div>' : '') +
+        '<dl class="kv"><dt>En retard</dt><dd class="num" style="color:' + (late ? 'var(--bad)' : 'inherit') + ';font-weight:600">' + fmt(late) + '</dd><dt>Factures ouvertes</dt><dd>' + unpaid.length + '</dd></dl>' +
+        '<div class="actions"><button class="btn" type="button" data-action="toast" data-arg="Relevé de compte PDF généré (maquette)">Relevé de compte</button>' + (late ? '<button class="btn" type="button" data-action="toast" data-arg="Relance envoyée par WhatsApp (maquette)">Relancer</button>' : '') + '</div></section>' +
+      '<section class="card card-pad"><h2>Historique</h2><dl class="kv"><dt>Facturé (12 mois)</dt><dd class="num">' + fmt(docs.filter((d) => d.type === 'facture').reduce((t, d) => t + d.ttc, 0)) + '</dd><dt>Dernière facture</dt><dd>' + (docs.filter((d) => d.type === 'facture').map((d) => dateFr(d.date)).sort().pop() || '—') + '</dd><dt>Devis refusés</dt><dd>' + docs.filter((d) => d.status === 'refuse').length + '</dd></dl></section>' +
+    '</div>' +
+    '<section style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><h2 style="font-size:19px">Documents en cours</h2><span class="badge b-info">Stock : sortie à la validation de la facture</span></div>' +
+    '<div class="grid-auto">' + col('Devis', docs.filter((d) => d.type === 'devis' && (d.status === 'brouillon' || d.status === 'envoye'))) + col('Commandes à facturer', docs.filter((d) => d.type === 'commande' && d.status !== 'facturee')) + col('Factures impayées', unpaid) + '</div></section>';
+}
+function viewClientForm(id) {
+  const c = id ? client(id) : null;
+  const f = setForm('client:' + (id || 'new'), c ? Object.assign({}, c) : { name: '', cat: 'Garage', phone: '', town: '', email: '', address: '', rc: '', nif: '', ai: '', nis: '', terms: '30 jours', remise: 0, plafond: 100000 });
+  const pro = f.cat !== 'Particulier';
+  const inp = (name, label, opts) => { opts = opts || {}; return '<div class="field"><label for="c-' + name + '">' + label + (opts.req ? ' *' : '') + '</label><input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="c-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.req ? ' required' : '') + (opts.num ? ' inputmode="numeric"' : '') + '>' + (opts.hint ? '<span class="hint">' + opts.hint + '</span>' : '') + '</div>'; };
+  return head(c ? 'Modifier le client' : 'Nouveau client', '', '', c ? ['#/clients/' + c.id, c.name] : ['#/clients', 'Clients']) +
+    '<form class="card card-pad" data-form="client" data-submit="saveClient" data-arg="' + (id || '') + '" style="gap:22px">' +
+    '<div class="form-section"><h2>Catégorie</h2><div class="chips" role="radiogroup" aria-label="Catégorie">' +
+      ['Particulier', 'Garage', 'Revendeur'].map((k) => '<button class="chip" type="button" role="radio" aria-checked="' + (f.cat === k) + '" aria-pressed="' + (f.cat === k) + '" data-action="formCat" data-arg="' + k + '">' + k + ' · prix ' + LEVELS[CAT_LEVEL[k]] + '</button>').join('') + '</div></div>' +
+    '<div class="form-section"><h2>Coordonnées</h2><div class="form-grid">' + inp('name', pro ? 'Raison sociale' : 'Nom et prénom', { req: true }) + inp('phone', 'Téléphone') + inp('email', 'E-mail') + inp('town', 'Commune') + inp('address', 'Adresse') + '</div></div>' +
+    (pro ? '<div class="form-section"><h2>Identifiants légaux</h2><div class="form-grid">' + inp('rc', 'RC', { mono: true }) + inp('nif', 'NIF', { mono: true }) + inp('ai', 'Article d’imposition', { mono: true }) + inp('nis', 'NIS', { mono: true }) + '</div></div>' +
+      '<div class="form-section"><h2>Conditions commerciales</h2><div class="form-grid">' +
+      '<div class="field"><label for="c-terms">Conditions de paiement</label><select id="c-terms" name="terms">' + ['Comptant', '30 jours', '30 jours fin de mois', '45 jours', '60 jours'].map((t) => '<option' + (t === f.terms ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></div>' +
+      inp('remise', 'Remise client %', { num: true }) + inp('plafond', 'Plafond d’encours (DA)', { num: true, hint: '0 = pas de vente à crédit' }) + '</div></div>' : '') +
+    '<div class="actions" style="justify-content:flex-end"><a class="btn" href="' + (c ? '#/clients/' + c.id : '#/clients') + '">Annuler</a><button class="btn btn-primary" type="submit">' + (c ? 'Enregistrer' : 'Créer le client') + '</button></div></form>';
+}
+
+/* =================================================================== VENTES */
+function viewVentes() {
+  const tab = S.ui.ventesTab || 'devis';
+  const f = S.ui.vf || (S.ui.vf = { q: '', st: '' });
+  const list = S.db.docs.filter((d) => d.type === tab && (!f.st || d.status === f.st) && (!f.q || norm(d.ref + client(d.client).name + d.desc).indexOf(norm(f.q)) !== -1)).sort((a, b) => a.ref < b.ref ? 1 : -1);
+  const count = (t) => S.db.docs.filter((d) => d.type === t).length;
+  const newBtn = tab === 'facture' ? '<a class="btn btn-primary" href="#/caisse">' + ic('plus', 18) + 'Vente comptoir</a>' : '<a class="btn btn-primary" href="#/ventes/nouveau/' + tab + '">' + ic('plus', 18) + (tab === 'devis' ? 'Nouveau devis' : 'Nouvelle commande') + '</a>';
+  return head('Ventes', 'Devis, commandes et factures clients', newBtn) +
+    tabs([['devis', 'Devis (' + count('devis') + ')'], ['commande', 'Commandes (' + count('commande') + ')'], ['facture', 'Factures (' + count('facture') + ')']], tab, 'ventesTab') +
+    '<div class="toolbar"><label class="search" for="vf-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="vf-q" type="search" placeholder="Référence, client…" value="' + esc(f.q) + '" data-input="vfQ"></label>' +
+    '<label class="sr" for="vf-st">Statut</label><select id="vf-st" data-change="vfSt"><option value="">Tous les statuts</option>' + Object.keys(STATUS[tab]).map((k) => '<option value="' + k + '"' + (f.st === k ? ' selected' : '') + '>' + STATUS[tab][k][0] + '</option>').join('') + '</select></div>' +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Référence</th><th>Client</th><th>Date</th><th>Objet</th><th>Statut</th><th class="right">Montant TTC</th>' + (tab === 'facture' ? '<th class="right">Reste dû</th>' : '') + '</tr></thead><tbody>' +
+    (list.length ? list.map((d) => '<tr class="click" data-action="go" data-arg="#/ventes/' + d.ref + '"><td><a class="rowlink mono" href="#/ventes/' + d.ref + '">' + d.ref + '</a></td><td>' + esc(client(d.client).name) + '</td><td class="num">' + dateFr(d.date) + '</td><td style="font-size:14px">' + esc(d.desc) + '</td><td>' + statusBadge(tab, d) + '</td><td class="right num"><b>' + fmt(d.ttc) + '</b></td>' + (tab === 'facture' ? '<td class="right num">' + fmt(d.ttc - (d.paid || 0)) + '</td>' : '') + '</tr>').join('') : '<tr><td colspan="7" class="empty">Aucun document.</td></tr>') +
+    '</tbody></table></div></div>';
+}
+function docLinesTable(lines, L) {
+  return '<div class="table-wrap"><table class="t" style="min-width:620px"><thead><tr><th>Pièce</th><th class="right">Qté</th><th class="right">PU HT</th><th class="right">Total HT</th></tr></thead><tbody>' +
+    lines.map((l) => { const p = part(l.pid); return '<tr><td><b>' + esc(p.name) + '</b> <span class="muted mono">' + esc(p.brand + ' ' + p.ref) + '</span></td><td class="right num">' + l.qty + '</td><td class="right num">' + fmt(l.price) + '</td><td class="right num"><b>' + fmt(l.price * l.qty) + '</b></td></tr>'; }).join('') + '</tbody></table></div>';
+}
+function viewDoc(ref) {
+  const d = doc(ref);
+  if (!d) return head('Document introuvable', '', '', ['#/ventes', 'Ventes']);
+  const c = client(d.client);
+  let act = '';
+  if (d.type === 'devis' && d.status === 'brouillon') act += '<button class="btn btn-primary" type="button" data-action="docStatus" data-arg="' + d.ref + ':envoye">Valider et envoyer</button>';
+  if (d.type === 'devis' && d.status === 'envoye') act += '<button class="btn btn-primary" type="button" data-action="docConvert" data-arg="' + d.ref + '">Convertir en commande</button><button class="btn" type="button" data-action="docStatus" data-arg="' + d.ref + ':refuse">Refusé</button>';
+  if (d.type === 'commande' && d.status === 'brouillon') act += '<button class="btn btn-primary" type="button" data-action="docStatus" data-arg="' + d.ref + ':validee">Valider</button>';
+  if (d.type === 'commande' && d.status === 'validee') act += '<button class="btn btn-primary" type="button" data-action="docStatus" data-arg="' + d.ref + ':prete">Marquer prête</button>';
+  if (d.type === 'commande' && d.status === 'prete') act += '<button class="btn btn-primary" type="button" data-action="docInvoice" data-arg="' + d.ref + '">Facturer</button>';
+  if (d.type === 'facture' && (d.status === 'impayee' || d.status === 'partielle')) act += '<button class="btn btn-primary" type="button" data-action="modalPay" data-arg="' + d.ref + '">Encaisser</button>';
+  act += '<button class="btn" type="button" data-action="toast" data-arg="PDF ' + d.ref + ' généré (maquette)">PDF</button>';
+  const ht = d.lines ? d.lines.reduce((t, l) => t + l.price * l.qty, 0) : Math.round(d.ttc / 1.19);
+  return head(TYPE_LABEL[d.type] + ' <span class="mono" style="font-size:22px">' + d.ref + '</span> ' + statusBadge(d.type, d), '<a href="#/clients/' + c.id + '">' + esc(c.name) + '</a> · ' + dateFr(d.date) + (d.due ? ' · échéance ' + dateFr(d.due) : '') + (d.origin ? ' · issu de <a class="mono" href="#/ventes/' + d.origin + '">' + d.origin + '</a>' : ''), act, ['#/ventes', 'Ventes']) +
+    (d.pendingSale && d.status !== 'payee' ? '<div class="alert a-warn">' + ic('warn', 20, '#9A3412') + 'Vente comptoir ' + d.pendingSale + ' interrompue : facture validée, stock sorti, encaissement à reprendre.</div>' : '') +
+    '<div class="row"><section class="card" style="flex:999 1 560px;min-width:0;overflow:hidden"><div class="card-head"><h2>Lignes</h2></div>' + (d.lines ? docLinesTable(d.lines) : '<p style="padding:16px 18px;margin:0">' + esc(d.desc) + '</p>') + '</section>' +
+    '<section class="card card-pad num" style="flex:1 1 300px">' +
+      '<div style="display:flex;justify-content:space-between"><span class="muted">Total HT</span><span>' + fmt(ht) + '</span></div><div style="display:flex;justify-content:space-between"><span class="muted">TVA 19 %</span><span>' + fmt(d.ttc - ht) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line2);padding-top:8px"><b>Total TTC</b><span style="font-size:24px;font-weight:700">' + fmt(d.ttc) + '</span></div>' +
+      (d.type === 'facture' ? '<div style="display:flex;justify-content:space-between"><span class="muted">Déjà payé</span><span>' + fmt(d.paid) + '</span></div><div style="display:flex;justify-content:space-between"><b>Reste dû</b><b>' + fmt(d.ttc - d.paid) + '</b></div>' : '') +
+      (d.payments && d.payments.length ? '<h3 style="margin-top:8px">Paiements</h3>' + d.payments.map((p) => '<div style="display:flex;justify-content:space-between;font-size:14px"><span>' + dateFr(p.date) + ' · ' + esc(p.mode) + '</span><span>' + fmt(p.amount) + '</span></div>').join('') : '') +
+    '</section></div>';
+}
+function viewDocEditor(type, query) {
+  const params = new URLSearchParams(query || '');
+  const key = 'editor:' + type + ':' + (params.get('client') || '');
+  if (S.ui.editorKey !== key) { S.ui.editorKey = key; S.ui.editor = { client: params.get('client') || 'g', q: '', lines: [], remise: 0, note: '' }; }
+  const e = S.ui.editor, c = client(e.client), L = lvl(c);
+  const res = e.q ? search(e.q, S.db.parts).slice(0, 6) : [];
+  const ht = e.lines.reduce((t, l) => t + l.price * l.qty, 0) * (1 - e.remise / 100);
+  return head(type === 'devis' ? 'Nouveau devis' : 'Nouvelle commande', 'Prix au niveau du client', '', ['#/ventes', 'Ventes']) +
+    '<div class="row"><section class="card card-pad" style="flex:999 1 560px;min-width:0">' +
+      '<div class="form-grid"><div class="field"><label for="ed-client">Client</label><select id="ed-client" data-change="edClient">' + S.db.clients.filter((x) => !x.fixed).map((x) => '<option value="' + x.id + '"' + (x.id === e.client ? ' selected' : '') + '>' + esc(x.name) + ' — ' + x.cat + '</option>').join('') + '</select><span class="hint">' + c.cat + ' → prix ' + LEVELS[L] + (c.remise ? ', remise client ' + c.remise + ' %' : '') + '</span></div>' +
+      '<div class="field"><label for="ed-remise">Remise globale %</label><input class="input num" id="ed-remise" inputmode="numeric" value="' + e.remise + '" data-input="edRemise"></div></div>' +
+      '<div style="position:relative"><label class="search" for="ed-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Ajouter une pièce</span><input id="ed-q" type="search" placeholder="Ajouter une pièce : référence, OEM, marque…" value="' + esc(e.q) + '" data-input="edQ" autocomplete="off"></label>' +
+        (res.length ? '<div class="card" style="position:absolute;left:0;right:0;top:52px;z-index:5;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12)">' + res.map((p) => '<button type="button" data-action="edAdd" data-arg="' + p.id + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;padding:10px 14px;border:0;border-bottom:1px solid var(--line2);background:#fff;cursor:pointer;text-align:left;min-height:48px"><span><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></span><span class="num">' + fmt(p.prices[L]) + ' · stock ' + total(p) + '</span></button>').join('') + '</div>' : '') + '</div>' +
+      (e.lines.length ? '<div class="table-wrap"><table class="t" style="min-width:600px"><thead><tr><th>Pièce</th><th class="right">Qté</th><th class="right">PU HT</th><th class="right">Total HT</th><th></th></tr></thead><tbody>' +
+        e.lines.map((l, i) => { const p = part(l.pid); return '<tr><td><b>' + esc(p.name) + '</b><div class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</div></td><td class="right"><label class="sr" for="ed-qty-' + i + '">Quantité</label><input class="input num" style="width:76px" id="ed-qty-' + i + '" inputmode="numeric" value="' + l.qty + '" data-input="edQty" data-arg="' + i + '"></td><td class="right"><label class="sr" for="ed-pu-' + i + '">Prix</label><input class="input num" style="width:110px" id="ed-pu-' + i + '" inputmode="numeric" value="' + l.price + '" data-input="edPrice" data-arg="' + i + '">' + (l.price < p.floor ? '<div style="color:var(--bad);font-size:12px">sous le plancher</div>' : '') + '</td><td class="right num"><b>' + fmt(l.price * l.qty) + '</b></td><td class="right"><button class="icon-btn" type="button" data-action="edDel" data-arg="' + i + '" aria-label="Retirer la ligne">' + ic('x', 18) + '</button></td></tr>'; }).join('') + '</tbody></table></div>'
+        : '<p class="empty" style="border:1px dashed var(--line);border-radius:12px">Aucune ligne. Cherchez une pièce ci-dessus.</p>') +
+      '<div class="field"><label for="ed-note">Note pour le client</label><textarea id="ed-note" data-input="edNote">' + esc(e.note) + '</textarea></div>' +
+    '</section>' +
+    '<aside class="card card-pad num" style="flex:1 1 300px"><h2>Total</h2><div style="display:flex;justify-content:space-between"><span class="muted">Total HT</span><span>' + fmt(ht) + '</span></div><div style="display:flex;justify-content:space-between"><span class="muted">TVA 19 %</span><span>' + fmt(ttc(ht) - ht) + '</span></div><div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line2);padding-top:8px"><b>Total TTC</b><span style="font-size:24px;font-weight:700">' + fmt(ttc(ht)) + '</span></div>' +
+      '<button class="btn btn-primary" type="button" data-action="edSave" data-arg="' + type + ':valid"' + (e.lines.length ? '' : ' disabled') + '>' + (type === 'devis' ? 'Valider et envoyer' : 'Valider la commande') + '</button><button class="btn" type="button" data-action="edSave" data-arg="' + type + ':brouillon"' + (e.lines.length ? '' : ' disabled') + '>Enregistrer en brouillon</button></aside></div>';
+}
+
+/* =================================================================== ACHATS */
+function viewAchats() {
+  const tab = S.ui.achatsTab || 'commandes';
+  let body;
+  if (tab === 'commandes') {
+    body = '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th>Référence</th><th>Fournisseur</th><th>Date</th><th>Lignes</th><th>Statut</th>' + (seeCost() ? '<th class="right">Montant HT</th>' : '') + '<th></th></tr></thead><tbody>' +
+      S.db.pos.slice().sort((a, b) => a.ref < b.ref ? 1 : -1).map((o) => '<tr class="click" data-action="go" data-arg="#/achats/' + o.ref + '"><td><a class="rowlink mono" href="#/achats/' + o.ref + '">' + o.ref + '</a></td><td>' + esc(supplier(o.supplier).name) + '</td><td class="num">' + dateFr(o.date) + '</td><td>' + o.lines.length + ' · ' + o.lines.reduce((t, l) => t + l.qty, 0) + ' pièces</td><td>' + statusBadge('po', o) + '</td>' +
+        (seeCost() ? '<td class="right num">' + fmt(o.lines.reduce((t, l) => t + l.qty * l.price, 0)) + '</td>' : '') + '<td class="right">' + (o.status === 'reception' || o.status === 'envoyee' ? '<span class="btn btn-outline">Réceptionner</span>' : '') + '</td></tr>').join('') +
+      '</tbody></table></div></div>';
+  } else {
+    body = '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:680px"><thead><tr><th>Fournisseur</th><th>Ville</th><th>Téléphone</th><th>E-mail</th><th class="right">Pièces référencées</th></tr></thead><tbody>' +
+      S.db.suppliers.map((s) => '<tr><td><b>' + esc(s.name) + '</b></td><td>' + esc(s.town) + '</td><td class="num">' + esc(s.phone) + '</td><td>' + esc(s.email) + '</td><td class="right num">' + S.db.parts.filter((p) => p.sups.some((x) => x.sid === s.id)).length + '</td></tr>').join('') +
+      '</tbody></table></div></div>';
+  }
+  return head('Achats', 'Commandes fournisseurs et réceptions', (tab === 'commandes' ? '<a class="btn btn-primary" href="#/achats/nouveau">' + ic('plus', 18) + 'Nouvelle commande</a>' : '<button class="btn btn-primary" type="button" data-action="modalSupplier">' + ic('plus', 18) + 'Nouveau fournisseur</button>')) +
+    tabs([['commandes', 'Commandes fournisseurs'], ['fournisseurs', 'Fournisseurs']], tab, 'achatsTab') + body;
+}
+function viewPO(ref) {
+  const o = po(ref);
+  if (!o) return head('Commande introuvable', '', '', ['#/achats', 'Achats']);
+  const open = o.status === 'envoyee' || o.status === 'reception';
+  const rec = o.lines.reduce((t, l) => t + l.rec, 0), qty = o.lines.reduce((t, l) => t + l.qty, 0);
+  const pending = o.lines.reduce((t, l) => t + Math.max(l.rec - l.done, 0), 0);
+  let act = '';
+  if (o.status === 'brouillon') act = '<button class="btn btn-primary" type="button" data-action="poSend" data-arg="' + o.ref + '">Envoyer au fournisseur</button>';
+  if (open) act = '<button class="btn" type="button" data-action="poScan" data-arg="' + o.ref + '">' + ic('scanner', 18) + 'Simuler un scan</button>';
+  return head('Commande fournisseur <span class="mono" style="font-size:22px">' + o.ref + '</span> ' + statusBadge('po', o), esc(supplier(o.supplier).name) + ' · ' + dateFr(o.date) + ' · vers Magasin', act, ['#/achats', 'Achats']) +
+    (open ? '<div class="card card-pad"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Contrôle : ' + o.lines.filter((l) => l.rec >= l.qty).length + ' lignes sur ' + o.lines.length + ' complètes</span><span class="num">' + rec + ' / ' + qty + ' pièces</span></div><div class="meter" role="img" aria-label="Réception à ' + Math.round(rec / qty * 100) + ' %"><div style="width:' + Math.min(100, Math.round(rec / qty * 100)) + '%;background:#15803D"></div></div></div>' : '') +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th>Pièce</th><th>Code-barres</th><th class="right">Commandé</th><th class="right">' + (open ? 'Reçu' : 'Reçu') + '</th><th>Contrôle</th>' + (seeCost() ? '<th class="right">PU HT</th>' : '') + '</tr></thead><tbody>' +
+    o.lines.map((l, i) => { const p = part(l.pid); const st = l.rec === 0 ? ['À scanner', 'b-grey'] : l.rec === l.qty ? ['Conforme', 'b-ok'] : l.rec < l.qty ? ['Manque ' + (l.qty - l.rec), 'b-warn'] : ['En trop ' + (l.rec - l.qty), 'b-warn'];
+      return '<tr><td><b>' + esc(p.name) + '</b><div class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</div></td><td class="mono">' + esc(p.ean) + '</td><td class="right num">' + l.qty + '</td><td class="right">' +
+        (open ? '<label class="sr" for="po-' + i + '">Reçu</label><input class="input num" style="width:80px" id="po-' + i + '" inputmode="numeric" value="' + l.rec + '" data-input="poRec" data-arg="' + o.ref + ':' + i + '">' : '<span class="num">' + l.rec + '</span>') +
+        '</td><td><span class="badge ' + st[1] + '">' + st[0] + '</span></td>' + (seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '</tr>'; }).join('') +
+    '</tbody></table></div></div>' +
+    (open ? '<div class="grid-auto"><section class="card card-pad"><h2>Bon de livraison</h2>' + (o.bl ? '<div style="display:flex;gap:12px;align-items:center"><span class="thumb" style="width:72px;height:72px"><img alt="Bon de livraison" src="' + o.bl.url + '"></span><span class="muted" style="font-size:14px">Photo jointe à la commande (' + o.bl.kb + ' Ko)</span></div>' : '<span class="muted" style="font-size:14px">Photographiez le BL du fournisseur, il sera joint à la commande dans Dolibarr.</span>') +
+      '<label class="btn btn-outline" style="position:relative">' + ic('camera', 18) + (o.bl ? 'Reprendre la photo' : 'Photographier le BL') + '<input type="file" accept="image/*" capture="environment" data-change="photoBL" data-arg="' + o.ref + '" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="Photo du bon de livraison"></label></section>' +
+      '<section class="card card-pad"><h2>Valider</h2><span class="muted" style="font-size:14px">' + pending + ' pièce(s) entreront en Magasin. Le coût moyen (PMP) sera recalculé. Ce qui manque reste en attente sur la commande.</span><button class="btn btn-primary btn-lg" type="button" data-action="poValidate" data-arg="' + o.ref + '"' + (pending ? '' : ' disabled') + '>Valider la réception (' + pending + ')</button></section></div>' : '');
+}
+function viewPOEditor() {
+  if (!S.ui.poEd) S.ui.poEd = { supplier: 's1', q: '', lines: [] };
+  const e = S.ui.poEd;
+  const res = e.q ? search(e.q, S.db.parts).slice(0, 6) : [];
+  return head('Nouvelle commande fournisseur', '', '', ['#/achats', 'Achats']) +
+    '<section class="card card-pad"><div class="form-grid"><div class="field"><label for="po-sup">Fournisseur</label><select id="po-sup" data-change="poSup">' + S.db.suppliers.map((s) => '<option value="' + s.id + '"' + (s.id === e.supplier ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select></div></div>' +
+    '<div style="position:relative"><label class="search" for="po-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Ajouter</span><input id="po-q" type="search" placeholder="Ajouter une pièce…" value="' + esc(e.q) + '" data-input="poQ" autocomplete="off"></label>' +
+    (res.length ? '<div class="card" style="position:absolute;left:0;right:0;top:52px;z-index:5;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12)">' + res.map((p) => '<button type="button" data-action="poAdd" data-arg="' + p.id + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;padding:10px 14px;border:0;border-bottom:1px solid var(--line2);background:#fff;cursor:pointer;text-align:left;min-height:48px"><span><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></span><span class="num">stock ' + total(p) + ' / seuil ' + p.seuil + '</span></button>').join('') + '</div>' : '') + '</div>' +
+    (e.lines.length ? '<div class="table-wrap"><table class="t" style="min-width:560px"><thead><tr><th>Pièce</th><th class="right">Qté</th>' + (seeCost() ? '<th class="right">PU HT</th>' : '') + '<th></th></tr></thead><tbody>' + e.lines.map((l, i) => { const p = part(l.pid); return '<tr><td><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></td><td class="right"><label class="sr" for="poe-' + i + '">Quantité</label><input class="input num" style="width:80px" id="poe-' + i + '" inputmode="numeric" value="' + l.qty + '" data-input="poQty" data-arg="' + i + '"></td>' + (seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel" data-arg="' + i + '" aria-label="Retirer">' + ic('x', 18) + '</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty" style="border:1px dashed var(--line);border-radius:12px">Aucune ligne.</p>') +
+    '<div class="actions" style="justify-content:flex-end"><a class="btn" href="#/achats">Annuler</a><button class="btn btn-primary" type="button" data-action="poCreate"' + (e.lines.length ? '' : ' disabled') + '>Créer la commande</button></div></section>';
+}
+
+/* =================================================================== SCANNER */
+function viewScanner() {
+  const sc = S.ui.scan || (S.ui.scan = { mode: 'consult', code: '', pid: null, count: '' });
+  const p = sc.pid ? part(sc.pid) : null;
+  const openPO = S.db.pos.find((o) => o.status === 'reception' || o.status === 'envoyee');
+  let card = '';
+  if (sc.code && !p) card = '<div class="alert a-bad">' + ic('warn', 20) + 'Code ' + esc(sc.code) + ' inconnu. <a href="#/pieces/nouveau">Créer la pièce</a></div>';
+  if (p) {
+    card = '<section class="card card-pad"><div style="display:flex;gap:12px;align-items:center">' + thumb(p, 56) + '<div><div style="font-weight:700">' + esc(p.name) + '</div><div class="mono muted">' + esc(p.brand + ' ' + p.ref) + ' · OEM ' + esc(p.oem) + '</div><div class="muted" style="font-size:13px">Emplacement <b class="mono" style="color:var(--ink)">' + esc(p.loc['Magasin']) + '</b> · Public ' + fmt(ttc(p.prices[0])) + ' TTC</div></div></div>';
+    if (sc.mode === 'consult') card += '<div class="grid-auto" style="grid-template-columns:repeat(2,1fr);gap:8px">' + WAREHOUSES.map((w) => '<div style="padding:10px 12px;border-radius:10px;background:var(--bg);display:flex;justify-content:space-between;align-items:baseline"><span class="muted">' + w + '</span><b style="font-size:20px">' + p.stock[w] + '</b></div>').join('') + '</div>' +
+      '<div class="actions"><a class="btn btn-outline" href="#/pieces/' + p.id + '" style="flex:1">Fiche et photos</a>' + (can(['vendeur', 'responsable', 'gerant']) ? '<button class="btn btn-primary" type="button" data-action="caisseAddGo" data-arg="' + p.id + '" style="flex:1">Vendre</button>' : '<button class="btn" type="button" data-action="modalTransfer" data-arg="' + p.id + '" style="flex:1">Transférer</button>') + '</div>';
+    if (sc.mode === 'count') { const n = sc.count === '' ? p.stock['Magasin'] : Number(sc.count); const gap = n - p.stock['Magasin'];
+      card += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="muted" style="font-size:14px">Compté en <b style="color:var(--ink)">Magasin</b><br>Attendu : ' + p.stock['Magasin'] + '</span><div class="qty"><button type="button" data-action="scanCount" data-arg="-1" aria-label="Moins un">−</button><span class="num" style="font-size:20px">' + n + '</span><button type="button" data-action="scanCount" data-arg="1" aria-label="Plus un">+</button></div></div>' +
+        '<b style="color:' + (gap ? 'var(--warn)' : 'var(--ok)') + ';font-size:14px">' + (gap ? 'Écart ' + (gap > 0 ? '+' : '−') + Math.abs(gap) + ' : une correction sera créée' : 'Conforme') + '</b><button class="btn btn-primary btn-lg" type="button" data-action="scanSaveCount">Enregistrer le comptage</button>'; }
+    if (sc.mode === 'reception') { const line = openPO && openPO.lines.find((l) => l.pid === p.id);
+      card += line ? '<div class="alert a-ok">' + ic('check', 18) + 'Ligne cochée sur ' + openPO.ref + ' : ' + line.rec + ' / ' + line.qty + ' reçues</div><a class="btn btn-dark btn-lg" href="#/achats/' + openPO.ref + '">Voir la réception</a>' : '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + 'Pièce absente de la commande en cours.</div>'; }
+    card += '</section>';
+  }
+  return head('Scanner', 'Caméra du téléphone ou douchette USB') +
+    '<div style="max-width:520px;width:100%;display:flex;flex-direction:column;gap:14px">' +
+    '<div class="chips" role="group" aria-label="Mode">' + [['consult', 'Consulter'], ['count', 'Inventaire'], ['reception', 'Réception']].map((m) => '<button class="chip" type="button" data-action="scanMode" data-arg="' + m[0] + '" aria-pressed="' + (sc.mode === m[0]) + '">' + m[1] + '</button>').join('') + '</div>' +
+    '<div class="cam"><span class="hint">' + (p ? 'Code lu : ' + esc(p.ean) : 'Placez le code-barres dans le cadre') + '</span><div class="frame"><div class="beam' + (p ? ' ok' : '') + '"></div></div><button class="btn" type="button" data-action="scanSim" style="position:absolute;bottom:14px;border-radius:999px">Simuler un scan</button></div>' +
+    '<label class="search" for="scan-code">' + ic('scanner', 20, '#4B5060') + '<span class="sr">Code-barres</span><input id="scan-code" inputmode="numeric" placeholder="Saisir ou scanner un code, puis Entrée" value="' + esc(sc.code) + '" data-input="scanCode" data-enter="scanEnter"></label>' +
+    card + '</div>';
+}
+
+/* =================================================================== TABLEAU DE BORD */
+function viewTableau() {
+  const day = S.db.day;
+  const ca = day.base + (day.extra || 0);
+  const imp = S.db.clients.reduce((t, c) => t + encours(c.id), 0);
+  const lateClients = S.db.clients.filter((c) => S.db.docs.some((d) => d.client === c.id && d.type === 'facture' && d.status !== 'payee' && d.due && d.due < TODAY)).length;
+  const alerts = S.db.parts.filter((p) => total(p) < p.seuil);
+  const pending = S.db.docs.find((d) => d.pendingSale && d.status !== 'payee');
+  const sellers = Object.keys(day.sellers).map((k) => ({ u: S.db.users.find((x) => x.login === k), v: day.sellers[k] })).sort((a, b) => b.v[0] - a.v[0]);
+  const max = Math.max.apply(null, sellers.map((s) => s.v[0]));
+  const tile = (l, v, s) => '<div class="card kpi"><span class="l">' + l + '</span><span class="v num">' + v + '</span><span class="s">' + s + '</span></div>';
+  return head('Tableau de bord', 'Dimanche 1<sup>er</sup> novembre 2026 · montants TTC') +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">' +
+      tile('Chiffre d’affaires du jour', fmt(ca), day.count + ' ventes · panier moyen ' + fmt(ca / day.count)) +
+      tile('Octobre 2026', fmt(3412600), '+8 % par rapport à septembre') +
+      (seeCost() ? tile('Marge brute d’octobre', '27,4 %', 'sur le coût moyen pondéré (PMP)') : '') +
+      tile('Impayés clients', fmt(imp), lateClients + ' client(s) avec des factures en retard') +
+    '</div>' +
+    '<div class="grid-auto">' +
+      '<section class="card card-pad"><h2>Ventes du jour par vendeur</h2>' + sellers.map((s) => '<div title="' + esc(s.u.name + ' : ' + fmt(s.v[0]) + ' en ' + s.v[1] + ' ventes') + '" style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:14px"><b>' + esc(s.u.name) + '</b><span class="num">' + fmt(s.v[0]) + ' <span class="muted">· ' + s.v[1] + ' ventes</span></span></div><div style="height:12px;background:#F0F0EC;border-radius:4px" aria-hidden="true"><div style="height:12px;width:' + Math.round(s.v[0] / max * 100) + '%;background:var(--accent);border-radius:0 4px 4px 0"></div></div></div>').join('') + '</section>' +
+      '<section class="card card-pad"><h2>Point de caisse</h2><table class="t num"><thead><tr><th>Mode</th><th class="right">Encaissé</th></tr></thead><tbody><tr><td>Espèces</td><td class="right">' + fmt(day.cash) + '</td></tr><tr><td>Chèques</td><td class="right">' + fmt(day.cheque) + '</td></tr><tr><td>Virements</td><td class="right">' + fmt(day.virement) + '</td></tr><tr><td><b>Total</b></td><td class="right"><b>' + fmt(day.cash + day.cheque + day.virement) + '</b></td></tr></tbody></table>' +
+        '<div class="alert a-info">Espèces attendues en caisse : <b>' + fmt(day.cash + 10000) + '</b> (fond de caisse 10 000 DA inclus)</div><button class="btn btn-dark" type="button" data-action="modalCashClose">Compter et clôturer la caisse</button></section>' +
+      '<section class="card card-pad"><h2>À vérifier</h2>' +
+        (pending ? '<div class="alert a-warn">' + ic('warn', 20, '#9A3412') + '<div><b>Attention :</b> vente ' + pending.pendingSale + ' interrompue, encaissement en attente (' + pending.ref + ', ' + fmt(pending.ttc - pending.paid) + '). <a href="#/ventes/' + pending.ref + '">Voir</a></div></div>' : '<div class="alert a-ok">' + ic('check', 20) + 'Aucune vente interrompue.</div>') +
+        (day.orphans ? '<div class="alert" style="background:var(--bg)">' + ic('info', 20) + '<div style="display:flex;flex-direction:column;gap:8px"><span><b>Info :</b> ' + day.orphans + ' factures brouillon CARUNO de plus de 24 h, sans vente en cours. Sans effet sur le stock.</span><button class="btn btn-outline" type="button" data-action="cleanOrphans" style="align-self:flex-start">Examiner et supprimer</button></div></div>' : '') +
+        '<div class="alert a-warn">' + ic('warn', 20, '#9A3412') + '<div>' + alerts.length + ' pièces sous le seuil d’alerte. <a href="#/stock">Voir le stock</a></div></div>' +
+      '</section>' +
+    '</div>';
+}
+
+/* =================================================================== UTILISATEURS & PROFIL */
+function viewUsers() {
+  return head('Utilisateurs', 'Comptes Dolibarr du magasin et leur rôle', '<a class="btn btn-primary" href="#/utilisateurs/nouveau">' + ic('plus', 18) + 'Nouvel utilisateur</a>') +
+    '<div class="alert a-info">' + ic('info', 20) + 'À trancher : aujourd’hui le groupe Gérant ne peut que lire les utilisateurs dans Dolibarr. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».</div>' +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:720px"><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle (groupe)</th><th>E-mail</th><th>État</th><th></th></tr></thead><tbody>' +
+    S.db.users.map((u) => '<tr><td><b>' + esc(u.name) + '</b></td><td class="mono">' + u.login + '</td><td>' + ROLES[u.role] + '</td><td>' + esc(u.email) + '</td><td>' + (u.active ? '<span class="badge b-ok">Actif</span>' : '<span class="badge b-grey">Désactivé</span>') + '</td><td class="right">' + (u.login === S.user.login ? '<span class="muted" style="font-size:13px">Vous</span>' : '<button class="btn" type="button" data-action="userToggle" data-arg="' + u.login + '">' + (u.active ? 'Désactiver' : 'Réactiver') + '</button>') + '</td></tr>').join('') +
+    '</tbody></table></div></div>';
+}
+function viewUserForm() {
+  setForm('user:new', { name: '', login: '', email: '', role: 'vendeur' });
+  return head('Nouvel utilisateur', '', '', ['#/utilisateurs', 'Utilisateurs']) +
+    '<form class="card card-pad" data-form="user" data-submit="saveUser" style="max-width:720px;gap:16px"><div class="form-grid">' +
+    '<div class="field"><label for="u-name">Nom affiché *</label><input class="input" id="u-name" name="name" required value="' + esc(fv('name')) + '"></div>' +
+    '<div class="field"><label for="u-login">Identifiant *</label><input class="input mono" id="u-login" name="login" required value="' + esc(fv('login')) + '" placeholder="prenom.nom"></div>' +
+    '<div class="field"><label for="u-email">E-mail</label><input class="input" id="u-email" name="email" value="' + esc(fv('email')) + '"></div>' +
+    '<div class="field"><label for="u-role">Rôle</label><select id="u-role" name="role">' + Object.keys(ROLES).map((r) => '<option value="' + r + '"' + (r === fv('role') ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select><span class="hint">Un seul groupe Dolibarr par utilisateur</span></div>' +
+    '</div><span class="muted" style="font-size:14px">Un mot de passe provisoire est généré et affiché une seule fois.</span><div class="actions" style="justify-content:flex-end"><a class="btn" href="#/utilisateurs">Annuler</a><button class="btn btn-primary" type="submit">Créer l’utilisateur</button></div></form>';
+}
+function viewProfil() {
+  const u = S.user;
+  return head('Mon profil', esc(u.name) + ' · ' + ROLES[u.role] + ' · <span class="mono">' + u.login + '</span>', '<button class="btn btn-dark" type="button" data-action="logout">' + ic('logout', 18) + 'Se déconnecter</button>') +
+    '<div class="grid-auto">' +
+      '<form class="card card-pad" data-submit="changePw"><h2>Changer mon mot de passe</h2><div class="field"><label for="pw-old">Mot de passe actuel</label><input class="input" type="password" id="pw-old" autocomplete="current-password" required></div><div class="field"><label for="pw-new">Nouveau mot de passe</label><input class="input" type="password" id="pw-new" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères minimum</span></div><button class="btn btn-primary" type="submit">Enregistrer</button></form>' +
+      '<section class="card card-pad"><h2>Paramètres du magasin</h2><dl class="kv"><dt>Magasin</dt><dd>HANOUT VW (DEV)</dd><dt>Sortie de stock</dt><dd>' + (STOCK_MODE === 'bill' ? 'à la validation de la facture' : 'à la validation de l’expédition') + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>19 % (9 % et 0 % disponibles)</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.join(', ') + '</dd><dt>Dolibarr</dt><dd>24.0.2</dd></dl><span class="muted" style="font-size:13px">Définis dans le profil magasin au déploiement, non modifiables ici.</span></section>' +
+      '<section class="card card-pad"><h2>Session</h2><span class="muted" style="font-size:14px">Se déconnecter annule le jeton d’accès sur tous vos appareils (POST /login avec reset=1).</span><button class="btn" type="button" data-action="logout">Se déconnecter</button></section>' +
+    '</div>';
+}
+function denied() { return head('Accès non autorisé', 'Votre rôle (' + ROLES[role()] + ') ne donne pas accès à cet écran.', '<a class="btn" href="#/' + HOME[role()] + '">Retour à l’accueil</a>'); }
+
+/* =================================================================== MODALS */
+function modal(title, body, footer, submit) {
+  return '<div class="modal-bg" data-action="closeModalBg"><' + (submit ? 'form data-submit="' + submit + '"' : 'div') + ' class="modal" role="dialog" aria-modal="true" aria-labelledby="mdl-t"><header><h2 id="mdl-t">' + title + '</h2><button class="icon-btn" type="button" data-action="closeModal" aria-label="Fermer">' + ic('x') + '</button></header><div class="body">' + body + '</div><footer>' + footer + '</footer></' + (submit ? 'form' : 'div') + '></div>';
+}
+function renderModal() {
+  const m = S.ui.modal;
+  if (!m) return '';
+  const cancel = '<button class="btn" type="button" data-action="closeModal">Annuler</button>';
+  if (m.kind === 'transfer') { const p = part(m.pid);
+    return modal('Transférer ' + esc(p.brand + ' ' + p.ref), '<div class="form-grid"><div class="field"><label for="m-from">De</label><select id="m-from" name="from"><option' + (p.stock['Magasin'] === 0 ? '' : ' selected') + '>Magasin</option><option' + (p.stock['Magasin'] === 0 ? ' selected' : '') + '>Réserve</option></select></div><div class="field"><label for="m-qty">Quantité</label><input class="input num" id="m-qty" name="qty" inputmode="numeric" value="1"></div></div><span class="muted" style="font-size:14px">Stock actuel : Magasin ' + p.stock['Magasin'] + ' · Réserve ' + p.stock['Réserve'] + '</span>', cancel + '<button class="btn btn-primary" type="submit">Transférer</button>', 'mTransfer'); }
+  if (m.kind === 'correct') { const p = part(m.pid);
+    return modal('Corriger le stock', '<div class="form-grid"><div class="field"><label for="m-wh">Entrepôt</label><select id="m-wh" name="wh">' + WAREHOUSES.map((w) => '<option>' + w + '</option>').join('') + '</select></div><div class="field"><label for="m-real">Quantité réelle</label><input class="input num" id="m-real" name="real" inputmode="numeric" value="' + p.stock['Magasin'] + '"></div></div><div class="field"><label for="m-why">Motif</label><select id="m-why" name="why"><option>Inventaire</option><option>Casse</option><option>Perte</option><option>Erreur de saisie</option></select></div>', cancel + '<button class="btn btn-primary" type="submit">Corriger</button>', 'mCorrect'); }
+  if (m.kind === 'label') { const p = part(m.pid);
+    return modal('Étiquette', '<div class="label-prev"><b style="font-size:14px">' + esc(p.name) + '</b><span class="mono">' + esc(p.brand + ' ' + p.ref) + '</span><div class="bars" aria-hidden="true"></div><span class="mono" style="text-align:center;letter-spacing:.2em">' + esc(p.ean) + '</span><b class="num" style="font-size:18px">' + fmt(ttc(p.prices[0])) + ' TTC</b><span class="mono muted">' + esc(p.loc['Magasin']) + '</span></div><div class="field"><label for="m-n">Nombre d’étiquettes</label><input class="input num" id="m-n" value="' + p.stock['Magasin'] + '" inputmode="numeric" style="width:120px"></div>', cancel + '<button class="btn btn-primary" type="button" data-action="toast" data-arg="Étiquettes envoyées à l’imprimante (maquette)">Imprimer</button>'); }
+  if (m.kind === 'pay') { const d = doc(m.ref);
+    return modal('Encaisser ' + d.ref, '<div class="form-grid"><div class="field"><label for="m-amt">Montant</label><input class="input num" id="m-amt" name="amount" inputmode="numeric" value="' + (d.ttc - d.paid) + '"></div><div class="field"><label for="m-mode">Mode</label><select id="m-mode" name="mode"><option>Espèces</option><option>Chèque</option><option>Virement</option></select></div></div><span class="muted" style="font-size:14px">Reste dû : ' + fmt(d.ttc - d.paid) + '. Le reste est relu juste avant l’envoi : jamais de double paiement.</span>', cancel + '<button class="btn btn-primary" type="submit">Encaisser</button>', 'mPay'); }
+  if (m.kind === 'settle') { const c = client(m.cid); const amount = Number(m.amount) || 0; const alloc = allocate(c.id, amount);
+    return modal('Règlement — ' + esc(c.name), '<div class="form-grid"><div class="field"><label for="m-samt">Montant reçu</label><input class="input num" id="m-samt" inputmode="numeric" value="' + esc(m.amount) + '" data-input="settleAmount"></div><div class="field"><label for="m-smode">Mode</label><select id="m-smode" name="mode"><option>Chèque</option><option>Espèces</option><option>Virement</option></select></div></div>' +
+      '<table class="t num"><thead><tr><th>Facture (plus ancienne d’abord)</th><th class="right">Affecté</th><th class="right">Reste</th></tr></thead><tbody>' + alloc.map((a) => '<tr><td class="mono">' + a.d.ref + '</td><td class="right">' + fmt(a.take) + '</td><td class="right">' + (a.left ? fmt(a.left) : '<b style="color:var(--ok)">Soldée</b>') + '</td></tr>').join('') + '</tbody></table>', cancel + '<button class="btn btn-primary" type="submit"' + (amount ? '' : ' disabled') + '>Enregistrer le règlement</button>', 'mSettle'); }
+  if (m.kind === 'supplier') return modal('Nouveau fournisseur', '<div class="field"><label for="m-sn">Nom *</label><input class="input" id="m-sn" name="name" required></div><div class="form-grid"><div class="field"><label for="m-st">Ville</label><input class="input" id="m-st" name="town"></div><div class="field"><label for="m-sp">Téléphone</label><input class="input" id="m-sp" name="phone"></div></div><div class="field"><label for="m-se">E-mail</label><input class="input" id="m-se" name="email"></div>', cancel + '<button class="btn btn-primary" type="submit">Créer</button>', 'mSupplier');
+  if (m.kind === 'cash') { const exp = S.db.day.cash + 10000;
+    return modal('Clôture de caisse', '<div class="field"><label for="m-cnt">Espèces comptées</label><input class="input num" id="m-cnt" inputmode="numeric" value="' + esc(m.counted) + '" data-input="cashCount"></div><dl class="kv num"><dt>Attendu</dt><dd>' + fmt(exp) + '</dd><dt>Écart</dt><dd style="font-weight:700;color:' + ((Number(m.counted) || 0) - exp ? 'var(--bad)' : 'var(--ok)') + '">' + fmt((Number(m.counted) || 0) - exp) + '</dd></dl>', cancel + '<button class="btn btn-primary" type="button" data-action="cashClose">Clôturer</button>'); }
+  return '';
+}
+function allocate(cid, amount) {
+  let left = amount;
+  return S.db.docs.filter((d) => d.type === 'facture' && d.client === cid && d.status !== 'payee' && d.status !== 'brouillon').sort((a, b) => a.date < b.date ? -1 : 1)
+    .map((d) => { const due = d.ttc - d.paid; const take = Math.max(0, Math.min(due, left)); left -= take; return { d, take, left: due - take }; }).filter((a) => a.take > 0);
+}
+
+/* =================================================================== ROUTER & RENDER */
+function route() {
+  const h = (location.hash || '').replace(/^#\/?/, '');
+  const [path, query] = h.split('?');
+  return { parts: path.split('/').filter(Boolean), query };
+}
+function render() {
+  const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null;
+  const app = document.getElementById('app');
+  if (!S.user) { app.innerHTML = viewLogin(); return; }
+  const r = route(), p = r.parts, sec = p[0] || HOME[role()];
+  if (!p[0]) { location.replace('#/' + sec); return; }
+  const navItem = NAV.find((n) => n.id === sec);
+  let html;
+  if (navItem && navItem.roles.indexOf(role()) === -1) html = denied();
+  else if (sec === 'caisse') html = viewCaisse();
+  else if (sec === 'pieces') html = p[1] === 'nouveau' ? viewPieceForm(null) : p[2] === 'modifier' ? viewPieceForm(p[1]) : p[1] ? viewPiece(p[1]) : viewPieces();
+  else if (sec === 'stock') html = viewStock();
+  else if (sec === 'clients') html = p[1] === 'nouveau' ? viewClientForm(null) : p[2] === 'modifier' ? viewClientForm(p[1]) : p[1] ? viewClient(p[1]) : viewClients();
+  else if (sec === 'ventes') html = p[1] === 'nouveau' ? viewDocEditor(p[2] || 'devis', r.query) : p[1] ? viewDoc(p[1]) : viewVentes();
+  else if (sec === 'achats') html = p[1] === 'nouveau' ? viewPOEditor() : p[1] ? viewPO(p[1]) : viewAchats();
+  else if (sec === 'scanner') html = viewScanner();
+  else if (sec === 'tableau') html = viewTableau();
+  else if (sec === 'utilisateurs') html = p[1] === 'nouveau' ? viewUserForm() : viewUsers();
+  else if (sec === 'profil') html = viewProfil();
+  else html = head('Page introuvable', '', '<a class="btn" href="#/' + HOME[role()] + '">Accueil</a>');
+  app.innerHTML = shell(sec, html) + renderModal() + (S.ui.toast ? '<div class="toast" role="status">' + esc(S.ui.toast) + '</div>' : '');
+  document.title = 'CARUNO — ' + (navItem ? navItem.label : sec.charAt(0).toUpperCase() + sec.slice(1));
+  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, sel); } catch (e) {} } } }
+}
+let lastHash = '';
+window.addEventListener('hashchange', () => { S.ui.drawer = false; S.ui.modal = null; const base = location.hash.split('/').slice(0, 2).join('/'); if (base !== lastHash) window.scrollTo(0, 0); lastHash = base; render(); });
+
+/* =================================================================== ACTIONS */
+const A = {
+  go: (el) => go(el.dataset.arg),
+  drawer: (el, ev) => { ev.preventDefault(); S.ui.drawer = !S.ui.drawer; },
+  toast: (el) => toast(el.dataset.arg),
+  reset: () => { if (confirm('Remettre toutes les données de test à zéro ?')) { S.db = seed(); S.ui.caisse = null; save(); toast('Données de test réinitialisées.'); } },
+  closeModal: () => { S.ui.modal = null; },
+  closeModalBg: () => { S.ui.modal = null; },
+  loginPick: (el) => { S.ui.loginPick = el.dataset.arg; },
+  logout: () => { S.user = null; saveUser(); S.ui = { caisse: null, modal: null, toast: '', drawer: false, form: {}, formKey: '' }; location.hash = ''; toast('Déconnecté : jeton annulé sur tous vos appareils.'); },
+
+  // caisse
+  caisseFam: (el) => { caisseState().fam = el.dataset.arg; },
+  caisseAdd: (el) => addToCart(el.dataset.arg),
+  caisseAddGo: (el) => { addToCart(el.dataset.arg); go('#/caisse'); },
+  caisseScan: () => { const p = part(4); addToCart(4); toast('Code ' + p.ean + ' lu : ' + p.brand + ' ' + p.ref + ' ajouté.'); },
+  caisseQty: (el) => { const st = caisseState(); const [i, d] = el.dataset.arg.split(':').map(Number); st.lines[i].qty += d; if (st.lines[i].qty <= 0) st.lines.splice(i, 1); },
+  caisseMode: (el) => { caisseState().mode = el.dataset.arg; },
+  caisseNew: () => { S.ui.caisse = { ref: nextRef('V'), q: '', fam: 'Tous', client: 'c', lines: [], remise: 0, mode: 'especes', given: '', done: null }; save(); },
+  caisseFor: (el) => { const st = caisseState(); st.client = el.dataset.arg; st.done = null; go('#/caisse'); },
+  caissePay: () => {
+    const st = caisseState(), T = caisseTotals(st);
+    const ref = nextRef('FA');
+    const given = parseInt(String(st.given).replace(/\D/g, ''), 10) || 0;
+    const modeLabel = { especes: 'espèces', cheque: 'chèque', virement: 'virement', credit: 'à crédit' }[st.mode];
+    const credit = st.mode === 'credit';
+    S.db.docs.push({ ref, type: 'facture', client: st.client, date: TODAY, due: credit ? '2026-12-01' : null, status: credit ? 'impayee' : 'payee', ttc: T.ttc, paid: credit ? 0 : T.ttc, desc: 'Vente comptoir ' + st.ref, saleRef: st.ref, mode: modeLabel, rendu: st.mode === 'especes' ? given - T.ttc : 0,
+      lines: T.lines.map((x) => ({ pid: x.p.id, qty: x.l.qty, price: x.unit })), payments: credit ? [] : [{ date: TODAY, mode: modeLabel, amount: T.ttc }] });
+    T.lines.forEach((x) => move(x.p.id, 'Vente comptoir — ' + ref, -x.l.qty, 'Magasin'));
+    if (!credit) { const d = S.db.day; d.extra = (d.extra || 0) + T.ttc; d.count++; if (st.mode === 'especes') d.cash += T.ttc; else d[st.mode] += T.ttc;
+      const s = d.sellers[S.user.login] || (d.sellers[S.user.login] = [0, 0]); s[0] += T.ttc; s[1]++; }
+    st.done = ref; save();
+  },
+  resumeSale: (el) => { const d = doc(el.dataset.arg); const amt = d.ttc - d.paid; d.paid = d.ttc; d.status = 'payee'; d.payments = (d.payments || []).concat([{ date: TODAY, mode: 'espèces', amount: amt }]); S.db.day.cash += amt; S.db.day.extra = (S.db.day.extra || 0) + amt; save(); toast('Vente ' + d.pendingSale + ' reprise : ' + fmt(amt) + ' encaissés sur ' + d.ref + '. Rien n’a été créé en double.'); },
+
+  // listes
+  cfCat: (el) => { S.ui.cf.cat = el.dataset.arg; },
+  ventesTab: (el) => { S.ui.ventesTab = el.dataset.arg; S.ui.vf = { q: '', st: '' }; },
+  achatsTab: (el) => { S.ui.achatsTab = el.dataset.arg; },
+  stockTab: (el) => { S.ui.stockTab = el.dataset.arg; },
+  stockTabGo: (el) => { S.ui.stockTab = el.dataset.arg; },
+
+  // pièces
+  photoMain: (el) => { const [kind, id, i] = el.dataset.arg.split(':'); const list = kind === 'formPhoto' ? S.ui.form.photos : part(id).photos; const ph = list.splice(Number(i), 1)[0]; list.unshift(ph); if (kind !== 'formPhoto') save(); },
+  photoDel: (el) => { const [kind, id, i] = el.dataset.arg.split(':'); const list = kind === 'formPhoto' ? S.ui.form.photos : part(id).photos; list.splice(Number(i), 1); if (kind !== 'formPhoto') save(); },
+  formScanEan: () => { S.ui.form.ean = '3' + String(Date.now()).slice(-12); toast('Code-barres lu (simulation).'); },
+  formCat: (el) => { S.ui.form.cat = el.dataset.arg; },
+  modalTransfer: (el) => { S.ui.modal = { kind: 'transfer', pid: Number(el.dataset.arg) }; },
+  modalCorrect: (el) => { S.ui.modal = { kind: 'correct', pid: Number(el.dataset.arg) }; },
+  modalLabel: (el) => { S.ui.modal = { kind: 'label', pid: Number(el.dataset.arg) }; },
+  modalPay: (el) => { S.ui.modal = { kind: 'pay', ref: el.dataset.arg }; },
+  modalSettle: (el) => { S.ui.modal = { kind: 'settle', cid: el.dataset.arg, amount: '120000' }; },
+  modalSupplier: () => { S.ui.modal = { kind: 'supplier' }; },
+  modalCashClose: () => { S.ui.modal = { kind: 'cash', counted: String(S.db.day.cash + 10000) }; },
+  cashClose: () => { S.ui.modal = null; toast('Caisse clôturée, rapport enregistré (maquette).'); },
+  cleanOrphans: () => { S.db.day.orphans = 0; save(); toast('2 brouillons supprimés. Aucun effet sur le stock.'); },
+
+  // stock
+  prepareOrders: () => {
+    const alerts = S.db.parts.filter((p) => total(p) < p.seuil), by = {};
+    alerts.forEach((p) => { const s = p.sups[0]; (by[s.sid] = by[s.sid] || []).push({ pid: p.id, qty: Math.max(p.souhaite - total(p), 1), rec: 0, done: 0, price: s.price }); });
+    const refs = Object.keys(by).map((sid) => { const ref = nextRef('CF'); S.db.pos.push({ ref, supplier: sid, date: TODAY, status: 'brouillon', bl: null, lines: by[sid] }); return ref; });
+    save(); S.ui.achatsTab = 'commandes'; toast(refs.length + ' commandes brouillon créées : ' + refs.join(', ')); go('#/achats');
+  },
+  applyInventory: () => {
+    let n = 0; Object.keys(S.ui.inv || {}).forEach((pid) => { const v = S.ui.inv[pid]; if (v === '' || v == null) return; const p = part(pid); const gap = Number(v) - p.stock['Magasin']; if (gap) { move(pid, 'Correction inventaire (' + p.fam + ')', gap, 'Magasin'); n++; } });
+    S.ui.inv = {}; save(); toast(n ? n + ' correction(s) de stock enregistrée(s).' : 'Aucun écart à corriger.');
+  },
+
+  // ventes
+  docStatus: (el) => { const [ref, st] = el.dataset.arg.split(':'); doc(ref).status = st; save(); toast(ref + ' : ' + STATUS[doc(ref).type][st][0].toLowerCase() + '.'); },
+  docConvert: (el) => { const d = doc(el.dataset.arg); d.status = 'accepte'; const ref = nextRef('CO'); S.db.docs.push({ ref, type: 'commande', client: d.client, date: TODAY, status: 'validee', ttc: d.ttc, desc: d.desc, lines: d.lines, origin: d.ref }); save(); toast('Commande ' + ref + ' créée depuis ' + d.ref + '.'); go('#/ventes/' + ref); },
+  docInvoice: (el) => {
+    const d = doc(el.dataset.arg); const c = client(d.client);
+    const short = (d.lines || []).find((l) => part(l.pid).stock['Magasin'] < l.qty);
+    if (short) { toast('Stock Magasin insuffisant pour ' + part(short.pid).brand + ' ' + part(short.pid).ref + ' : facture refusée (stock négatif interdit).'); return; }
+    d.status = 'facturee'; const ref = nextRef('FA');
+    S.db.docs.push({ ref, type: 'facture', client: d.client, date: TODAY, due: '2026-12-01', status: 'impayee', ttc: d.ttc, paid: 0, desc: d.desc, lines: d.lines, origin: d.ref, payments: [] });
+    if (d.lines) d.lines.forEach((l) => move(l.pid, 'Facture ' + ref + ' (' + c.name + ')', -l.qty, 'Magasin'));
+    save(); toast('Facture ' + ref + ' validée' + (d.lines ? ' : stock sorti du Magasin.' : '.')); go('#/ventes/' + ref);
+  },
+  edAdd: (el) => { const e = S.ui.editor, p = part(el.dataset.arg), c = client(e.client); const ex = e.lines.find((l) => l.pid === p.id); if (ex) ex.qty++; else e.lines.push({ pid: p.id, qty: 1, price: Math.round(p.prices[lvl(c)] * (1 - (c.remise || 0) / 100)) }); e.q = ''; },
+  edDel: (el) => { S.ui.editor.lines.splice(Number(el.dataset.arg), 1); },
+  edSave: (el) => {
+    const [type, mode] = el.dataset.arg.split(':'); const e = S.ui.editor;
+    const ht = e.lines.reduce((t, l) => t + l.price * l.qty, 0) * (1 - e.remise / 100);
+    const ref = nextRef(type === 'devis' ? 'PR' : 'CO');
+    const status = mode === 'brouillon' ? 'brouillon' : (type === 'devis' ? 'envoye' : 'validee');
+    S.db.docs.push({ ref, type, client: e.client, date: TODAY, status, ttc: ttc(ht), desc: e.lines.map((l) => l.qty + ' × ' + part(l.pid).brand + ' ' + part(l.pid).ref).join(', '), lines: e.lines.map((l) => ({ pid: l.pid, qty: l.qty, price: Math.round(l.price * (1 - e.remise / 100)) })), note: e.note });
+    S.ui.editorKey = ''; save(); toast(TYPE_LABEL[type] + ' ' + ref + ' enregistré.'); go('#/ventes/' + ref);
+  },
+
+  // achats
+  poSend: (el) => { po(el.dataset.arg).status = 'envoyee'; save(); toast('Commande envoyée au fournisseur (maquette).'); },
+  poScan: (el) => { const o = po(el.dataset.arg); const l = o.lines.find((x) => x.rec < x.qty); if (!l) { toast('Toutes les lignes sont complètes.'); return; } l.rec++; o.status = 'reception'; save(); toast('Code ' + part(l.pid).ean + ' lu : ' + part(l.pid).brand + ' ' + part(l.pid).ref + ' (' + l.rec + ' / ' + l.qty + ').'); },
+  poValidate: (el) => {
+    const o = po(el.dataset.arg); let n = 0;
+    o.lines.forEach((l) => { const q = l.rec - l.done; if (q > 0) { const p = part(l.pid); const t = total(p); p.cost = Math.round((p.cost * t + l.price * q) / (t + q)); move(l.pid, 'Réception ' + o.ref + ' (' + supplier(o.supplier).name + ')', q, 'Magasin'); l.done = l.rec; n += q; } });
+    o.status = o.lines.every((l) => l.rec >= l.qty) ? 'recue' : 'reception'; save(); toast(n + ' pièce(s) entrées en Magasin, PMP recalculé.');
+  },
+  poAdd: (el) => { const e = S.ui.poEd, p = part(el.dataset.arg); const s = p.sups.find((x) => x.sid === e.supplier) || p.sups[0]; e.lines.push({ pid: p.id, qty: Math.max(p.souhaite - total(p), 1), rec: 0, done: 0, price: s ? s.price : p.cost }); e.q = ''; },
+  poDel: (el) => { S.ui.poEd.lines.splice(Number(el.dataset.arg), 1); },
+  poCreate: () => { const e = S.ui.poEd; const ref = nextRef('CF'); S.db.pos.push({ ref, supplier: e.supplier, date: TODAY, status: 'brouillon', bl: null, lines: e.lines }); S.ui.poEd = null; save(); toast('Commande ' + ref + ' créée en brouillon.'); go('#/achats/' + ref); },
+
+  // scanner
+  scanMode: (el) => { (S.ui.scan || (S.ui.scan = { mode: 'consult', code: '', pid: null, count: '' })).mode = el.dataset.arg; S.ui.scan.count = ''; },
+  scanSim: () => { const sc = S.ui.scan; const list = sc.mode === 'reception' ? (S.db.pos.find((o) => o.status === 'reception' || o.status === 'envoyee') || { lines: [] }).lines.map((l) => part(l.pid)) : S.db.parts; const p = list[Math.floor(Math.random() * list.length)] || part(4); scanCode(p.ean); },
+  scanCount: (el) => { const sc = S.ui.scan, p = part(sc.pid); const n = sc.count === '' ? p.stock['Magasin'] : Number(sc.count); sc.count = String(Math.max(0, n + Number(el.dataset.arg))); },
+  scanSaveCount: () => { const sc = S.ui.scan, p = part(sc.pid); const n = sc.count === '' ? p.stock['Magasin'] : Number(sc.count); const gap = n - p.stock['Magasin']; if (gap) move(p.id, 'Inventaire au scan (' + p.loc['Magasin'] + ')', gap, 'Magasin'); sc.count = ''; save(); toast(gap ? 'Correction de ' + (gap > 0 ? '+' : '') + gap + ' enregistrée.' : 'Comptage conforme enregistré.'); },
+
+  // utilisateurs
+  userToggle: (el) => { const u = S.db.users.find((x) => x.login === el.dataset.arg); u.active = !u.active; save(); toast(u.name + (u.active ? ' réactivé.' : ' désactivé : ses jetons ne fonctionnent plus.')); }
+};
+function addToCart(pid) {
+  const st = caisseState(), p = part(pid);
+  st.done = null;
+  const l = st.lines.find((x) => x.pid === p.id);
+  if (l) { if (l.qty < p.stock['Magasin']) l.qty++; else toast('Stock Magasin insuffisant pour ' + p.brand + ' ' + p.ref + '.'); }
+  else if (p.stock['Magasin'] > 0) st.lines.push({ pid: p.id, qty: 1 });
+  else toast('Aucun stock en Magasin pour ' + p.brand + ' ' + p.ref + '.');
+}
+function scanCode(code) {
+  const sc = S.ui.scan, p = S.db.parts.find((x) => x.ean === String(code).trim());
+  sc.code = String(code); sc.pid = p ? p.id : null; sc.count = '';
+  if (p && sc.mode === 'reception') { const o = S.db.pos.find((x) => x.status === 'reception' || x.status === 'envoyee'); const l = o && o.lines.find((x) => x.pid === p.id); if (l) { l.rec++; o.status = 'reception'; save(); } }
+}
+
+/* input handlers: update state, re-render */
+const I = {
+  caisseQ: (v) => { caisseState().q = v; },
+  caisseRemise: (v) => { caisseState().remise = Math.min(50, Math.max(0, Number(v.replace(/\D/g, '')) || 0)); },
+  caisseGiven: (v) => { caisseState().given = v; },
+  pfQ: (v) => { S.ui.pf.q = v; },
+  cfQ: (v) => { S.ui.cf.q = v; },
+  vfQ: (v) => { S.ui.vf.q = v; },
+  invCount: (v, el) => { S.ui.inv[el.dataset.arg] = v.replace(/\D/g, ''); },
+  edQ: (v) => { S.ui.editor.q = v; },
+  edRemise: (v) => { S.ui.editor.remise = Math.min(50, Number(v.replace(/\D/g, '')) || 0); },
+  edQty: (v, el) => { S.ui.editor.lines[Number(el.dataset.arg)].qty = Math.max(1, Number(v.replace(/\D/g, '')) || 1); },
+  edPrice: (v, el) => { S.ui.editor.lines[Number(el.dataset.arg)].price = Number(v.replace(/\D/g, '')) || 0; },
+  edNote: (v) => { S.ui.editor.note = v; return false; },
+  poQ: (v) => { S.ui.poEd.q = v; },
+  poQty: (v, el) => { S.ui.poEd.lines[Number(el.dataset.arg)].qty = Math.max(1, Number(v.replace(/\D/g, '')) || 1); },
+  poRec: (v, el) => { const [ref, i] = el.dataset.arg.split(':'); const o = po(ref); o.lines[Number(i)].rec = Math.max(o.lines[Number(i)].done, Number(v.replace(/\D/g, '')) || 0); o.status = 'reception'; save(); },
+  scanCode: (v) => { S.ui.scan.code = v; return false; },
+  settleAmount: (v) => { S.ui.modal.amount = v.replace(/\D/g, ''); },
+  cashCount: (v) => { S.ui.modal.counted = v.replace(/\D/g, ''); }
+};
+const C = {
+  caisseClient: (v) => { caisseState().client = v; },
+  pfFam: (v) => { S.ui.pf.fam = v; },
+  pfSt: (v) => { S.ui.pf.st = v; },
+  vfSt: (v) => { S.ui.vf.st = v; },
+  mvType: (v) => { S.ui.mvType = v; },
+  invFam: (v) => { S.ui.invFam = v; },
+  edClient: (v) => { const e = S.ui.editor; e.client = v; const c = client(v); e.lines.forEach((l) => { const p = part(l.pid); l.price = Math.round(p.prices[lvl(c)] * (1 - (c.remise || 0) / 100)); }); },
+  poSup: (v) => { S.ui.poEd.supplier = v; },
+  photoPiece: async (v, el) => { const p = part(el.dataset.arg); for (const f of el.files) { const ph = await compress(f); if (ph) p.photos.push(ph); } save(); toast(el.files.length + ' photo(s) ajoutée(s), réduites avant envoi.'); },
+  photoForm: async (v, el) => { for (const f of el.files) { const ph = await compress(f); if (ph) S.ui.form.photos.push(ph); } },
+  photoBL: async (v, el) => { const ph = await compress(el.files[0]); if (ph) { po(el.dataset.arg).bl = ph; save(); toast('Photo du BL jointe (' + ph.kb + ' Ko).'); } }
+};
+const E = {
+  caisseEnter: () => { const st = caisseState(); const p = S.db.parts.find((x) => x.ean === st.q.trim()); if (p) { addToCart(p.id); st.q = ''; toast('Code ' + p.ean + ' lu : ' + p.brand + ' ' + p.ref + ' ajouté.'); } else { const r = search(st.q, S.db.parts).filter((x) => x.stock['Magasin'] > 0); if (r.length === 1) { addToCart(r[0].id); st.q = ''; } } },
+  scanEnter: () => scanCode(S.ui.scan.code)
+};
+const F = {
+  login: () => { const u = S.db.users.find((x) => x.login === (S.ui.loginPick || 'dev.vendeur')); S.user = { login: u.login, name: u.name, role: u.role }; saveUser(); location.hash = '#/' + HOME[u.role]; },
+  savePiece: (form) => {
+    const f = S.ui.form, id = form.dataset.arg;
+    const num = (k) => Number(String(f[k] || '').replace(/\D/g, '')) || 0;
+    if (!f.name || !f.brand || !f.ref || !num('p0')) { toast('Désignation, marque, référence et prix public sont obligatoires.'); return; }
+    const prices = [num('p0'), num('p1') || num('p0'), num('p2') || num('p1') || num('p0')];
+    const sup = { sid: f.sid || 's1', ref: f.sref || '', price: num('sprice') || Math.round(prices[0] * 0.65), delay: 3 };
+    let p;
+    if (id) { p = part(id); Object.assign(p, { name: f.name, brand: f.brand, ref: f.ref, oem: norm(f.oem).toUpperCase(), ean: f.ean, fam: f.fam, type: f.type, prices, floor: num('floor') || Math.round(prices[2] * 0.9), tva: Number(f.tva), seuil: num('seuil'), souhaite: num('souhaite'), photos: f.photos }); p.loc = { 'Magasin': f.locM, 'Réserve': f.locR }; p.sups[0] = sup; }
+    else {
+      p = { id: Math.max.apply(null, S.db.parts.map((x) => x.id)) + 1, name: f.name, brand: f.brand, ref: f.ref, oem: norm(f.oem).toUpperCase(), ean: f.ean, fam: f.fam, type: f.type || '', stock: { 'Magasin': 0, 'Réserve': 0 }, loc: { 'Magasin': f.locM, 'Réserve': f.locR },
+        prices, floor: num('floor') || Math.round(prices[2] * 0.9), cost: sup.price, seuil: num('seuil'), souhaite: num('souhaite'), sups: [sup], photos: f.photos, tva: Number(f.tva) };
+      S.db.parts.push(p);
+      if (num('initQty')) move(p.id, 'Stock initial', num('initQty'), 'Magasin');
+    }
+    S.ui.formKey = ''; save(); toast(id ? 'Pièce enregistrée.' : 'Pièce ' + p.brand + ' ' + p.ref + ' créée.'); go('#/pieces/' + p.id);
+  },
+  saveClient: (form) => {
+    const f = S.ui.form, id = form.dataset.arg;
+    if (!f.name) { toast('Le nom est obligatoire.'); return; }
+    const data = { name: f.name, cat: f.cat, phone: f.phone, town: f.town, email: f.email, address: f.address };
+    if (f.cat !== 'Particulier') Object.assign(data, { rc: f.rc, nif: f.nif, ai: f.ai, nis: f.nis, terms: f.terms, remise: Number(f.remise) || 0, plafond: Number(String(f.plafond).replace(/\D/g, '')) || 0 });
+    let c; if (id) { c = client(id); Object.assign(c, data); } else { c = Object.assign({ id: 'k' + Date.now().toString(36) }, data); S.db.clients.push(c); }
+    S.ui.formKey = ''; save(); toast(id ? 'Client enregistré.' : 'Client ' + c.name + ' créé.'); go('#/clients/' + c.id);
+  },
+  saveUser: () => { const f = S.ui.form; if (S.db.users.some((u) => u.login === f.login)) { toast('Cet identifiant existe déjà.'); return; } S.db.users.push({ login: f.login, name: f.name, role: f.role, email: f.email, active: true }); S.ui.formKey = ''; save(); toast('Utilisateur ' + f.login + ' créé. Mot de passe provisoire : ' + Math.random().toString(36).slice(2, 10)); go('#/utilisateurs'); },
+  transfer: () => { const f = S.ui.form; const p = part(f.pid), q = Number(f.qty) || 0; if (f.from === f.to) { toast('Choisissez deux entrepôts différents.'); return; } if (q <= 0 || q > p.stock[f.from]) { toast('Quantité impossible : ' + p.stock[f.from] + ' en ' + f.from + '.'); return; } move(p.id, 'Transfert ' + f.from + ' → ' + f.to, -q, f.from); move(p.id, 'Transfert ' + f.from + ' → ' + f.to, q, f.to); save(); toast(q + ' × ' + p.brand + ' ' + p.ref + ' transféré(s) vers ' + f.to + '.'); },
+  changePw: (form) => { form.reset(); toast('Mot de passe modifié (maquette).'); },
+  mTransfer: (form, fd) => { const p = part(S.ui.modal.pid), from = fd.get('from'), to = from === 'Magasin' ? 'Réserve' : 'Magasin', q = Number(fd.get('qty')) || 0; if (q <= 0 || q > p.stock[from]) { toast('Quantité impossible : ' + p.stock[from] + ' en ' + from + '.'); return; } move(p.id, 'Transfert ' + from + ' → ' + to, -q, from); move(p.id, 'Transfert ' + from + ' → ' + to, q, to); S.ui.modal = null; save(); toast(q + ' transféré(s) vers ' + to + '.'); },
+  mCorrect: (form, fd) => { const p = part(S.ui.modal.pid), wh = fd.get('wh'), real = Number(fd.get('real')) || 0, gap = real - p.stock[wh]; if (gap) move(p.id, 'Correction : ' + fd.get('why'), gap, wh); S.ui.modal = null; save(); toast(gap ? 'Stock corrigé (' + (gap > 0 ? '+' : '') + gap + ').' : 'Aucun écart.'); },
+  mPay: (form, fd) => { const d = doc(S.ui.modal.ref), amt = Math.min(Number(fd.get('amount')) || 0, d.ttc - d.paid); if (amt <= 0) return; d.paid += amt; d.status = d.paid >= d.ttc ? 'payee' : 'partielle'; d.payments = (d.payments || []).concat([{ date: TODAY, mode: fd.get('mode'), amount: amt }]); S.ui.modal = null; save(); toast(fmt(amt) + ' encaissés sur ' + d.ref + '.'); },
+  mSettle: (form, fd) => { const m = S.ui.modal; const alloc = allocate(m.cid, Number(m.amount) || 0); alloc.forEach((a) => { a.d.paid += a.take; a.d.status = a.d.paid >= a.d.ttc ? 'payee' : 'partielle'; a.d.payments = (a.d.payments || []).concat([{ date: TODAY, mode: fd.get('mode'), amount: a.take }]); }); S.ui.modal = null; save(); toast('Règlement de ' + fmt(Number(m.amount)) + ' réparti sur ' + alloc.length + ' facture(s).'); },
+  mSupplier: (form, fd) => { S.db.suppliers.push({ id: 's' + Date.now().toString(36), name: fd.get('name'), town: fd.get('town'), phone: fd.get('phone'), email: fd.get('email') }); S.ui.modal = null; save(); toast('Fournisseur créé.'); }
+};
+
+function compress(file) {
+  return new Promise((resolve) => {
+    if (!file) return resolve(null);
+    const r = new FileReader();
+    r.onload = () => { const img = new Image(); img.onload = () => { const k = Math.min(1, 1280 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); const url = c.toDataURL('image/jpeg', 0.72); resolve({ url, kb: Math.round(url.length * 0.75 / 1024) }); }; img.onerror = () => resolve(null); img.src = r.result; };
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(file);
+  });
+}
+
+/* =================================================================== EVENTS */
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-action]');
+  if (!el || !A[el.dataset.action]) return;
+  // The modal backdrop closes only on a click on itself; clicks inside the dialog (submit buttons…) keep their default.
+  if (el.dataset.action === 'closeModalBg') { if (ev.target === el) { S.ui.modal = null; render(); } return; }
+  if (el.tagName === 'A' && el.dataset.action !== 'drawer') { A[el.dataset.action](el, ev); return; }
+  if (el.tagName === 'TR' && ev.target.closest('a,button,input,select,label')) return;
+  ev.preventDefault();
+  if (A[el.dataset.action](el, ev) !== false) render();
+});
+document.addEventListener('input', (ev) => {
+  const el = ev.target;
+  const form = el.closest('[data-form]');
+  if (form && el.name) { S.ui.form[el.name] = el.type === 'checkbox' ? el.checked : el.value; return; }
+  if (el.dataset.input && I[el.dataset.input]) { if (I[el.dataset.input](el.value, el) !== false) render(); }
+});
+document.addEventListener('change', async (ev) => {
+  const el = ev.target;
+  const form = el.closest('[data-form]');
+  if (form && el.name && el.tagName === 'SELECT') { S.ui.form[el.name] = el.value; return; }
+  if (el.dataset.change && C[el.dataset.change]) { await C[el.dataset.change](el.value, el); render(); }
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && S.ui.modal) { S.ui.modal = null; render(); return; }
+  const el = ev.target;
+  if (ev.key === 'Enter' && el.dataset && el.dataset.enter && E[el.dataset.enter]) { ev.preventDefault(); E[el.dataset.enter](el); render(); }
+});
+document.addEventListener('submit', (ev) => {
+  const form = ev.target.closest('[data-submit]');
+  if (!form || !F[form.dataset.submit]) return;
+  ev.preventDefault();
+  F[form.dataset.submit](form, new FormData(form));
+  render();
+});
+render();
+</script>
+</body>
+</html>

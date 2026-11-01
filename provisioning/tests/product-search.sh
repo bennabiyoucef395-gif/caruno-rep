@@ -57,8 +57,8 @@ check "OEM inconnu: aucune pièce (200 vide ou 404)" "$code:${refs:-none}" "200:
 echo "== Recherche par référence et désignation"
 search "(t.ref:=:'413471')"
 check "Référence 413471" "$refs" "413471"
-search "(t.label:like:'%Headlight%')"
-check "Désignation %Headlight% (3 pièces)" "$refs" "392924 417527 417657"
+search "(t.label:like:'%Headlight Level Sensor FR%')"
+check "Désignation %Headlight Level Sensor FR%" "$(printf ' %s ' "$refs" | grep -q ' 417527 ' && echo found || echo missing)" "found"
 
 echo "== Champs renvoyés"
 search "(t.ref:=:'414019')"

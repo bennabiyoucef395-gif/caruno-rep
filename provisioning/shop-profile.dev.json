@@ -1,0 +1,89 @@
+{
+  "_comment": "CARUNO shop profile for the HANOUT VW development instance. No secrets here. Identity values are fictitious and marked DEV.",
+  "admin_login": "admin",
+
+  "modules": {
+    "enable": ["modCategorie", "modBarcode", "modAgenda"],
+    "disable": ["modPaymentByBankTransfer", "modVariants"]
+  },
+
+  "company": {
+    "name": "HANOUT VW (DEV)",
+    "address": "1 rue Fictive (DEV - ne pas utiliser)",
+    "zip": "16000",
+    "town": "Alger",
+    "state_id": 17,
+    "legal_form_code": "1301",
+    "capital": "100000",
+    "phone": "+213 000 00 00 00",
+    "email": "dev@hanout-vw.invalid",
+    "profid": {
+      "rc": "DEV-RC-0000000",
+      "nif": "DEV-NIF-000000000000000",
+      "ai": "DEV-AI-00000000000",
+      "nis": "DEV-NIS-000000000000000"
+    }
+  },
+
+  "general": {
+    "language": "fr_FR",
+    "show_profids_on_documents": true
+  },
+
+  "api": {
+    "_comment": "The CARUNO front signs each user in through POST /api/index.php/login and keeps the returned token; logout calls /login with reset=1. Users also need user:self:creer (see roles.dev.json).",
+    "enable_login_api": true
+  },
+
+  "pricing": {
+    "levels": ["Public", "Garage", "Revendeur"],
+    "price_base_type": "HT",
+    "margin_type": "pmp"
+  },
+
+  "barcode": {
+    "default_product_type": "EAN13"
+  },
+
+  "stock": {
+    "disallow_negative": true,
+    "_decrease_on": "Chosen by each shop. bill: stock leaves when the invoice is validated (counter sale = invoice -> validate -> payment). shipment: stock leaves when the shipment is validated (every sale, counter included, goes order -> shipment -> invoice). The CARUNO front adapts its sale flow to this value.",
+    "decrease_on": "bill"
+  },
+
+  "warehouses": [
+    { "label": "Magasin", "location": "HANOUT VW (DEV) - surface de vente", "description": "Stock vendable en magasin" },
+    { "label": "Réserve", "location": "HANOUT VW (DEV) - réserve", "description": "Stock de réserve" }
+  ],
+
+  "bank_accounts": [
+    { "ref": "CAISSE", "label": "Caisse (fictive DEV)", "type": "cash", "bank": "" },
+    { "ref": "BANQUE", "label": "Banque (fictive DEV)", "type": "current", "bank": "Banque fictive (DEV)" }
+  ],
+
+  "categories": {
+    "product": [
+      { "code": "caruno:famille:moteur", "label": "Moteur" },
+      { "code": "caruno:famille:filtration", "label": "Filtration" },
+      { "code": "caruno:famille:freinage", "label": "Freinage" },
+      { "code": "caruno:famille:embrayage-transmission", "label": "Embrayage et transmission" },
+      { "code": "caruno:famille:suspension-direction", "label": "Suspension et direction" },
+      { "code": "caruno:famille:electricite-electronique", "label": "Électricité et électronique" },
+      { "code": "caruno:famille:refroidissement-climatisation", "label": "Refroidissement et climatisation" },
+      { "code": "caruno:famille:carrosserie-accessoires", "label": "Carrosserie et accessoires" }
+    ],
+    "customer": [
+      { "code": "caruno:client:particulier", "label": "Particulier", "description": "Niveau de prix 1 (Public)" },
+      { "code": "caruno:client:garage", "label": "Garage", "description": "Niveau de prix 2 (Garage)" },
+      { "code": "caruno:client:revendeur", "label": "Revendeur", "description": "Niveau de prix 3 (Revendeur)" }
+    ]
+  },
+
+  "product_extrafields": [
+    { "code": "brand", "label": "Marque", "type": "varchar", "size": "64", "position": 10 },
+    { "code": "oem_ref", "label": "Référence OEM", "type": "varchar", "size": "64", "position": 20, "help": "Référence constructeur normalisée (sans espaces ni points)" },
+    { "code": "caruno_part_type", "label": "Type de pièce CARUNO", "type": "varchar", "size": "64", "position": 30 },
+    { "code": "caruno_part_id", "label": "Identifiant catalogue CARUNO", "type": "varchar", "size": "64", "position": 40 },
+    { "code": "emplacement", "label": "Emplacement (rayon / casier)", "type": "varchar", "size": "32", "position": 50 }
+  ]
+}

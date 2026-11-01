@@ -1,0 +1,174 @@
+{
+  "_comment": "CARUNO roles for the HANOUT VW development instance. Rights are Dolibarr rights_def keys: module:perms or module:perms:subperms. No secrets here: passwords and the API key live outside Git.",
+  "admin_login": "admin",
+  "advanced_permissions": true,
+
+  "_self_rights_comment": "Given to every group. user:self:creer is required by POST /login to create or reset the user's own API token (CARUNO front sign-in and sign-out).",
+  "self_rights": ["user:self_advance:readperms", "user:self:password", "user:self:creer"],
+
+  "groups": {
+    "Gérant": {
+      "note": "Gestion générale de la boutique (pas d'administration technique Dolibarr)",
+      "rights": [
+        "societe:lire", "societe:creer", "societe:supprimer", "societe:export", "societe:client:voir",
+        "societe:contact:lire", "societe:contact:creer", "societe:contact:supprimer", "societe:contact:export",
+        "societe:thirdparty_paymentinformation:write",
+        "produit:lire", "produit:creer", "produit:supprimer", "produit:export", "produit:ignore_price_min_advance",
+        "produit:product_advance:read_prices", "produit:product_advance:read_supplier_prices", "produit:product_advance:write_supplier_prices",
+        "service:lire", "service:creer", "service:supprimer", "service:export",
+        "service:service_advance:read_prices", "service:service_advance:read_supplier_prices",
+        "stock:lire", "stock:creer", "stock:supprimer", "stock:mouvement:lire", "stock:mouvement:creer",
+        "stock:inventory_advance:read", "stock:inventory_advance:write", "stock:inventory_advance:delete",
+        "categorie:lire", "categorie:creer", "categorie:supprimer",
+        "barcode:read", "barcode:lire_advance", "barcode:creer_advance",
+        "propale:lire", "propale:creer", "propale:supprimer", "propale:export",
+        "propale:propal_advance:validate", "propale:propal_advance:send", "propale:propal_advance:close", "propale:propal_advance:reopen",
+        "commande:lire", "commande:creer", "commande:supprimer", "commande:commande:export",
+        "commande:order_advance:validate", "commande:order_advance:generetedoc", "commande:order_advance:send", "commande:order_advance:close", "commande:order_advance:annuler",
+        "expedition:lire", "expedition:creer", "expedition:supprimer", "expedition:shipment:export",
+        "expedition:shipping_advance:validate", "expedition:shipping_advance:send",
+        "expedition:delivery:lire", "expedition:delivery:creer", "expedition:delivery:supprimer", "expedition:delivery_advance:validate",
+        "facture:lire", "facture:creer", "facture:paiement", "facture:supprimer", "facture:facture:export",
+        "facture:invoice_advance:validate", "facture:invoice_advance:unvalidate", "facture:invoice_advance:send", "facture:invoice_advance:reopen",
+        "fournisseur:lire",
+        "fournisseur:commande:lire", "fournisseur:commande:creer", "fournisseur:commande:approuver", "fournisseur:commande:commander",
+        "fournisseur:commande:receptionner", "fournisseur:commande:supprimer", "fournisseur:commande:export",
+        "fournisseur:supplier_order_advance:validate", "fournisseur:commande_advance:check",
+        "fournisseur:facture:lire", "fournisseur:facture:creer", "fournisseur:facture:supprimer", "fournisseur:facture:export",
+        "fournisseur:supplier_invoice_advance:validate", "fournisseur:supplier_invoice_advance:send",
+        "reception:lire", "reception:creer", "reception:supprimer", "reception:reception:export",
+        "reception:reception_advance:validate", "reception:reception_advance:send",
+        "banque:lire", "banque:modifier", "banque:configurer", "banque:consolidate", "banque:export", "banque:transfer", "banque:cheque",
+        "tax:charges:lire", "tax:charges:creer", "tax:charges:supprimer", "tax:charges:export",
+        "margins:liretous", "margins:creer", "margins:read:all",
+        "export:lire", "export:creer",
+        "agenda:myactions:read", "agenda:myactions:create", "agenda:myactions:delete",
+        "agenda:allactions:read", "agenda:allactions:create", "agenda:allactions:delete", "agenda:export",
+        "user:user:lire", "user:user_advance:readperms", "user:group_advance:read", "user:group_advance:readperms"
+      ]
+    },
+
+    "Responsable": {
+      "note": "Gestion opérationnelle : ventes, achats, stock ; pas de suppression, d'export, de réouverture ni de configuration",
+      "rights": [
+        "societe:lire", "societe:creer", "societe:client:voir", "societe:contact:lire", "societe:contact:creer",
+        "produit:lire", "produit:creer",
+        "produit:product_advance:read_prices", "produit:product_advance:read_supplier_prices", "produit:product_advance:write_supplier_prices",
+        "service:lire", "service:creer", "service:service_advance:read_prices",
+        "stock:lire", "stock:creer", "stock:mouvement:lire", "stock:mouvement:creer",
+        "stock:inventory_advance:read", "stock:inventory_advance:write",
+        "categorie:lire", "categorie:creer",
+        "barcode:read", "barcode:lire_advance", "barcode:creer_advance",
+        "propale:lire", "propale:creer", "propale:propal_advance:validate", "propale:propal_advance:send", "propale:propal_advance:close",
+        "commande:lire", "commande:creer",
+        "commande:order_advance:validate", "commande:order_advance:generetedoc", "commande:order_advance:send", "commande:order_advance:close",
+        "expedition:lire", "expedition:creer", "expedition:shipping_advance:validate",
+        "expedition:delivery:lire", "expedition:delivery:creer", "expedition:delivery_advance:validate",
+        "facture:lire", "facture:creer", "facture:paiement", "facture:invoice_advance:validate", "facture:invoice_advance:send",
+        "fournisseur:lire",
+        "fournisseur:commande:lire", "fournisseur:commande:creer", "fournisseur:commande:approuver", "fournisseur:commande:commander",
+        "fournisseur:commande:receptionner", "fournisseur:supplier_order_advance:validate", "fournisseur:commande_advance:check",
+        "fournisseur:facture:lire", "fournisseur:facture:creer",
+        "reception:lire", "reception:creer", "reception:reception_advance:validate",
+        "banque:lire",
+        "margins:liretous",
+        "agenda:myactions:read", "agenda:myactions:create", "agenda:allactions:read"
+      ]
+    },
+
+    "Vendeur": {
+      "note": "Vente : clients, devis, commandes, factures, encaissements ; consultation des pièces et du stock ; ni prix d'achat ni marges",
+      "rights": [
+        "societe:lire", "societe:creer", "societe:client:voir", "societe:contact:lire", "societe:contact:creer",
+        "produit:lire", "produit:product_advance:read_prices",
+        "service:lire", "service:service_advance:read_prices",
+        "stock:lire",
+        "categorie:lire",
+        "barcode:lire_advance",
+        "propale:lire", "propale:creer", "propale:propal_advance:validate", "propale:propal_advance:send",
+        "commande:lire", "commande:creer", "commande:order_advance:validate", "commande:order_advance:send",
+        "expedition:lire",
+        "facture:lire", "facture:creer", "facture:paiement", "facture:invoice_advance:validate", "facture:invoice_advance:send",
+        "agenda:myactions:read", "agenda:myactions:create"
+      ]
+    },
+
+    "Magasinier": {
+      "note": "Stock : fiches pièces, mouvements, inventaires, réceptions et préparation des expéditions ; ni ventes ni banque",
+      "rights": [
+        "societe:lire",
+        "produit:lire", "produit:creer", "produit:product_advance:read_supplier_prices",
+        "service:lire",
+        "stock:lire", "stock:creer", "stock:mouvement:lire", "stock:mouvement:creer",
+        "stock:inventory_advance:read", "stock:inventory_advance:write",
+        "categorie:lire",
+        "barcode:read", "barcode:lire_advance", "barcode:creer_advance",
+        "expedition:lire", "expedition:creer", "expedition:shipping_advance:validate",
+        "expedition:delivery:lire", "expedition:delivery:creer",
+        "fournisseur:lire", "fournisseur:commande:lire", "fournisseur:commande:receptionner", "fournisseur:commande_advance:check",
+        "reception:lire", "reception:creer", "reception:reception_advance:validate",
+        "agenda:myactions:read", "agenda:myactions:create"
+      ]
+    },
+
+    "Comptable": {
+      "note": "Finance : factures et avoirs, paiements, factures fournisseurs, banque, taxes, marges, exports ; pas de stock en écriture",
+      "rights": [
+        "societe:lire", "societe:client:voir", "societe:contact:lire", "societe:export",
+        "produit:lire", "produit:product_advance:read_prices", "produit:product_advance:read_supplier_prices",
+        "service:lire", "service:service_advance:read_prices",
+        "stock:lire", "stock:mouvement:lire",
+        "categorie:lire",
+        "propale:lire", "commande:lire", "expedition:lire", "reception:lire",
+        "facture:lire", "facture:creer", "facture:paiement", "facture:facture:export",
+        "facture:invoice_advance:validate", "facture:invoice_advance:send",
+        "fournisseur:lire", "fournisseur:commande:lire",
+        "fournisseur:facture:lire", "fournisseur:facture:creer", "fournisseur:facture:export",
+        "fournisseur:supplier_invoice_advance:validate",
+        "banque:lire", "banque:modifier", "banque:consolidate", "banque:export", "banque:transfer", "banque:cheque",
+        "tax:charges:lire", "tax:charges:creer", "tax:charges:export",
+        "margins:liretous", "margins:read:all",
+        "export:lire", "export:creer",
+        "agenda:myactions:read", "agenda:myactions:create"
+      ]
+    }
+  },
+
+  "users": [
+    { "login": "dev.gerant", "firstname": "Test", "lastname": "Gérant (DEV)", "email": "dev.gerant@hanout-vw.invalid", "group": "Gérant", "secret_key": "TEST_PW_DEV_GERANT" },
+    { "login": "dev.responsable", "firstname": "Test", "lastname": "Responsable (DEV)", "email": "dev.responsable@hanout-vw.invalid", "group": "Responsable", "secret_key": "TEST_PW_DEV_RESPONSABLE" },
+    { "login": "dev.vendeur", "firstname": "Test", "lastname": "Vendeur (DEV)", "email": "dev.vendeur@hanout-vw.invalid", "group": "Vendeur", "secret_key": "TEST_PW_DEV_VENDEUR" },
+    { "login": "dev.magasinier", "firstname": "Test", "lastname": "Magasinier (DEV)", "email": "dev.magasinier@hanout-vw.invalid", "group": "Magasinier", "secret_key": "TEST_PW_DEV_MAGASINIER" },
+    { "login": "dev.comptable", "firstname": "Test", "lastname": "Comptable (DEV)", "email": "dev.comptable@hanout-vw.invalid", "group": "Comptable", "secret_key": "TEST_PW_DEV_COMPTABLE" }
+  ],
+
+  "api_user": {
+    "login": "caruno_api",
+    "firstname": "",
+    "lastname": "CARUNO_API",
+    "email": "caruno-api@hanout-vw.invalid",
+    "note": "Compte technique d'intégration CARUNO. Usage API uniquement. Aucun droit d'administration.",
+    "api_key_secret": "CARUNO_API_KEY",
+    "rights": [
+      "societe:lire", "societe:creer", "societe:client:voir", "societe:contact:lire", "societe:contact:creer",
+      "produit:lire", "produit:creer",
+      "produit:product_advance:read_prices", "produit:product_advance:read_supplier_prices", "produit:product_advance:write_supplier_prices",
+      "service:lire", "service:service_advance:read_prices",
+      "stock:lire", "stock:creer", "stock:mouvement:lire", "stock:mouvement:creer",
+      "stock:inventory_advance:read", "stock:inventory_advance:write",
+      "categorie:lire", "categorie:creer",
+      "barcode:lire_advance", "barcode:creer_advance",
+      "propale:lire", "propale:creer", "propale:propal_advance:validate", "propale:propal_advance:close",
+      "commande:lire", "commande:creer", "commande:order_advance:validate", "commande:order_advance:close",
+      "expedition:lire", "expedition:creer", "expedition:shipping_advance:validate",
+      "facture:lire", "facture:creer", "facture:paiement", "facture:invoice_advance:validate",
+      "fournisseur:lire",
+      "fournisseur:commande:lire", "fournisseur:commande:creer", "fournisseur:commande:approuver", "fournisseur:commande:commander",
+      "fournisseur:commande:receptionner", "fournisseur:supplier_order_advance:validate",
+      "fournisseur:facture:lire", "fournisseur:facture:creer", "fournisseur:supplier_invoice_advance:validate",
+      "reception:lire", "reception:creer", "reception:reception_advance:validate",
+      "banque:lire",
+      "margins:liretous"
+    ]
+  }
+}

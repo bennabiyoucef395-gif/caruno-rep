@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Text, XStack, YStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '@/state/app';
-import { Dolibarr } from '@/lib/dolibarr';
+import { Dolibarr, isAddress } from '@/lib/dolibarr';
 import { LANGUAGES, type Lang } from '@/i18n';
 import { Btn, Card, Chip, Field, H1, Notice } from '@/components/ui';
 import { C } from '@/theme/colors';
@@ -25,12 +25,14 @@ export default function Parametres() {
   useEffect(() => { setUrl(device.dolibarrUrl); setName(device.deviceName); setCat(device.catalogueUrl); }, [device.dolibarrUrl, device.deviceName, device.catalogueUrl]);
 
   const runTest = async () => {
+    if (!isAddress(url)) { setTest({ ok: false, msg: t('settings.badUrl') }); return; }
     setTesting(true); setTest(null);
     const r = await new Dolibarr(url).ping();
     setTest({ ok: r.ok, msg: r.message }); setTesting(false);
   };
 
   const save = async () => {
+    if (url.trim() && !isAddress(url)) { setTest({ ok: false, msg: t('settings.badUrl') }); return; }
     await saveDevice({ dolibarrUrl: url.trim(), deviceName: name.trim() || 'Comptoir 1', catalogueUrl: cat.trim() });
     const n = (v: string, d: number) => { const x = parseInt(v.replace(/\D/g, ''), 10); return Number.isFinite(x) ? x : d; };
     await saveShop({ warehouseId: n(ids.warehouseId, 1), cashAccountId: n(ids.cashAccountId, 1), bankAccountId: n(ids.bankAccountId, 2), counterCustomerId: n(ids.counterCustomerId, 5), openingFloat: n(ids.openingFloat, 10000) });

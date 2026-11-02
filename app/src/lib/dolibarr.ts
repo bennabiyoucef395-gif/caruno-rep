@@ -52,6 +52,12 @@ export function apiRoot(url: string): string {
   return u + '/api/index.php';
 }
 
+// Une adresse web plausible : pas d'espace, et un nom d'hôte avec un point, un port ou « localhost » (le nom du magasin n'en est pas une).
+export function isAddress(url: string): boolean {
+  const host = url.trim().replace(/^https?:\/\//i, '').split(/[/?#]/)[0];
+  return !!host && !/\s/.test(url.trim()) && (/[.:]/.test(host) || /^localhost$/i.test(host));
+}
+
 export class Dolibarr {
   readonly root: string;
   token: string;

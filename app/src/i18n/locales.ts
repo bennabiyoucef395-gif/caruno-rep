@@ -17,6 +17,7 @@ export const fr = {
     deviceHint: 'Gardés sur cet appareil uniquement.',
     dolibarrUrl: 'Adresse du Dolibarr du magasin',
     dolibarrUrlHint: 'Exemple : https://erp.mon-magasin.dz — l’adresse de base suffit.',
+    badUrl: 'Ce n’est pas une adresse web. Mettez l’adresse du Dolibarr (ex. http://localhost:8080) ; le nom du magasin va dans « Nom du poste ».',
     test: 'Tester la connexion',
     testing: 'Test en cours…',
     deviceName: 'Nom du poste',
@@ -110,7 +111,7 @@ export const ar: Dict = {
   common: { save: 'حفظ', cancel: 'إلغاء', close: 'إغلاق', back: 'رجوع', search: 'بحث', loading: 'جارٍ التحميل…', retry: 'إعادة المحاولة', yes: 'نعم', no: 'لا', total: 'المجموع', none: 'لا شيء', error: 'خطأ', da: 'دج', ok: 'حسنًا' },
   nav: { caisse: 'الصندوق', pieces: 'القطع', tableau: 'لوحة القيادة', parametres: 'الإعدادات', logout: 'تسجيل الخروج', fold: 'طيّ القائمة', unfold: 'فتح القائمة', backOffice: 'الإدارة' },
   settings: {
-    title: 'الإعدادات', deviceSection: 'هذا الجهاز', deviceHint: 'محفوظة على هذا الجهاز فقط.', dolibarrUrl: 'عنوان Dolibarr الخاص بالمحل', dolibarrUrlHint: 'مثال: https://erp.mon-magasin.dz — يكفي العنوان الأساسي.',
+    title: 'الإعدادات', deviceSection: 'هذا الجهاز', deviceHint: 'محفوظة على هذا الجهاز فقط.', dolibarrUrl: 'عنوان Dolibarr الخاص بالمحل', dolibarrUrlHint: 'مثال: https://erp.mon-magasin.dz — يكفي العنوان الأساسي.', badUrl: 'هذا ليس عنوان ويب. أدخل عنوان Dolibarr (مثل http://localhost:8080)؛ اسم المحل يوضع في «اسم نقطة البيع».',
     test: 'اختبار الاتصال', testing: 'جارٍ الاختبار…', deviceName: 'اسم نقطة البيع', deviceNameHint: 'يظهر على المبيعات وتقارير الصندوق (مثال: كاونتر 1).', language: 'اللغة',
     restartNeeded: 'سيتغيّر اتجاه الكتابة عند إعادة تشغيل التطبيق.', catalogueUrl: 'عنوان الكتالوج المشترك', catalogueUrlHint: 'ملف أو خدمة كتالوج CARUNO، يُستعمل لاقتراح البطاقات عند إنشاء قطعة.',
     shopSection: 'المحل', shopHint: 'محفوظة حاليًا على هذا الجهاز. لاحقًا: ملف مشترك تقرؤه كل الأجهزة من Dolibarr.', vat: 'المحل يفوتر الرسم على القيمة المضافة',
@@ -158,7 +159,7 @@ export const en: Dict = {
   common: { save: 'Save', cancel: 'Cancel', close: 'Close', back: 'Back', search: 'Search', loading: 'Loading…', retry: 'Retry', yes: 'Yes', no: 'No', total: 'Total', none: 'None', error: 'Error', da: 'DA', ok: 'OK' },
   nav: { caisse: 'Till', pieces: 'Parts', tableau: 'Dashboard', parametres: 'Settings', logout: 'Sign out', fold: 'Collapse menu', unfold: 'Expand menu', backOffice: 'Back office' },
   settings: {
-    title: 'Settings', deviceSection: 'This device', deviceHint: 'Kept on this device only.', dolibarrUrl: 'Shop Dolibarr address', dolibarrUrlHint: 'Example: https://erp.my-shop.dz — the base address is enough.',
+    title: 'Settings', deviceSection: 'This device', deviceHint: 'Kept on this device only.', dolibarrUrl: 'Shop Dolibarr address', dolibarrUrlHint: 'Example: https://erp.my-shop.dz — the base address is enough.', badUrl: 'This is not a web address. Enter the Dolibarr address (e.g. http://localhost:8080); the shop name goes in “Device name”.',
     test: 'Test connection', testing: 'Testing…', deviceName: 'Device name', deviceNameHint: 'Shown on sales and till reports (e.g. Counter 1).', language: 'Language',
     restartNeeded: 'Text direction will change next time the app starts.', catalogueUrl: 'Shared catalogue address', catalogueUrlHint: 'CARUNO catalogue file or service, used to suggest records when creating a part.',
     shopSection: 'Shop', shopHint: 'Saved on this device for now. Later: one shared profile read by every device from Dolibarr.', vat: 'The shop charges VAT',

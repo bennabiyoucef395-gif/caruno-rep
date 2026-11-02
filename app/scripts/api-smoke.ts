@@ -1,7 +1,7 @@
 // Essai du client Dolibarr contre une instance de développement (jamais en production : crée une vente de test).
 // Usage : npm run test:api   (DOLI_URL, CARUNO_TEST_USERS pour changer l'instance ou le fichier des mots de passe)
 import { readFileSync } from 'node:fs';
-import { Dolibarr, apiRoot, capabilities, DolibarrError } from '../src/lib/dolibarr.ts';
+import { Dolibarr, apiRoot, isAddress, capabilities, DolibarrError } from '../src/lib/dolibarr.ts';
 
 const url = process.env.DOLI_URL || 'http://localhost:8080';
 const usersFile = process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env';
@@ -15,6 +15,7 @@ async function main() {
   check('adresse sans http:// complétée (internet → https)', apiRoot('erp.boutique.dz/') === 'https://erp.boutique.dz/api/index.php');
   check('adresse complète gardée', apiRoot('http://x:8080/api/index.php') === 'http://x:8080/api/index.php');
   check('adresse copiée du navigateur ramenée à la racine', apiRoot('http://localhost:8080/index.php?mainmenu=home') === 'http://localhost:8080/api/index.php' && apiRoot('localhost:8080/societe/card.php?id=3') === 'http://localhost:8080/api/index.php' && apiRoot('https://x.dz/dolibarr/product/list.php') === 'https://x.dz/dolibarr/api/index.php' && apiRoot('http://x/api/index.php/explorer') === 'http://x/api/index.php');
+  check('nom du magasin refusé comme adresse', !isAddress('city makoudi 2') && !isAddress('CARUNO') && isAddress('localhost:8080') && isAddress('erp.boutique.dz') && isAddress('http://192.168.1.20'));
   const unreachable = await new Dolibarr('localhost').ping();
   check('adresse sans port : message qui montre l’adresse essayée', !unreachable.ok && unreachable.message.includes('http://localhost'), unreachable.message);
   const noScheme = await new Dolibarr(url.replace(/^https?:\/\//, '')).ping();

@@ -37,6 +37,9 @@ try {
   await page.getByTestId('set-url').fill('http://localhost:1');
   await page.getByTestId('set-test').click();
   check('test de connexion : adresse fausse refusée', /✕/.test(await page.getByTestId('set-test-result').innerText()));
+  await page.getByTestId('set-url').fill('city makoudi 2');
+  await page.getByTestId('set-test').click();
+  check('test de connexion : nom du magasin refusé comme adresse', /adresse web/.test(await page.getByTestId('set-test-result').innerText()));
   await page.getByTestId('set-url').fill(BASE);
   await page.getByTestId('set-test').click();
   check('test de connexion : une page web qui n’est pas Dolibarr est refusée', /✕/.test(await page.getByTestId('set-test-result').innerText()));

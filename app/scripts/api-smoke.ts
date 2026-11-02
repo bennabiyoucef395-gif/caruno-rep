@@ -14,6 +14,9 @@ async function main() {
   check('adresse sans http:// complétée (local → http)', apiRoot('localhost:8080') === 'http://localhost:8080/api/index.php', apiRoot('localhost:8080'));
   check('adresse sans http:// complétée (internet → https)', apiRoot('erp.boutique.dz/') === 'https://erp.boutique.dz/api/index.php');
   check('adresse complète gardée', apiRoot('http://x:8080/api/index.php') === 'http://x:8080/api/index.php');
+  check('adresse copiée du navigateur ramenée à la racine', apiRoot('http://localhost:8080/index.php?mainmenu=home') === 'http://localhost:8080/api/index.php' && apiRoot('localhost:8080/societe/card.php?id=3') === 'http://localhost:8080/api/index.php' && apiRoot('https://x.dz/dolibarr/product/list.php') === 'https://x.dz/dolibarr/api/index.php' && apiRoot('http://x/api/index.php/explorer') === 'http://x/api/index.php');
+  const unreachable = await new Dolibarr('localhost').ping();
+  check('adresse sans port : message qui montre l’adresse essayée', !unreachable.ok && unreachable.message.includes('http://localhost'), unreachable.message);
   const noScheme = await new Dolibarr(url.replace(/^https?:\/\//, '')).ping();
   check('ping sur l’adresse sans http:// : joignable', noScheme.ok, noScheme.message);
 

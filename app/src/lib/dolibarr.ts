@@ -42,10 +42,14 @@ const num = (v: unknown) => {
 
 // Adresse saisie dans Paramètres : on accepte « erp.boutique.dz », « https://erp.boutique.dz » ou « …/api/index.php ».
 // Sans http(s)://, l'adresse serait lue comme un chemin de l'app elle-même : on complète (http en local, https sinon).
+// Une adresse copiée depuis la barre du navigateur (« …/index.php?mainmenu=home », « …/societe/card.php?id=3 ») est ramenée à la racine de Dolibarr.
 export function apiRoot(url: string): string {
-  let u = url.trim().replace(/\/+$/, '');
+  let u = url.trim().replace(/[?#].*$/, '');
   if (u && !/^https?:\/\//i.test(u)) u = (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(u) ? 'http://' : 'https://') + u;
-  return /\/api\/index\.php$/.test(u) ? u : u + '/api/index.php';
+  const api = u.search(/\/api\/index\.php(\/|$)/);
+  if (api >= 0) return u.slice(0, api) + '/api/index.php';
+  u = u.replace(/(\/(admin|comm|commande|compta|core|expedition|fourn|product|projet|societe|user))?\/[^/]*\.php(\/.*)?$/i, '').replace(/\/+$/, '');
+  return u + '/api/index.php';
 }
 
 export class Dolibarr {
@@ -67,7 +71,7 @@ export class Dolibarr {
     try {
       res = await fetch(url, { method: opts.method || 'GET', headers, body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
     } catch (e) {
-      throw new DolibarrError('Dolibarr injoignable : vérifiez l’adresse et le réseau.', 0);
+      throw new DolibarrError('Dolibarr injoignable à l’adresse ' + this.root.replace(/\/api\/index\.php$/, '') + ' : vérifiez l’adresse (port compris, http ou https) et le réseau.', 0);
     }
     const text = await res.text();
     let data: any = null;

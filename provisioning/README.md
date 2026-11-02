@@ -9,6 +9,8 @@ Configures a Dolibarr 24.0.2 instance as the CARUNO ERP engine, from a shop prof
 | `lib/configure.php` | Engine, run inside the Dolibarr container; uses only Dolibarr's PHP API |
 | `20-import-products.sh` | Creates or updates parts from a CSV made by `scripts/catalogue-pdf` (ref, label, description, `brand`, `oem_ref`); prices and stock untouched |
 | `lib/import_products.php` | Import engine, same rules as `configure.php` (PHP API only, idempotent) |
+| `25-import-photos.sh` | Attaches `<ref>.jpg` photos (from `scripts/catalogue-pdf -Photos`) to the products of the same ref, with thumbnails, in `produit/<ref>/` like an upload from the product card |
+| `lib/import_photos.php` | Photo import engine (Dolibarr file functions, document index; idempotent) |
 | `tests/product-search.sh` | Counter searches through the API as a seller: by OEM, reference, label |
 
 ## Usage

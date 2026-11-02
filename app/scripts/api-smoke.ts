@@ -1,7 +1,7 @@
 // Essai du client Dolibarr contre une instance de développement (jamais en production : crée une vente de test).
 // Usage : npm run test:api   (DOLI_URL, CARUNO_TEST_USERS pour changer l'instance ou le fichier des mots de passe)
 import { readFileSync } from 'node:fs';
-import { Dolibarr, capabilities, DolibarrError } from '../src/lib/dolibarr.ts';
+import { Dolibarr, apiRoot, capabilities, DolibarrError } from '../src/lib/dolibarr.ts';
 
 const url = process.env.DOLI_URL || 'http://localhost:8080';
 const usersFile = process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env';
@@ -11,6 +11,12 @@ let ok = 0, ko = 0;
 const check = (name: string, cond: unknown, detail = '') => { if (cond) { ok++; console.log('OK   ' + name); } else { ko++; console.log('FAIL ' + name + (detail ? ' :: ' + detail : '')); } };
 
 async function main() {
+  check('adresse sans http:// complétée (local → http)', apiRoot('localhost:8080') === 'http://localhost:8080/api/index.php', apiRoot('localhost:8080'));
+  check('adresse sans http:// complétée (internet → https)', apiRoot('erp.boutique.dz/') === 'https://erp.boutique.dz/api/index.php');
+  check('adresse complète gardée', apiRoot('http://x:8080/api/index.php') === 'http://x:8080/api/index.php');
+  const noScheme = await new Dolibarr(url.replace(/^https?:\/\//, '')).ping();
+  check('ping sur l’adresse sans http:// : joignable', noScheme.ok, noScheme.message);
+
   const anon = new Dolibarr(url);
   const ping = await anon.ping();
   check('ping sans jeton : API joignable', ping.ok, ping.message);

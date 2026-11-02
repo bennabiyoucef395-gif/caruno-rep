@@ -40,9 +40,11 @@ const num = (v: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-// Adresse saisie dans Paramètres : on accepte « https://erp.boutique.dz » comme « …/api/index.php ».
+// Adresse saisie dans Paramètres : on accepte « erp.boutique.dz », « https://erp.boutique.dz » ou « …/api/index.php ».
+// Sans http(s)://, l'adresse serait lue comme un chemin de l'app elle-même : on complète (http en local, https sinon).
 export function apiRoot(url: string): string {
-  const u = url.trim().replace(/\/+$/, '');
+  let u = url.trim().replace(/\/+$/, '');
+  if (u && !/^https?:\/\//i.test(u)) u = (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(u) ? 'http://' : 'https://') + u;
   return /\/api\/index\.php$/.test(u) ? u : u + '/api/index.php';
 }
 
@@ -70,6 +72,8 @@ export class Dolibarr {
     const text = await res.text();
     let data: any = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    // Une page web au lieu de JSON : l'adresse ne mène pas à l'API Dolibarr (mauvaise adresse, page d'accueil, proxy…).
+    if (typeof data === 'string' && /^\s*</.test(data)) throw new DolibarrError('Cette adresse ne répond pas comme une API Dolibarr : vérifiez-la dans Paramètres.', -1);
     if (!res.ok) {
       // GET d'une liste vide : Dolibarr répond 404 « No … found » ; on renvoie une liste vide.
       if (res.status === 404 && (opts.method || 'GET') === 'GET' && !/\/\d+$/.test(path)) return [] as T;
@@ -93,7 +97,14 @@ export class Dolibarr {
   }
 
   async login(login: string, password: string): Promise<string> {
-    const r = await this.request<any>('login', { method: 'POST', body: { login, password, reset: 0 } });
+    let r: any;
+    try { r = await this.request<any>('login', { method: 'POST', body: { login, password, reset: 0 } }); }
+    catch (e) {
+      // Refus d'identifiants seulement si Dolibarr le dit ; sinon on garde l'erreur réelle (adresse, réseau, API de connexion coupée).
+      const err = e as DolibarrError;
+      if (err.status === 401 || err.status === 403) throw new DolibarrError('Identifiant ou mot de passe refusé.', err.status);
+      throw err;
+    }
     const token = r?.success?.token;
     if (!token) throw new DolibarrError('Identifiant ou mot de passe refusé.', 403);
     this.token = token;

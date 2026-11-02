@@ -20,8 +20,9 @@ const api = async (path, token, opts = {}) => { const r = await fetch(DOLI + '/a
 const focused = (page) => page.evaluate(() => document.activeElement?.getAttribute('data-testid') || document.activeElement?.tagName || '');
 const waitFocus = (page, id) => page.waitForFunction((x) => document.activeElement?.getAttribute('data-testid') === x, id, { timeout: 8000 }).then(() => true, () => false);
 
-const server = await serve(8082);
-const BASE = 'http://localhost:8082';
+const PORT = Number(process.env.E2E_PORT) || 8083;
+const server = await serve(PORT);
+const BASE = 'http://localhost:' + PORT;
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const errors = [];
 try {
@@ -36,15 +37,24 @@ try {
   await page.getByTestId('set-url').fill('http://localhost:1');
   await page.getByTestId('set-test').click();
   check('test de connexion : adresse fausse refusée', /✕/.test(await page.getByTestId('set-test-result').innerText()));
-  await page.getByTestId('set-url').fill(DOLI);
+  await page.getByTestId('set-url').fill(BASE);
   await page.getByTestId('set-test').click();
-  check('test de connexion : Dolibarr joignable', /✓/.test(await page.getByTestId('set-test-result').innerText()));
+  check('test de connexion : une page web qui n’est pas Dolibarr est refusée', /✕/.test(await page.getByTestId('set-test-result').innerText()));
+  // Adresse saisie sans http:// (cas réel d'un utilisateur) : complétée par l'app.
+  await page.getByTestId('set-url').fill(DOLI.replace(/^https?:\/\//, ''));
+  await page.getByTestId('set-test').click();
+  check('test de connexion : adresse sans http:// joignable', /✓/.test(await page.getByTestId('set-test-result').innerText()));
   await page.getByTestId('set-save').click();
   await page.getByTestId('set-continue').click();
   await page.getByTestId('login-user').waitFor();
   await page.screenshot({ path: resolve(shots, '01-connexion.png') });
 
-  // 2. Connexion vendeur.
+  // 2. Mauvais mot de passe : message de refus ; puis connexion vendeur.
+  await page.getByTestId('login-user').fill('dev.vendeur');
+  await page.getByTestId('login-pw').fill('mauvais');
+  await page.getByTestId('login-submit').click();
+  await page.getByText('Identifiant ou mot de passe refusé.').waitFor({ timeout: 10000 }).catch(() => {});
+  check('mauvais mot de passe : refus clair', /Identifiant ou mot de passe refusé/.test(await page.locator('body').innerText()));
   await page.getByTestId('login-user').fill('dev.vendeur');
   await page.getByTestId('login-pw').fill(secrets.TEST_PW_DEV_VENDEUR);
   await page.getByTestId('login-submit').click();

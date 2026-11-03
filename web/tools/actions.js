@@ -11,7 +11,11 @@ async function run(fn, wait) {
   catch (e) {
     if (DOLI.expired) { A.logout(); toast('Session Dolibarr expirée : reconnectez-vous.'); }
     else toast(e && e.message ? e.message : String(e));
-  } finally { S.ui.busy = ''; render(); }
+  } finally {
+    // Le message d'attente disparaît dès la fin (un message de résultat a pu le remplacer).
+    if (wait && S.ui.toast === wait) S.ui.toast = '';
+    S.ui.busy = ''; render();
+  }
 }
 const notYet = (what) => () => { toast(what + ' : pas encore relié à Dolibarr. À faire dans Dolibarr pour l’instant.'); };
 const otherWh = (w) => WAREHOUSES.find((x) => x !== w) || w;
@@ -360,6 +364,6 @@ function loginMark(sub) {
     '<div><div style="font-weight:700;font-size:' + (s.name && s.name.length > 12 ? 26 : 34) + 'px;letter-spacing:' + (s.name && s.name.length > 12 ? '.02em' : '.1em') + '">' + esc(s.name || 'CARUNO') + '</div><div style="color:#C9CBD2;margin-top:4px">' + esc(sub) + '</div></div></div>';
 }
 const LANG = () => { try { return localStorage.getItem('caruno-lang') || 'fr'; } catch (e) { return 'fr'; } };
-function applyLang() { const ar = LANG() === 'ar'; document.documentElement.lang = ar ? 'ar' : 'fr'; document.documentElement.dir = ar ? 'rtl' : 'ltr'; }
+function applyLang() { document.documentElement.lang = LANG(); document.documentElement.dir = LANG() === 'ar' ? 'rtl' : 'ltr'; }
 A.setLang = (el) => { try { localStorage.setItem('caruno-lang', el.dataset.arg); } catch (e) {} applyLang(); };
 

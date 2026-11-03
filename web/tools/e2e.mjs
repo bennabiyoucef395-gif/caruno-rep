@@ -144,6 +144,13 @@ try {
   await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(400);
   await g.locator('[data-action="setLang"][data-arg="fr"]').click(); await g.waitForTimeout(300);
   check('retour au français', (await g.evaluate(() => document.documentElement.dir)) === 'ltr' && /Mon profil/.test(await body(g)));
+  await g.locator('[data-action="setLang"][data-arg="en"]').click(); await g.waitForTimeout(400);
+  check('anglais : profil traduit, gauche-à-droite', /My profile/.test(await body(g)) && /My shop/.test(await body(g)) && (await g.evaluate(() => document.documentElement.dir)) === 'ltr');
+  await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);
+  check('anglais : écran Pièces et menu traduits', /New part/.test(await body(g)) && /Customers/.test(await body(g)) && /Dashboard/.test(await body(g)));
+  await g.screenshot({ path: resolve(shots, '05b2-pieces-en.png') });
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(400);
+  await g.locator('[data-action="setLang"][data-arg="fr"]').click(); await g.waitForTimeout(300);
 
   // 5e. Import Excel puis PDF : pièces créées dans Dolibarr.
   const XLSX = createRequire(import.meta.url)('../vendor/xlsx.full.min.js');
@@ -214,6 +221,14 @@ try {
   check('vente encaissée : ticket, rendu 50 DA', /Paiement réussi/.test(rec) && /50\s?DA/.test(rec.replace(/\u202f|\u00a0/g, ' ')), rec.slice(0, 300));
   const ref = (rec.match(/IN\d{4}-\d{4}/) || [])[0];
   await v.screenshot({ path: resolve(shots, '07-ticket.png') });
+  check('après la vente : bon d’achat par défaut', await v.locator('.print-area.bon').isVisible().catch(() => false) && /BON D’ACHAT/.test(await v.locator('.print-area').innerText()));
+  await v.locator('[data-action="posPrintFmt"][data-arg="ticket"]').click(); await v.waitForTimeout(200);
+  check('format ticket 80 mm au choix', await v.locator('.print-area.ticket').isVisible().catch(() => false));
+  await v.locator('[data-action="posPrintFmt"][data-arg="a4"]').click(); await v.waitForTimeout(200);
+  check('format facture A4 au choix', /FACTURE/.test(await v.locator('.print-area').innerText()) && !(await v.locator('.print-area.ticket').count()));
+  await v.screenshot({ path: resolve(shots, '07b-facture-a4.png') });
+  await v.locator('[data-action="posPrintFmt"][data-arg="bon"]').click(); await v.waitForTimeout(200);
+  await v.screenshot({ path: resolve(shots, '07c-bon-achat.png') });
   const inv = ref ? (await api('invoices?sqlfilters=' + encodeURIComponent("(t.ref:=:'" + ref + "')"), g0))[0] : null;
   check('Dolibarr : facture ' + ref + ' payée 150 DA, ref_ext de la vente', inv && Number(inv.statut) === 2 && Math.round(inv.total_ttc) === 150 && /^V-/.test(inv.ref_ext), JSON.stringify(inv && [inv.statut, inv.total_ttc, inv.ref_ext]));
   await v.keyboard.press('Enter');

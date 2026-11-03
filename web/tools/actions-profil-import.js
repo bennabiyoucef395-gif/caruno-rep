@@ -14,7 +14,7 @@ viewProfil = function () {
         (edit ? '<button class="btn btn-primary" type="submit">Enregistrer le magasin</button><span class="muted" style="font-size:13px">Le nom, l’adresse et le logo apparaissent dans le menu, sur les tickets et les factures, sur tous les postes du magasin.</span>'
           : '<span class="muted" style="font-size:13px">Seul le gérant ou le responsable peut modifier ces informations.</span>') + '</form>' +
       '<section class="card card-pad" style="gap:14px"><h2>Langue et poste</h2>' +
-        '<div class="field"><span class="lbl">Langue de l’application</span><div class="chips" role="radiogroup" aria-label="Langue">' + [['fr', 'Français'], ['ar', 'العربية']].map((l) => '<button class="chip" type="button" role="radio" data-action="setLang" data-arg="' + l[0] + '" aria-pressed="' + (LANG() === l[0]) + '" aria-checked="' + (LANG() === l[0]) + '">' + l[1] + '</button>').join('') + '</div></div>' +
+        '<div class="field"><span class="lbl">Langue de l’application</span><div class="chips" role="radiogroup" aria-label="Langue">' + [['fr', 'Français'], ['ar', 'العربية'], ['en', 'English']].map((l) => '<button class="chip" type="button" role="radio" data-action="setLang" data-arg="' + l[0] + '" aria-pressed="' + (LANG() === l[0]) + '" aria-checked="' + (LANG() === l[0]) + '">' + l[1] + '</button>').join('') + '</div></div>' +
         '<form data-submit="saveDevice" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="dv-name">Nom de ce poste</label><input class="input" id="dv-name" name="device" value="' + esc(DEVICE) + '"></div><button class="btn" type="submit">Enregistrer le poste</button></form>' +
         '<dl class="kv"><dt>Dolibarr</dt><dd class="mono" style="font-size:13px">' + esc(DOLI.url) + '</dd><dt>Sortie de stock</dt><dd>' + STOCK_MODES[stockMode()] + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>' + (VAT() ? '19 %' : 'non assujetti : prix sans TVA') + '</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.map(esc).join(', ') + '</dd></dl></section>' +
       '<form class="card card-pad" data-submit="changePw"><h2>Changer mon mot de passe</h2><div class="field"><label for="pw-old">Mot de passe actuel</label><input class="input" type="password" id="pw-old" autocomplete="current-password" required></div><div class="field"><label for="pw-new">Nouveau mot de passe</label><input class="input" type="password" id="pw-new" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères minimum</span></div><button class="btn btn-primary" type="submit">Enregistrer</button></form>' +
@@ -202,19 +202,21 @@ function importModal(m) {
 const renderModalBase = renderModal;
 renderModal = function () { return S.ui.modal && S.ui.modal.kind === 'import' ? importModal(S.ui.modal) : renderModalBase(); };
 
-/* =================================================================== ARABE : traduction de l'interface après chaque rendu */
-// Dictionnaire window.AR (i18n-ar.js) : texte français exact → arabe ; dans les clés, les nombres sont remplacés par #.
+/* =================================================================== ARABE, ANGLAIS : traduction de l'interface après chaque rendu */
+const dict = () => (LANG() === 'ar' ? window.AR : LANG() === 'en' ? window.EN : null);
+// Dictionnaires window.AR (i18n-ar.js) et window.EN (i18n-en.js) : texte français exact → arabe ; dans les clés, les nombres sont remplacés par #.
 const NUM_RE = /\d+(?:[   .,]\d+)*/g;
 function trText(t) {
   const core = t.trim();
   if (!core || !/[A-Za-zÀ-ÿ]/.test(core)) return t;
-  let out = window.AR[core];
+  const D = dict();
+  let out = D[core];
   if (out === undefined) {
-    const nums = core.match(NUM_RE) || [], hit = window.AR[core.replace(NUM_RE, '#')];
+    const nums = core.match(NUM_RE) || [], hit = D[core.replace(NUM_RE, '#')];
     if (hit !== undefined) { let i = 0; out = hit.replace(/#/g, () => (nums[i++] || '')); }
     else {
       // Textes composés (dates, mois…) : règles du dictionnaire.
-      const rule = (window.AR_RULES || []).find((r) => r[0].test(core));
+      const rule = ((LANG() === 'ar' ? window.AR_RULES : window.EN_RULES) || []).find((r) => r[0].test(core));
       if (!rule) return t;
       out = core.replace(rule[0], rule[1]);
     }
@@ -230,7 +232,36 @@ function translateDom(root) {
   document.title = trText(document.title);
 }
 const renderFr = render;
-render = function () { renderFr(); if (LANG() === 'ar' && window.AR) translateDom(document.getElementById('app')); };
+render = function () { renderFr(); if (dict()) translateDom(document.getElementById('app')); };
+/* =================================================================== IMPRESSION : bon d'achat par défaut */
+// Choix du format (bon d'achat, facture A4, ticket 80 mm) pour une facture.
+function printFormats(cur, action) {
+  return '<div class="chips" role="group" aria-label="Format" style="justify-content:center">' + [['bon', 'Bon d’achat'], ['a4', 'Facture A4'], ['ticket', 'Ticket 80 mm']].map((f) => '<button class="chip" type="button" data-action="' + action + '" data-arg="' + f[0] + '" aria-pressed="' + (cur === f[0]) + '">' + f[1] + '</button>').join('') + '</div>';
+}
+A.posPrintFmt = (el) => { posUi().pfmt = el.dataset.arg; };
+const posNextBase = A.posNext;
+A.posNext = (el, ev) => { posUi().pfmt = ''; return posNextBase(el, ev); };
+A.modalPrint = (el) => { const [ref, f] = el.dataset.arg.split(':'), d = doc(ref); S.ui.modal = { kind: 'print', ref, format: d && d.type === 'facture' ? 'bon' : (f || 'a4') }; };
+// Bon d'achat : enseigne et logo, pièces achetées, total, règlements et rendu ; sans mentions fiscales.
+const printDocBase = printDoc;
+printDoc = function (d, format) {
+  if (format !== 'bon') return printDocBase(d, format);
+  const shop = S.db.shop, c = client(d.client) || {}, lines = d.lines || [];
+  const row = (a, b, st) => '<div style="display:flex;justify-content:space-between;gap:16px' + (st || '') + '"><span>' + a + '</span><span>' + b + '</span></div>';
+  return '<div class="print-area bon">' +
+    '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start"><div style="display:flex;gap:10px;align-items:center">' +
+      (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:52px;width:auto;max-width:96px;object-fit:contain">' : '') +
+      '<div><b style="font-size:16px">' + esc(shop.name) + '</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + '</div></div>' +
+    '<div style="text-align:right"><b style="font-size:18px">BON D’ACHAT</b><br><span class="mono">' + esc(d.ref) + '</span>' + (d.saleRef ? '<br><span class="mono">' + esc(d.saleRef) + '</span>' : '') + '<br>' + dateFr(d.date) + '</div></div>' +
+    (c.fixed || !c.name ? '' : '<div>Client : <b>' + esc(c.name) + '</b>' + (c.phone ? ' · ' + esc(c.phone) : '') + '</div>') +
+    '<table><thead><tr><th>Désignation</th><th>Référence</th><th class="r">Qté</th><th class="r">Prix</th><th class="r">Total</th></tr></thead><tbody>' +
+      (lines.length ? lines.map((l) => { const p = part(l.pid) || {}; return '<tr><td>' + esc(p.name || '') + '</td><td>' + esc((p.brand ? p.brand + ' ' : '') + (p.ref || '')) + '</td><td class="r">' + l.qty + '</td><td class="r">' + fmt(l.price) + '</td><td class="r">' + fmt(l.price * l.qty) + '</td></tr>'; }).join('') : '<tr><td colspan="5">' + esc(d.desc) + '</td></tr>') + '</tbody></table>' +
+    '<div style="align-self:flex-end;min-width:min(240px,100%);display:flex;flex-direction:column;gap:2px">' + row('Total', fmt(d.ttc), ';font-weight:700;font-size:15px;border-top:1px solid #000;padding-top:4px') +
+      (d.payments || []).map((p) => row(esc(MODES[p.mode] || p.mode), fmt(p.amount))).join('') + (d.change ? row('Rendu monnaie', fmt(d.change)) : '') +
+      (d.type === 'facture' && d.paid < d.ttc ? row('Reste dû', fmt(d.ttc - d.paid)) : '') + '</div>' +
+    '<div style="text-align:center;margin-top:6px">Merci de votre visite</div></div>';
+};
+
 applyLang();
 
 boot();

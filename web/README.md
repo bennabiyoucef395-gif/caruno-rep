@@ -6,7 +6,7 @@ L'interface est celle de la maquette validée (`doc/maquette/caruno-maquette.htm
   On modifie la maquette (ou `tools/patch-from-mockup.mjs`, `tools/actions.js`), puis on régénère.
 - `caruno-dolibarr.js` : lecture des données Dolibarr dans la maquette et écritures (ventes, pièces, stock, clients, règlements, devis, commandes).
 - Profil du magasin (enseigne, adresse, identifiants, logo) : fichier `caruno-profil.json` dans les documents du client comptoir de Dolibarr, partagé par tous les postes. Langue et nom du poste : sur le poste.
-- Arabe : `i18n-ar.js` (texte français affiché → arabe, appliqué après chaque rendu, page en droite-à-gauche). Textes à traduire relevés par `node web/tools/collect-texts.mjs sortie.json`.
+- Arabe et anglais : `i18n-ar.js`, `i18n-en.js` (texte français affiché → arabe, appliqué après chaque rendu, page en droite-à-gauche). Textes à traduire relevés par `node web/tools/collect-texts.mjs sortie.json`.
 - Import de pièces (Excel, CSV, PDF) : bibliothèques `vendor/` (SheetJS 0.18.5, pdf.js 3.11.174, copiées de cdnjs).
 - La marque TIBAO (catalogue fournisseur importé) n’est jamais affichée.
 - Gardé sur le poste : commandes en cours, journal des ventes, session de caisse.

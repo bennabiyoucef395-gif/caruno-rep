@@ -170,6 +170,9 @@ window.AR = {
   'Particulier · prix Public': 'فرد · سعر العموم', 'Garage · prix Garage': 'ورشة · سعر الورشة', 'Revendeur · prix Gros': 'بائع جملة · سعر الجملة',
   'Particulier · niv. #': 'فرد · مستوى #', 'Garage · niv. #': 'ورشة · مستوى #', 'Revendeur · niv. #': 'بائع جملة · مستوى #', 'Particulier · Public': 'فرد · العموم', 'Garage · Garage': 'ورشة · الورشة', 'Revendeur · Gros': 'بائع جملة · الجملة',
   'Aucune pièce. Essayez la référence OEM ou une autre marque.': 'لا توجد قطعة. جرب مرجع OEM أو علامة أخرى.', 'Transférer ': 'تحويل', 'Commandes ': 'الطلبيات',
+
+  // ---- impression
+  'Bon d’achat': 'وصل شراء', 'BON D’ACHAT': 'وصل شراء', 'Client :': 'الزبون:',
 };
 // Textes composés : dates, mois, titres avec une référence.
 (function () {
@@ -184,6 +187,7 @@ window.AR = {
     [/^Paiement · (\S+)$/, (s, r) => 'الدفع · ' + r],
     [/^Client · (\S+)$/, (s, r) => 'الزبون · ' + r],
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'إغلاق الصندوق · ' + r],
+    [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'طباعة ' + ({ facture: 'فاتورة', devis: 'عرض سعر', commande: 'طلبية', livraison: 'تسليم', avoir: 'إشعار دائن' })[t] + ' ' + r],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'استيراد ' + f],
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم في Dolibarr حالياً.'],
   ];

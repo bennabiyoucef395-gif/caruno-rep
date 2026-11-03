@@ -132,8 +132,15 @@ rep("'</button></div><span>' + esc(S.db.shop.name) + '</span></div>'", "'</butto
 rep("<b>CARUNO</b><span style=\"font-size:12px;color:#C9CBD2;flex:1\">' + esc(S.db.shop.name) + '</span>", "' + shopMark(true) + '<span style=\"flex:1\"></span>");
 rep('<span class="brand2">CARUNO</span>', "<span class=\"brand2\">' + shopMark(true) + '</span>");
 rep("'Nouvelle pièce</a>' : '')", "'Nouvelle pièce</a><button class=\"btn\" type=\"button\" data-action=\"modalImport\">Importer</button>' : '')");
-// Traduction arabe : dictionnaire chargé avant l'interface.
-rep('<script src="caruno-dolibarr.js"></script>', '<script src="i18n-ar.js"></script>\n<script src="caruno-dolibarr.js"></script>');
+// Traductions arabe et anglaise : dictionnaires chargés avant l'interface.
+rep('<script src="caruno-dolibarr.js"></script>', '<script src="i18n-ar.js"></script>\n<script src="i18n-en.js"></script>\n<script src="caruno-dolibarr.js"></script>');
+
+// ---------- impression : bon d'achat par défaut, facture A4 ou ticket 80 mm au choix ----------
+rep(`printDoc(d, 'ticket') +
+      '<div class="actions" style="justify-content:center"><button class="btn btn-outline" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer le ticket</button><button class="btn btn-outline" type="button" data-action="modalPrint" data-arg="' + d.ref + ':a4">Facture A4</button>`,
+`printFormats(posUi().pfmt || 'bon', 'posPrintFmt') + printDoc(d, posUi().pfmt || 'bon') +
+      '<div class="actions" style="justify-content:center"><button class="btn btn-primary" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer</button>`);
+rep("[['a4', 'Format A4'], ['ticket', 'Ticket 80 mm']]", "(d.type === 'facture' ? [['bon', 'Bon d’achat'], ['a4', 'Facture A4'], ['ticket', 'Ticket 80 mm']] : [['a4', 'Format A4'], ['ticket', 'Ticket 80 mm']])");
 
 // ---------- rendu : écran de chargement tant que les données Dolibarr arrivent ----------
 rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) { app.innerHTML = viewLogin(); return; }\n  if (!S.ready) { app.innerHTML = viewLoading(); return; }");

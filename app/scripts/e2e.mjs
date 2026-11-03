@@ -26,6 +26,12 @@ const BASE = 'http://localhost:' + PORT;
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const errors = [];
 try {
+  // Données de test : assez de stock sur TEST-STK-002 (les essais précédents en vendent).
+  const g0 = (await api('login', '', { method: 'POST', body: JSON.stringify({ login: 'dev.gerant', password: secrets.TEST_PW_DEV_GERANT, reset: 0 }) })).success.token;
+  const st = await api('products/4/stock', g0);
+  const have = Number(st?.stock_warehouses?.['1']?.real || 0);
+  if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e' }) });
+
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 950 }, locale: 'fr-FR' });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
@@ -118,10 +124,13 @@ try {
   check('anglais : textes traduits, gauche-à-droite', /Settings/.test(await page.locator('body').innerText()) && (await page.evaluate(() => document.documentElement.dir)) === 'ltr');
   await page.getByTestId('lang-fr').click();
 
-  // 7. Pièces : le vendeur ne crée pas de pièce.
+  // 7. Pièces : le vendeur ne crée pas de pièce ; son menu suit ses droits Dolibarr.
   await page.goto(BASE + '/pieces');
   await page.getByTestId('pieces-q').waitFor();
   check('vendeur : pas de bouton « Nouvelle pièce »', !(await page.getByTestId('pieces-new').isVisible().catch(() => false)));
+  const navOf = async (p) => p.$$eval('[data-testid^="nav-"]', (els) => els.map((e) => e.getAttribute('data-testid').slice(4)).filter((x) => x !== 'toggle'));
+  const navV = await navOf(page);
+  check('vendeur : menu caisse, pièces, catalogue, stock, clients, ventes, scanner, profil', ['caisse', 'pieces', 'catalogue', 'stock', 'clients', 'ventes', 'scanner', 'profil'].every((x) => navV.includes(x)) && !navV.includes('achats') && !navV.includes('utilisateurs') && !navV.includes('reglements'), navV.join(','));
 
   // 8. Clôture de caisse (vendeur : rapport dans l'agenda, écritures bancaires laissées au responsable).
   await page.goto(BASE + '/caisse');
@@ -134,15 +143,26 @@ try {
 
   // 9. Gérant : nouvelle pièce depuis le catalogue commun.
   const ctxG = await browser.newContext({ viewport: { width: 1440, height: 950 }, locale: 'fr-FR' });
-  await ctxG.addInitScript((url) => { localStorage.setItem('caruno:device', JSON.stringify({ dolibarrUrl: url, deviceName: 'Bureau', lang: 'fr', catalogueUrl: '/catalogue/tibao-2025.json' })); }, DOLI);
+  await ctxG.addInitScript((url) => { if (!localStorage.getItem('caruno:device')) localStorage.setItem('caruno:device', JSON.stringify({ dolibarrUrl: url, deviceName: 'Bureau', lang: 'fr', catalogueUrl: '/catalogue/tibao-2025.json' })); }, DOLI);
   const pg = await ctxG.newPage();
   pg.on('pageerror', (e) => errors.push(e.message));
   await pg.goto(BASE + '/connexion');
   await pg.getByTestId('login-user').fill('dev.gerant');
   await pg.getByTestId('login-pw').fill(secrets.TEST_PW_DEV_GERANT);
   await pg.getByTestId('login-submit').click();
-  await pg.waitForURL('**/caisse', { timeout: 15000 });
-  await pg.goto(BASE + '/pieces');
+  await pg.waitForURL('**/tableau', { timeout: 15000 });
+  check('gérant connecté → tableau de bord', pg.url().endsWith('/tableau'));
+  await pg.getByText('Chiffre d’affaires du jour').waitFor({ timeout: 15000 });
+  await pg.waitForFunction(() => !document.body.innerText.includes('…'), null, { timeout: 15000 }).catch(() => {});
+  await pg.screenshot({ path: resolve(shots, '07a-tableau.png') });
+
+  // Liste des pièces sans recherche : toutes les pièces, les plus récentes d'abord.
+  await pg.getByTestId('nav-pieces').click();
+  await pg.getByTestId('pieces-q').waitFor();
+  await pg.getByText(/pièce\(s\), les plus récentes/).waitFor({ timeout: 15000 });
+  const rowsNoSearch = await pg.getByTestId('pieces-table').locator('[role="link"]').count();
+  check('pièces : liste remplie sans recherche', rowsNoSearch >= 20, String(rowsNoSearch));
+  await pg.screenshot({ path: resolve(shots, '07b-pieces-liste.png') });
   await pg.getByTestId('pieces-q').fill('TEST-STK');
   await pg.getByText('TEST-STK-001').first().waitFor({ timeout: 10000 }).catch(() => {});
   check('gérant : liste des pièces depuis Dolibarr', /TEST-STK-001/.test(await pg.locator('body').innerText()));
@@ -157,11 +177,68 @@ try {
   await pg.getByTestId('np-ref').fill(newRef);
   await pg.getByTestId('np-price').fill('1234');
   await pg.screenshot({ path: resolve(shots, '08-nouvelle-piece.png') });
+  await pg.getByTestId('np-qty').fill('4');
   await pg.getByTestId('np-create').click();
+  await pg.getByTestId('piece-screen').waitFor({ timeout: 15000 });
   await pg.getByText(newRef + ' créée', { exact: false }).waitFor({ timeout: 15000 }).catch(() => {});
+  check('après création : la fiche de la pièce s’ouvre avec un message', /\/pieces\/\d+/.test(pg.url()) && /créée dans Dolibarr/.test(await pg.locator('body').innerText()), pg.url());
+  check('fiche : stock initial 4 en Magasin', (await pg.getByTestId('piece-stock-1').innerText()).trim() === '4');
+  await pg.screenshot({ path: resolve(shots, '08b-fiche-piece.png') });
   const prods = await api('products?sqlfilters=' + encodeURIComponent("(t.ref:=:'" + newRef + "')"), gTok);
   const prod = Array.isArray(prods) ? prods[0] : null;
   check('Dolibarr : pièce créée, liée au catalogue (ref_ext)', prod && prod.ref_ext === 'tibao:420218' && prod.array_options?.options_oem_ref === '028145271K', JSON.stringify(prod && { ref_ext: prod.ref_ext, oem: prod.array_options?.options_oem_ref }));
+  await pg.getByTestId('page-back').click();
+  await pg.getByTestId('pieces-table').locator('[role="link"]').first().waitFor({ timeout: 15000 });
+  await pg.getByText(newRef).first().waitFor({ timeout: 15000 }).catch(() => {});
+  check('liste des pièces : la nouvelle pièce est en tête, sans recherche', (await pg.getByTestId('pieces-table').locator('[role="link"]').first().innerText()).includes(newRef));
+
+  // Correction de stock depuis la fiche.
+  await pg.getByTestId('pieces-table').locator('[role="link"]').first().click();
+  await pg.getByTestId('move-qty').fill('6');
+  await pg.getByTestId('move-go').click();
+  await pg.getByText('Correction +2 enregistrée', { exact: false }).waitFor({ timeout: 15000 }).catch(() => {});
+  await pg.waitForFunction(() => document.querySelector('[data-testid="piece-stock-1"]')?.textContent?.trim() === '6', null, { timeout: 15000 }).catch(() => {});
+  check('fiche : correction de stock 4 → 6', (await pg.getByTestId('piece-stock-1').innerText()).trim() === '6', await pg.getByTestId('piece-stock-1').innerText());
+
+  // Tous les écrans du menu gérant s'ouvrent sans erreur.
+  const navG = await navOf(pg);
+  check('gérant : menu complet', ['caisse', 'pieces', 'catalogue', 'stock', 'clients', 'ventes', 'achats', 'reglements', 'scanner', 'tableau', 'utilisateurs', 'profil'].every((x) => navG.includes(x)), navG.join(','));
+  for (const [nav, screen, text] of [['catalogue', 'catalogue-screen', 'Créer dans mon magasin'], ['stock', 'stock-screen', 'Alertes'], ['clients', 'clients-screen', 'TEST-STK'], ['ventes', 'ventes-screen', 'IN2'], ['achats', 'achats-screen', 'Commandes fournisseurs'], ['reglements', 'reglements-screen', 'Caisse'], ['scanner', 'scanner-screen', 'Douchette'], ['utilisateurs', 'users-screen', 'dev.vendeur'], ['profil', 'profil-screen', 'Ce que mon compte peut faire']]) {
+    await pg.getByTestId('nav-' + nav).click();
+    await pg.getByTestId(screen).waitFor({ timeout: 15000 });
+    await pg.getByText(text).first().waitFor({ timeout: 15000 }).catch(() => {});
+    const body = await pg.locator('body').innerText();
+    check('écran ' + nav + ' : affiché avec ses données', body.includes(text) && !/pas le droit|Erreur Dolibarr|injoignable/.test(body), body.slice(0, 160).replace(/\s+/g, ' '));
+    await pg.screenshot({ path: resolve(shots, '09-' + nav + '.png') });
+  }
+
+  // Fiche client, document de vente, encaissement visible ; scanner d'un code-barres connu.
+  await pg.getByTestId('nav-clients').click();
+  await pg.getByTestId('clients-table').locator('[role="link"]').first().click();
+  await pg.getByTestId('client-owed').waitFor({ timeout: 15000 });
+  check('fiche client : encours affiché', /DA/.test(await pg.getByTestId('client-owed').innerText()));
+  await pg.screenshot({ path: resolve(shots, '10-client.png') });
+  await pg.getByTestId('nav-ventes').click();
+  await pg.getByTestId('ventes-table').locator('[role="link"]').first().click();
+  await pg.getByTestId('doc-total').waitFor({ timeout: 15000 });
+  check('facture : total et lignes', /DA/.test(await pg.getByTestId('doc-total').innerText()));
+  await pg.screenshot({ path: resolve(shots, '11-facture.png') });
+  await pg.getByTestId('nav-scanner').click();
+  await pg.getByTestId('scan-code').fill('TEST-STK-001');
+  await pg.getByTestId('scan-code').press('Enter');
+  await pg.getByTestId('scan-result').waitFor({ timeout: 15000 }).catch(() => {});
+  check('scanner : pièce trouvée avec son stock', await pg.getByTestId('scan-result').isVisible().catch(() => false));
+  await pg.screenshot({ path: resolve(shots, '12-scanner.png') });
+
+  // Arabe sur un écran du back-office.
+  await pg.goto(BASE + '/parametres');
+  await pg.getByTestId('lang-ar').click();
+  await pg.goto(BASE + '/stock');
+  await pg.getByTestId('stock-screen').waitFor();
+  check('back-office en arabe', /المخزون/.test(await pg.locator('body').innerText()));
+  await pg.screenshot({ path: resolve(shots, '13-stock-ar.png') });
+  await pg.goto(BASE + '/parametres');
+  await pg.getByTestId('lang-fr').click();
 } catch (e) {
   ko++; console.log('ERR  ' + (e && e.message ? e.message.split('\n')[0] : e));
 } finally {

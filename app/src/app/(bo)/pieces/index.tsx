@@ -1,59 +1,53 @@
-// Liste des pièces du magasin : recherche directe dans Dolibarr (référence, OEM, marque, désignation, code-barres).
+// Liste des pièces du magasin, directement depuis Dolibarr : toutes les pièces, les plus récentes en tête
+// (une pièce créée apparaît tout de suite), recherche (référence, OEM, marque, désignation, code-barres) et filtre de stock.
 import { useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { Text, XStack, YStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 import { useApp, money } from '@/state/app';
 import type { Product } from '@/lib/dolibarr';
-import { Btn, Field, H1, Notice } from '@/components/ui';
+import { useLoad } from '@/lib/useLoad';
+import { Btn, Choice, Field, Notice, PageHead, Pager, Screen, Table, type Col } from '@/components/ui';
+import { StockBadge } from '@/components/StockBadge';
 import { C } from '@/theme/colors';
+
+const LIMIT = 50;
 
 export default function Pieces() {
   const { t } = useTranslation();
   const { api, auth } = useApp();
   const [q, setQ] = useState('');
-  const [rows, setRows] = useState<Product[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
+  const [query, setQuery] = useState('');
+  const [stock, setStock] = useState<'' | 'in' | 'out'>('');
+  const [page, setPage] = useState(0);
+  const da = t('common.da');
 
-  useEffect(() => {
-    if (q.trim().length < 2) { setRows([]); return; }
-    let live = true;
-    const h = setTimeout(async () => {
-      setBusy(true); setErr('');
-      try { const r = await api.searchProducts(q, 60); if (live) setRows(r); }
-      catch (e) { if (live) setErr((e as Error).message); }
-      finally { if (live) setBusy(false); }
-    }, 300);
-    return () => { live = false; clearTimeout(h); };
-  }, [q, api]);
+  // Recherche lancée après une courte pause de frappe.
+  useEffect(() => { const h = setTimeout(() => { setQuery(q.trim()); setPage(0); }, 300); return () => clearTimeout(h); }, [q]);
+  const { data, error, loading } = useLoad(() => api.listProducts({ q: query, stock, page, limit: LIMIT }), [api, query, stock, page]);
+
+  const cols: Col<Product>[] = [
+    { key: 'p', label: t('pieces.piece'), flex: 3, render: (p) => <YStack><Text fontWeight="600" numberOfLines={2}>{p.label}</Text>{p.brand ? <Text fontSize={12} color={C.muted}>{p.brand}</Text> : null}</YStack> },
+    { key: 'r', label: t('pieces.refOem'), flex: 2, render: (p) => <YStack><Text fontSize={13}>{p.ref}</Text>{p.oem ? <Text fontSize={12} color={C.muted}>{p.oem}</Text> : null}</YStack> },
+    { key: 'l', label: t('pieces.location'), width: 90, render: (p) => p.location || '—' },
+    { key: 's', label: t('pieces.stock'), width: 80, align: 'right', render: (p) => <Text fontWeight="700" color={p.stock > 0 ? C.ink : C.bad}>{p.stock}</Text> },
+    { key: 'e', label: t('pieces.state'), width: 120, render: (p) => <StockBadge p={p} /> },
+    { key: 'pr', label: t('pieces.public'), width: 110, align: 'right', render: (p) => (p.prices[0] ? money(p.prices[0], da) : '—') },
+    ...(auth.cap?.seeCost ? [{ key: 'c', label: t('pieces.cost'), width: 100, align: 'right' as const, render: (p: Product) => <Text color={C.muted}>{p.cost ? money(p.cost, da) : '—'}</Text> }] : []),
+  ];
 
   return (
-    <YStack flex={1} padding={22} gap={14}>
-      <XStack justifyContent="space-between" alignItems="flex-end" flexWrap="wrap" gap={10}>
-        <YStack><H1>{t('pieces.title')}</H1><Text color={C.muted}>{busy ? t('common.loading') : t('pieces.count', { n: rows.length })}</Text></YStack>
-        {auth.cap?.createProduct ? <Btn label={'+ ' + t('pieces.new')} variant="primary" onPress={() => router.push('/pieces/nouvelle')} testID="pieces-new" /> : null}
+    <Screen testID="pieces-screen">
+      <PageHead title={t('pieces.title')} sub={data ? t('pieces.count', { n: data.total.toLocaleString('fr-FR') }) : t('common.loading')}
+        actions={auth.cap?.createProduct ? <Btn label={'+ ' + t('pieces.new')} variant="primary" onPress={() => router.push('/pieces/nouvelle')} testID="pieces-new" /> : null} />
+      <XStack gap={12} flexWrap="wrap" alignItems="flex-end">
+        <YStack flexGrow={3} minWidth={260}><Field placeholder={t('pieces.search')} value={q} onChangeText={setQ} autoFocus autoCapitalize="none" testID="pieces-q" /></YStack>
+        <Choice value={stock} onChange={(v) => { setStock(v); setPage(0); }} options={[['', t('pieces.allStock')], ['in', t('pieces.inStock')], ['out', t('pieces.out')]]} testID="pieces-stock" />
       </XStack>
-      <Field placeholder={t('pieces.search')} value={q} onChangeText={setQ} autoFocus autoCapitalize="none" testID="pieces-q" />
-      {err ? <Notice tone="bad">{err}</Notice> : null}
-      <FlatList
-        data={rows}
-        keyExtractor={(p) => String(p.id)}
-        style={{ backgroundColor: C.surface, borderRadius: 14, borderWidth: 1, borderColor: C.line }}
-        ListEmptyComponent={<Text padding={24} color={C.muted} textAlign="center">{t('pieces.none')}</Text>}
-        renderItem={({ item: p }) => (
-          <XStack paddingHorizontal={14} paddingVertical={10} borderBottomWidth={1} borderColor={C.line2} gap={12} alignItems="center">
-            <YStack flex={1} minWidth={0}>
-              <Text fontWeight="600" numberOfLines={1}>{p.label}</Text>
-              <Text fontSize={12} color={C.muted} numberOfLines={1}>{[p.brand, p.ref, p.oem && 'OEM ' + p.oem].filter(Boolean).join(' · ')}</Text>
-            </YStack>
-            <Text width={90} textAlign="right" color={p.stock > 0 ? C.ok : C.bad} fontWeight="700">{p.stock}</Text>
-            <Text width={110} textAlign="right" fontWeight="700">{money(p.prices[0], t('common.da'))}</Text>
-            {auth.cap?.seeCost ? <Text width={100} textAlign="right" color={C.muted}>{money(p.cost, t('common.da'))}</Text> : null}
-          </XStack>
-        )}
-      />
-    </YStack>
+      {error ? <Notice tone="bad">{error}</Notice> : null}
+      <Table cols={cols} rows={data?.items || []} keyOf={(p) => p.id} onPress={(p) => router.push(('/pieces/' + p.id) as never)} minWidth={auth.cap?.seeCost ? 900 : 800}
+        empty={loading ? t('common.loading') : t('pieces.none')} testID="pieces-table" />
+      {data ? <Pager page={page} total={data.total} limit={LIMIT} onPage={setPage} label={(p, n) => t('common.page', { p, n })} /> : null}
+    </Screen>
   );
 }

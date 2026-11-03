@@ -55,9 +55,25 @@ Vérifié en vendeur : création, validation (numéro définitif, stock −1), p
 - Le vendeur de dev **n'a pas** le droit « banque » (vérifié : `POST /bankaccounts/{id}/lines` refusé). Ses clôtures laissent les écritures à un responsable.
 - **À décider** : donner au vendeur le droit d'écrire sur le compte Caisse, ou garder la validation par un responsable.
 
-## 7. Encore à faire
+## 7. Écrans du back-office
+
+Repris de la maquette, branchés sur Dolibarr. Le menu suit les droits Dolibarr de l'utilisateur ; l'accueil dépend du rôle (responsables au tableau de bord, vendeurs à la caisse, magasiniers au stock).
+
+| Écran | Contenu | Écritures dans Dolibarr |
+|---|---|---|
+| Pièces | Toutes les pièces, les plus récentes en tête, recherche, filtre de stock ; fiche (stock par entrepôt, 3 niveaux de prix, équivalences OEM, fournisseurs, mouvements) | Création, modification (prix par niveau, seuils, emplacement), correction et transfert de stock |
+| Catalogue | Catalogue commun CARUNO, « Créer dans mon magasin » | Création de pièce pré-remplie |
+| Stock | Pièces sous le seuil d'alerte, journal des mouvements | — (depuis la fiche pièce) |
+| Clients | Liste, fiche (encours, plafond, impayés, factures), formulaire | Création, modification, niveau de prix (`setpricelevel`) |
+| Ventes | Devis, commandes, livraisons, factures, avoirs ; document avec lignes et paiements | Encaissement du reste dû d'une facture |
+| Achats | Commandes fournisseurs, fournisseurs | — |
+| Règlements | Soldes Caisse / Banque, opérations, impayés | — |
+| Tableau de bord | Chiffre du jour et du mois, ventes par vendeur, caisse du poste, alertes, ventes interrompues | — |
+| Utilisateurs, Mon profil, Scanner | Comptes et groupes ; droits vus par l'app ; douchette USB | — |
+
+## 8. Encore à faire
 
 - Profil magasin commun (§3), droit banque du vendeur (§6), hébergement du catalogue (§2).
 - Déconnexion de tous les appareils (`/login` avec `reset=1` demande le mot de passe).
 - Mode « sortie à l'expédition » et TVA dans l'enchaînement de vente (aujourd'hui : mode facture, magasin sans TVA).
-- Plusieurs commandes en parallèle, remboursements / avoirs, impression du ticket, remise client, tableau de bord, jeu d'icônes, application mobile (build EAS).
+- Devis et commandes à créer depuis l'app, réception des commandes fournisseurs, retours et avoirs, remise de chèques, inventaire au scan, photos des pièces, impression du ticket, caméra (application mobile, build EAS).

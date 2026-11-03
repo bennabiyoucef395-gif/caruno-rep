@@ -5,6 +5,15 @@ import { initReactI18next } from 'react-i18next';
 import { getLocales } from 'expo-localization';
 import { I18nManager, Platform } from 'react-native';
 import { fr, ar, en } from './locales';
+import { boFr, boAr, boEn } from './backoffice';
+
+// Fusion profonde des textes du back-office dans ceux de base (mêmes rubriques, ex. « nav »).
+type Tree = { [k: string]: string | Tree };
+function merge(a: Tree, b: Tree): Tree {
+  const out: Tree = { ...a };
+  for (const [k, v] of Object.entries(b)) out[k] = typeof v === 'object' && typeof out[k] === 'object' ? merge(out[k] as Tree, v) : v;
+  return out;
+}
 
 export const LANGUAGES = [
   { code: 'fr', label: 'Français', rtl: false },
@@ -21,7 +30,7 @@ export function deviceLanguage(): Lang {
 export const isRtl = (lang: string) => !!LANGUAGES.find((l) => l.code === lang)?.rtl;
 
 i18n.use(initReactI18next).init({
-  resources: { fr: { translation: fr }, ar: { translation: ar }, en: { translation: en } },
+  resources: { fr: { translation: merge(fr, boFr) }, ar: { translation: merge(ar, boAr) }, en: { translation: merge(en, boEn) } },
   lng: 'fr',
   fallbackLng: 'fr',
   interpolation: { escapeValue: false },

@@ -37,3 +37,11 @@ export function suggest(q: string, limit = 8): CatalogueItem[] {
   }
   return exact.concat(partial).slice(0, limit);
 }
+
+// Consultation du catalogue (écran Catalogue) : tout le catalogue page par page, ou les fiches qui contiennent la recherche.
+export function browse(q: string, page: number, size = 50): { items: CatalogueItem[]; total: number } {
+  if (!cache) return { items: [], total: 0 };
+  const n = norm(q);
+  const list = n.length < 2 ? cache.items : suggest(q, 400);
+  return { items: list.slice(page * size, page * size + size), total: list.length };
+}

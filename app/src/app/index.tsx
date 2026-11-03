@@ -11,5 +11,7 @@ export default function Index() {
   if (!ready) return <YStack flex={1} alignItems="center" justifyContent="center" backgroundColor={C.bg}><Text color={C.muted}>{t('common.loading')}</Text></YStack>;
   if (!device.dolibarrUrl) return <Redirect href="/parametres" />;
   if (!auth.token) return <Redirect href="/connexion" />;
-  return <Redirect href={auth.cap?.sell ? '/caisse' : '/pieces'} />;
+  // Accueil par rôle, comme la maquette : responsables au tableau de bord, vendeurs à la caisse, magasiniers au stock.
+  const c = auth.cap;
+  return <Redirect href={c?.bankRead || c?.users ? '/tableau' : c?.sell ? '/caisse' : c?.stockMoves ? '/stock' : '/pieces'} />;
 }

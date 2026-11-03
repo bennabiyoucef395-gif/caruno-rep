@@ -72,6 +72,39 @@ async function main() {
   const ev = await v.addAgendaEvent(me.id, 'Essai rapport de caisse (api-smoke)', 'Rapport de session de test.');
   check('vendeur : événement d’agenda (rapport de caisse) créé', ev > 0);
 
+  // Back-office (gérant) : pièce créée visible en tête de liste, prix par niveau, mouvements, clients, documents.
+  const stamp = Date.now().toString(36).toUpperCase();
+  const pid = await g.createProduct({ ref: 'CARUNO-T-' + stamp, label: 'Essai back-office ' + stamp, brand: 'TEST', oem: '1k0 615 301', price: 1000, prices: [1000, 900, 800], alert: 2, location: 'T-01' });
+  const first = await g.listProducts({ limit: 5 });
+  check('pièce créée : en tête de la liste sans recherche', first.items[0]?.id === pid && first.total > 1, first.items.map((p) => p.ref).join(','));
+  const card = await g.productFull(pid);
+  check('pièce : 3 niveaux de prix, seuil, emplacement, OEM normalisé', card.prices.join('/') === '1000/900/800' && card.alert === 2 && card.location === 'T-01' && card.oem === '1K0615301', JSON.stringify([card.prices, card.alert, card.location, card.oem]));
+  await g.updateProduct(pid, { prices: [1200, 1100, 1000], label: 'Essai modifié ' + stamp });
+  const edited = await g.productFull(pid);
+  check('pièce modifiée : prix et désignation', edited.prices.join('/') === '1200/1100/1000' && edited.label === 'Essai modifié ' + stamp, JSON.stringify([edited.prices, edited.label]));
+  await g.addMovement(pid, 1, 5, 'Stock initial CARUNO (api-smoke)');
+  await g.addMovement(pid, 1, -2, 'Transfert CARUNO');
+  await g.addMovement(pid, 2, 2, 'Transfert CARUNO');
+  const moved = await g.productFull(pid);
+  check('mouvements : stock par entrepôt (Magasin 3, Réserve 2)', moved.byWarehouse[1] === 3 && moved.byWarehouse[2] === 2, JSON.stringify(moved.byWarehouse));
+  check('mouvements de la pièce lus (3)', (await g.movements({ productId: pid })).items.length === 3);
+  check('recherche dans la liste : par OEM avec espaces', (await g.listProducts({ q: '1K0 615 301' })).items.some((p) => p.id === pid));
+  check('filtre « rupture » : la pièce en stock n’y est pas', !(await g.listProducts({ q: stamp, stock: 'out' })).items.some((p) => p.id === pid));
+  const cid = await g.saveCustomer(null, { name: 'Garage essai ' + stamp, phone: '0550000000', town: 'Alger', priceLevel: 2, outstandingLimit: 50000 });
+  const cust = await g.customer(cid);
+  check('client créé : niveau Garage, plafond', cust.priceLevel === 2 && cust.outstandingLimit === 50000 && cust.town === 'Alger', JSON.stringify(cust));
+  check('noms des tiers par identifiants', (await g.names([cid, 5]))[cid] === 'Garage essai ' + stamp);
+  const invs = await g.listDocs('invoice', { limit: 5 });
+  check('factures listées (pagination)', invs.items.length > 0 && invs.total >= invs.items.length);
+  const doc = await g.doc('invoice', id);
+  check('facture : lignes et paiements', doc.lines.length === 1 && (doc.payments || []).length === 1 && doc.paid, JSON.stringify({ l: doc.lines.length, p: doc.payments }));
+  check('tableau de bord : factures du jour', (await g.invoicesSince(new Date().toISOString().slice(0, 10))).some((d) => d.id === id));
+  check('comptes bancaires et soldes (gérant)', (await g.bankAccounts()).some((a) => a.ref === 'CAISSE'));
+  check('utilisateurs et groupes (gérant)', (await g.users()).some((u) => u.login === 'dev.vendeur' && u.groups.includes('Vendeur')));
+  let usersRefused = false; try { await v.users(); } catch (e) { usersRefused = (e as DolibarrError).status === 403; }
+  check('vendeur : liste des utilisateurs refusée', usersRefused);
+  check('libellés décodés (entités HTML)', !/&\w+;/.test((await g.movements({ limit: 20 })).items.map((m) => m.label).join(' ')));
+
   console.log('\n' + ok + ' OK, ' + ko + ' échec(s)');
   process.exit(ko ? 1 : 0);
 }

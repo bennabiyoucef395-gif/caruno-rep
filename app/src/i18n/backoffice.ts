@@ -1,0 +1,177 @@
+// Textes des écrans du back-office (pièces, catalogue, stock, clients, ventes, achats, règlements, tableau de bord,
+// utilisateurs, profil, scanner), fusionnés avec locales.ts. Le français fait référence.
+
+export const boFr = {
+  common: { date: 'Date', page: 'Page {{p}} / {{n}}' },
+  nav: {
+    catalogue: 'Catalogue', stock: 'Stock', clients: 'Clients', ventes: 'Ventes', achats: 'Achats', reglements: 'Règlements',
+    scanner: 'Scanner', utilisateurs: 'Utilisateurs', profil: 'Mon profil',
+  },
+  pieces: {
+    piece: 'Pièce', refOem: 'Réf. / OEM', location: 'Empl.', state: 'État', public: 'Public', cost: 'Coût PMP',
+    allStock: 'Tous les stocks', inStock: 'En stock', out: 'Rupture', low: 'Sous le seuil',
+    count: '{{n}} pièce(s), les plus récentes en premier', none: 'Aucune pièce ne correspond.',
+  },
+  piece: {
+    notFound: 'Pièce introuvable', fromCatalogue: 'Catalogue CARUNO', sell: 'Ajouter à la vente', edit: 'Modifier',
+    thresholds: 'Seuil d’alerte {{a}} · stock souhaité {{d}}', prices: 'Prix de vente', minPrice: 'Prix minimum {{v}}',
+    cost: 'Coût moyen (PMP) : {{v}}', costHidden: 'Coût masqué pour votre compte.',
+    equivalents: 'Équivalences', noEquivalent: 'Aucune autre pièce avec cet OEM.', noOem: 'Pas d’OEM : renseignez-le pour trouver les équivalences.',
+    suppliers: 'Fournisseurs', supplier: 'Fournisseur', supplierRef: 'Réf. fournisseur', buyPrice: 'Prix d’achat', delay: 'Délai', noSupplier: 'Aucun prix fournisseur.',
+    moves: 'Derniers mouvements', noMove: 'Aucun mouvement.', reason: 'Motif', warehouse: 'Entrepôt',
+    stockMove: 'Mouvement de stock', count: 'Corriger (compté)', transfer: 'Transférer', from: 'De', to: 'Vers',
+    counted: 'Quantité comptée (actuel : {{n}})', applyCount: 'Appliquer la correction', countSame: 'Rien à corriger : le compte est bon.',
+    countDone: 'Correction {{d}} enregistrée dans Dolibarr.', transferDone: '{{n}} pièce(s) transférée(s).', notEnough: 'Stock insuffisant ({{n}}).',
+    identification: 'Identification', oemHint: 'Sans espaces ni points : sert aux équivalences', alert: 'Seuil d’alerte', desired: 'Stock souhaité',
+    samePublic: 'Vide = prix public', initQty: 'Stock initial', initQtyHint: 'Crée un mouvement « stock initial ».',
+    requiredHint: 'Les champs * sont obligatoires. Choisissez d’abord une fiche du catalogue si elle existe.', editTitle: 'Modifier la pièce', backToCard: 'Retour à la fiche',
+  },
+  catalogue: {
+    title: 'Catalogue', sub: 'Catalogue commun CARUNO · {{n}} fiches · hors Dolibarr', search: 'Référence, OEM, désignation, marque, véhicule…',
+    hint: 'Le catalogue est commun à toutes les boutiques. « Créer dans mon magasin » ouvre une nouvelle pièce pré-remplie : vous ajoutez le prix et le stock.',
+    vehicles: 'Véhicules', create: 'Créer dans mon magasin', none: 'Aucune fiche ne correspond.',
+  },
+  stock: {
+    title: 'Stock', sub: 'Alertes et mouvements de tous les entrepôts', alerts: 'Alertes ({{n}})', moves: 'Mouvements',
+    toOrder: 'À commander', noAlert: 'Aucune pièce sous son seuil d’alerte. Les seuils se règlent sur la fiche de chaque pièce.', noAlertShort: 'Aucune alerte.',
+    correct: 'Corriger / transférer une pièce',
+  },
+  clients: {
+    title: 'Clients', count: '{{n}} client(s)', search: 'Nom, ville, téléphone…', new: 'Nouveau client', none: 'Aucun client.',
+    client: 'Client', category: 'Catégorie', town: 'Ville', phone: 'Téléphone', email: 'E-mail', limit: 'Plafond', address: 'Adresse',
+    cat1: 'Particulier', cat2: 'Garage', cat3: 'Revendeur', notFound: 'Client introuvable', sell: 'Vente comptoir',
+    outstanding: 'Encours', ofLimit: 'sur un plafond de {{v}}', noCredit: 'pas de crédit autorisé', late: 'En retard', openInvoices: 'Factures ouvertes',
+    identity: 'Identifiants', ai: 'Article d’imposition', unpaid: 'Factures impayées', nothingDue: 'Rien à payer.', lastInvoices: 'Dernières factures',
+    discountShort: 'remise {{n}} %', editTitle: 'Modifier le client', contact: 'Coordonnées', company: 'Raison sociale', fullName: 'Nom et prénom',
+    legal: 'Identifiants légaux', terms: 'Conditions commerciales', discount: 'Remise client %', limitDa: 'Plafond d’encours (DA)', limitHint: '0 = pas de vente à crédit',
+    create: 'Créer le client', nameRequired: 'Le nom est obligatoire.', notAllowed: 'Votre compte ne peut pas créer ou modifier de clients.',
+  },
+  ventes: {
+    title: 'Ventes', sub: 'Devis, commandes, livraisons, factures et avoirs', proposals: 'Devis', orders: 'Commandes', shipments: 'Livraisons',
+    invoices: 'Factures', credits: 'Avoirs', search: 'Référence…', none: 'Aucun document.', unpaidOnly: 'Impayées seulement',
+    counterSale: 'Vente comptoir', noRight: 'Votre compte ne voit aucun document de vente.',
+  },
+  doc: {
+    ref: 'Référence', status: 'Statut', remain: 'Reste dû', lines: 'Lignes', unit: 'Prix unitaire', alreadyPaid: 'Déjà payé', payments: 'Paiements',
+    due: 'échéance {{d}}', notFound: 'Document introuvable', privateNote: 'Note privée (prix modifiés en caisse)',
+    settle: 'Encaisser un règlement', settleBtn: 'Enregistrer le règlement',
+    kind_proposal: 'Devis', kind_order: 'Commande', kind_shipment: 'Livraison', kind_invoice: 'Facture', kind_credit: 'Avoir', kind_supplierOrder: 'Commande fournisseur',
+    mode_LIQ: 'Espèces', mode_CHQ: 'Chèque', mode_VIR: 'Virement', mode_CB: 'Carte',
+    draft: 'Brouillon', paid: 'Payée', unpaid: 'Impayée', partial: 'Partielle', abandoned: 'Abandonnée', used: 'Utilisé', canceled: 'Annulé',
+    sent: 'Envoyé', signed: 'Signé', refused: 'Refusé', billed: 'Facturé', validated: 'Validé', shipping: 'En livraison', delivered: 'Livré', closed: 'Clôturé',
+    approved: 'Approuvée', ordered: 'Commandée', partReceived: 'Reçue en partie', received: 'Reçue',
+  },
+  achats: {
+    title: 'Achats', sub: 'Commandes fournisseurs et fournisseurs', orders: 'Commandes fournisseurs', suppliers: 'Fournisseurs',
+    noOrder: 'Aucune commande fournisseur.', noSupplier: 'Aucun fournisseur.',
+  },
+  reg: {
+    title: 'Règlements', sub: 'Comptes du magasin et factures à encaisser', balance: 'solde dans Dolibarr', unpaidTotal: 'Reste à encaisser',
+    unpaidCount: '{{n}} facture(s) impayée(s)', unpaid: 'Impayés', dueDate: 'Échéance', operation: 'Opération', type: 'Type', noLine: 'Aucune opération.',
+  },
+  dash: {
+    caDay: 'Chiffre d’affaires du jour', caMonth: 'Chiffre du mois', unpaid: 'Impayés clients', alerts: 'Pièces sous le seuil',
+    salesCount: '{{n}} vente(s) · panier moyen {{avg}}', invoicesCount: '{{n}} facture(s) et avoir(s)', late: '{{n}} facture(s) en retard', alertsSub: 'à réapprovisionner',
+    bySeller: 'Ventes du jour par vendeur', sales: '{{n}} vente(s)', noSale: 'Aucune vente aujourd’hui.',
+    register: 'Caisse de ce poste', sessionOpen: 'Ouverte le {{t}} par {{by}}', expected: 'Espèces attendues : {{v}} ({{n}} vente(s))',
+    check: 'À vérifier', interrupted: 'Vente {{sale}} du {{t}} ({{v}}) interrompue : reprenez-la depuis la caisse.', noInterrupted: 'Aucune vente interrompue sur ce poste.',
+    alertsNotice: '{{n}} pièce(s) sous le seuil d’alerte.', lateNotice: '{{n}} facture(s) client en retard de paiement.',
+  },
+  users: {
+    title: 'Utilisateurs', sub: 'Comptes Dolibarr du magasin et leur rôle', name: 'Nom', role: 'Rôle (groupe)', state: 'État',
+    active: 'Actif', disabled: 'Désactivé', you: 'Vous', admin: 'Administrateur', updated: 'Lu dans Dolibarr le {{d}}',
+    hint: 'Créer, désactiver un compte ou changer son groupe se fait dans Dolibarr (droit « utilisateurs : créer »).',
+  },
+  profil: {
+    title: 'Mon profil', rights: 'Ce que mon compte peut faire', rightsHint: 'Lu dans les droits Dolibarr de votre compte à la connexion.',
+    sell: 'Vendre à la caisse', cost: 'Voir les coûts d’achat', createProduct: 'Créer et modifier des pièces', stockMoves: 'Corriger et transférer le stock',
+    customers: 'Voir les clients', purchases: 'Voir les achats', bank: 'Écrire sur les comptes (banque)', users: 'Voir les utilisateurs',
+    shop: 'Magasin et poste', levels: 'Niveaux de prix',
+  },
+  scanner: {
+    title: 'Scanner', sub: 'Douchette USB ou saisie du code, puis Entrée', placeholder: 'Code-barres, référence ou OEM puis Entrée',
+    unknown: 'Code « {{c}} » inconnu.', createHint: 'Créez la pièce depuis Pièces → Nouvelle pièce.', card: 'Fiche de la pièce',
+  },
+};
+
+type Dict = { [k: string]: string | Dict };
+
+export const boEn: Dict = {
+  common: { date: 'Date', page: 'Page {{p}} / {{n}}' },
+  nav: { catalogue: 'Catalogue', stock: 'Stock', clients: 'Customers', ventes: 'Sales', achats: 'Purchases', reglements: 'Payments', scanner: 'Scanner', utilisateurs: 'Users', profil: 'My profile' },
+  pieces: { piece: 'Part', refOem: 'Ref. / OEM', location: 'Loc.', state: 'State', public: 'Public', cost: 'Avg cost', allStock: 'All stock', inStock: 'In stock', out: 'Out of stock', low: 'Below threshold', count: '{{n}} part(s), newest first', none: 'No matching part.' },
+  piece: {
+    notFound: 'Part not found', fromCatalogue: 'CARUNO catalogue', sell: 'Add to sale', edit: 'Edit', thresholds: 'Alert threshold {{a}} · desired stock {{d}}', prices: 'Selling prices', minPrice: 'Minimum price {{v}}',
+    cost: 'Average cost: {{v}}', costHidden: 'Cost hidden for your account.', equivalents: 'Equivalents', noEquivalent: 'No other part with this OEM.', noOem: 'No OEM: fill it in to find equivalents.',
+    suppliers: 'Suppliers', supplier: 'Supplier', supplierRef: 'Supplier ref.', buyPrice: 'Purchase price', delay: 'Lead time', noSupplier: 'No supplier price.',
+    moves: 'Latest movements', noMove: 'No movement.', reason: 'Reason', warehouse: 'Warehouse', stockMove: 'Stock movement', count: 'Correct (counted)', transfer: 'Transfer', from: 'From', to: 'To',
+    counted: 'Counted quantity (now: {{n}})', applyCount: 'Apply correction', countSame: 'Nothing to correct.', countDone: 'Correction {{d}} saved in Dolibarr.', transferDone: '{{n}} part(s) transferred.', notEnough: 'Not enough stock ({{n}}).',
+    identification: 'Identification', oemHint: 'No spaces or dots: used for equivalents', alert: 'Alert threshold', desired: 'Desired stock', samePublic: 'Empty = public price', initQty: 'Initial stock', initQtyHint: 'Creates an “initial stock” movement.',
+    requiredHint: 'Fields marked * are required. Pick a catalogue sheet first if it exists.', editTitle: 'Edit part', backToCard: 'Back to the part',
+  },
+  catalogue: { title: 'Catalogue', sub: 'Shared CARUNO catalogue · {{n}} sheets · outside Dolibarr', search: 'Reference, OEM, name, brand, vehicle…', hint: 'The catalogue is shared by all shops. “Create in my shop” opens a pre-filled new part: you add price and stock.', vehicles: 'Vehicles', create: 'Create in my shop', none: 'No matching sheet.' },
+  stock: { title: 'Stock', sub: 'Alerts and movements for all warehouses', alerts: 'Alerts ({{n}})', moves: 'Movements', toOrder: 'To order', noAlert: 'No part below its alert threshold. Thresholds are set on each part.', noAlertShort: 'No alert.', correct: 'Correct / transfer a part' },
+  clients: {
+    title: 'Customers', count: '{{n}} customer(s)', search: 'Name, town, phone…', new: 'New customer', none: 'No customer.', client: 'Customer', category: 'Category', town: 'Town', phone: 'Phone', email: 'E-mail', limit: 'Limit', address: 'Address',
+    cat1: 'Individual', cat2: 'Garage', cat3: 'Reseller', notFound: 'Customer not found', sell: 'Counter sale', outstanding: 'Outstanding', ofLimit: 'of a {{v}} limit', noCredit: 'no credit allowed', late: 'Overdue', openInvoices: 'Open invoices',
+    identity: 'Identifiers', ai: 'Tax article', unpaid: 'Unpaid invoices', nothingDue: 'Nothing due.', lastInvoices: 'Latest invoices', discountShort: '{{n}} % discount', editTitle: 'Edit customer', contact: 'Contact', company: 'Company name', fullName: 'Full name',
+    legal: 'Legal identifiers', terms: 'Commercial terms', discount: 'Customer discount %', limitDa: 'Credit limit (DA)', limitHint: '0 = no credit sale', create: 'Create customer', nameRequired: 'Name is required.', notAllowed: 'Your account cannot create or edit customers.',
+  },
+  ventes: { title: 'Sales', sub: 'Quotes, orders, deliveries, invoices and credit notes', proposals: 'Quotes', orders: 'Orders', shipments: 'Deliveries', invoices: 'Invoices', credits: 'Credit notes', search: 'Reference…', none: 'No document.', unpaidOnly: 'Unpaid only', counterSale: 'Counter sale', noRight: 'Your account sees no sales document.' },
+  doc: {
+    ref: 'Reference', status: 'Status', remain: 'Due', lines: 'Lines', unit: 'Unit price', alreadyPaid: 'Already paid', payments: 'Payments', due: 'due {{d}}', notFound: 'Document not found', privateNote: 'Private note (prices changed at the till)',
+    settle: 'Record a payment', settleBtn: 'Save payment', kind_proposal: 'Quote', kind_order: 'Order', kind_shipment: 'Delivery', kind_invoice: 'Invoice', kind_credit: 'Credit note', kind_supplierOrder: 'Supplier order',
+    mode_LIQ: 'Cash', mode_CHQ: 'Cheque', mode_VIR: 'Transfer', mode_CB: 'Card', draft: 'Draft', paid: 'Paid', unpaid: 'Unpaid', partial: 'Partial', abandoned: 'Abandoned', used: 'Used', canceled: 'Canceled',
+    sent: 'Sent', signed: 'Signed', refused: 'Refused', billed: 'Billed', validated: 'Validated', shipping: 'Shipping', delivered: 'Delivered', closed: 'Closed', approved: 'Approved', ordered: 'Ordered', partReceived: 'Partly received', received: 'Received',
+  },
+  achats: { title: 'Purchases', sub: 'Supplier orders and suppliers', orders: 'Supplier orders', suppliers: 'Suppliers', noOrder: 'No supplier order.', noSupplier: 'No supplier.' },
+  reg: { title: 'Payments', sub: 'Shop accounts and invoices to collect', balance: 'balance in Dolibarr', unpaidTotal: 'To collect', unpaidCount: '{{n}} unpaid invoice(s)', unpaid: 'Unpaid', dueDate: 'Due date', operation: 'Operation', type: 'Type', noLine: 'No operation.' },
+  dash: {
+    caDay: 'Today’s sales', caMonth: 'This month', unpaid: 'Customer unpaid', alerts: 'Parts below threshold', salesCount: '{{n}} sale(s) · average {{avg}}', invoicesCount: '{{n}} invoice(s) and credit note(s)', late: '{{n}} overdue invoice(s)', alertsSub: 'to restock',
+    bySeller: 'Today’s sales by seller', sales: '{{n}} sale(s)', noSale: 'No sale today.', register: 'This device’s till', sessionOpen: 'Opened {{t}} by {{by}}', expected: 'Expected cash: {{v}} ({{n}} sale(s))',
+    check: 'To check', interrupted: 'Sale {{sale}} of {{t}} ({{v}}) interrupted: resume it from the till.', noInterrupted: 'No interrupted sale on this device.', alertsNotice: '{{n}} part(s) below alert threshold.', lateNotice: '{{n}} customer invoice(s) overdue.',
+  },
+  users: { title: 'Users', sub: 'Shop Dolibarr accounts and their role', name: 'Name', role: 'Role (group)', state: 'State', active: 'Active', disabled: 'Disabled', you: 'You', admin: 'Administrator', updated: 'Read from Dolibarr on {{d}}', hint: 'Creating, disabling an account or changing its group is done in Dolibarr.' },
+  profil: { title: 'My profile', rights: 'What my account can do', rightsHint: 'Read from your Dolibarr rights at sign-in.', sell: 'Sell at the till', cost: 'See purchase costs', createProduct: 'Create and edit parts', stockMoves: 'Correct and transfer stock', customers: 'See customers', purchases: 'See purchases', bank: 'Write to accounts (bank)', users: 'See users', shop: 'Shop and device', levels: 'Price levels' },
+  scanner: { title: 'Scanner', sub: 'USB scanner or typed code, then Enter', placeholder: 'Barcode, reference or OEM then Enter', unknown: 'Unknown code “{{c}}”.', createHint: 'Create the part from Parts → New part.', card: 'Part sheet' },
+};
+
+export const boAr: Dict = {
+  common: { date: 'التاريخ', page: 'صفحة {{p}} / {{n}}' },
+  nav: { catalogue: 'الكتالوج', stock: 'المخزون', clients: 'الزبائن', ventes: 'المبيعات', achats: 'المشتريات', reglements: 'التسديدات', scanner: 'الماسح', utilisateurs: 'المستخدمون', profil: 'ملفي' },
+  pieces: { piece: 'القطعة', refOem: 'المرجع / OEM', location: 'المكان', state: 'الحالة', public: 'سعر العموم', cost: 'متوسط التكلفة', allStock: 'كل المخزون', inStock: 'متوفر', out: 'نفد', low: 'تحت الحد', count: '{{n}} قطعة، الأحدث أولاً', none: 'لا توجد قطعة مطابقة.' },
+  piece: {
+    notFound: 'القطعة غير موجودة', fromCatalogue: 'كتالوج CARUNO', sell: 'أضف إلى البيع', edit: 'تعديل', thresholds: 'حد التنبيه {{a}} · المخزون المرغوب {{d}}', prices: 'أسعار البيع', minPrice: 'أدنى سعر {{v}}',
+    cost: 'متوسط التكلفة: {{v}}', costHidden: 'التكلفة مخفية لحسابك.', equivalents: 'القطع المكافئة', noEquivalent: 'لا توجد قطعة أخرى بنفس OEM.', noOem: 'لا يوجد OEM: أدخله لإيجاد المكافئات.',
+    suppliers: 'الموردون', supplier: 'المورد', supplierRef: 'مرجع المورد', buyPrice: 'سعر الشراء', delay: 'المدة', noSupplier: 'لا يوجد سعر مورد.',
+    moves: 'آخر الحركات', noMove: 'لا توجد حركة.', reason: 'السبب', warehouse: 'المستودع', stockMove: 'حركة مخزون', count: 'تصحيح (بعد العد)', transfer: 'تحويل', from: 'من', to: 'إلى',
+    counted: 'الكمية المعدودة (الحالية: {{n}})', applyCount: 'طبّق التصحيح', countSame: 'لا شيء للتصحيح.', countDone: 'تم تسجيل التصحيح {{d}} في Dolibarr.', transferDone: 'تم تحويل {{n}} قطعة.', notEnough: 'المخزون غير كاف ({{n}}).',
+    identification: 'التعريف', oemHint: 'بدون فراغات أو نقاط: يستعمل للمكافئات', alert: 'حد التنبيه', desired: 'المخزون المرغوب', samePublic: 'فارغ = سعر العموم', initQty: 'المخزون الأولي', initQtyHint: 'ينشئ حركة «مخزون أولي».',
+    requiredHint: 'الحقول * إجبارية. اختر بطاقة من الكتالوج أولاً إن وجدت.', editTitle: 'تعديل القطعة', backToCard: 'العودة إلى البطاقة',
+  },
+  catalogue: { title: 'الكتالوج', sub: 'كتالوج CARUNO المشترك · {{n}} بطاقة · خارج Dolibarr', search: 'مرجع، OEM، تسمية، علامة، مركبة…', hint: 'الكتالوج مشترك بين كل المحلات. «أنشئ في محلي» يفتح قطعة جديدة معبأة مسبقاً: تضيف السعر والمخزون.', vehicles: 'المركبات', create: 'أنشئ في محلي', none: 'لا توجد بطاقة مطابقة.' },
+  stock: { title: 'المخزون', sub: 'التنبيهات والحركات لكل المستودعات', alerts: 'التنبيهات ({{n}})', moves: 'الحركات', toOrder: 'للطلب', noAlert: 'لا توجد قطعة تحت حد التنبيه. تضبط الحدود في بطاقة كل قطعة.', noAlertShort: 'لا تنبيه.', correct: 'تصحيح / تحويل قطعة' },
+  clients: {
+    title: 'الزبائن', count: '{{n}} زبون', search: 'الاسم، المدينة، الهاتف…', new: 'زبون جديد', none: 'لا يوجد زبون.', client: 'الزبون', category: 'الفئة', town: 'المدينة', phone: 'الهاتف', email: 'البريد', limit: 'السقف', address: 'العنوان',
+    cat1: 'فرد', cat2: 'ورشة', cat3: 'بائع', notFound: 'الزبون غير موجود', sell: 'بيع في الكاونتر', outstanding: 'الديون الجارية', ofLimit: 'من سقف {{v}}', noCredit: 'لا بيع بالدين', late: 'متأخر', openInvoices: 'فواتير مفتوحة',
+    identity: 'المعرّفات', ai: 'المادة الجبائية', unpaid: 'فواتير غير مدفوعة', nothingDue: 'لا شيء للدفع.', lastInvoices: 'آخر الفواتير', discountShort: 'تخفيض {{n}} %', editTitle: 'تعديل الزبون', contact: 'معلومات الاتصال', company: 'الاسم التجاري', fullName: 'الاسم واللقب',
+    legal: 'المعرّفات القانونية', terms: 'الشروط التجارية', discount: 'تخفيض الزبون %', limitDa: 'سقف الدين (دج)', limitHint: '0 = لا بيع بالدين', create: 'إنشاء الزبون', nameRequired: 'الاسم إجباري.', notAllowed: 'حسابك لا يمكنه إنشاء أو تعديل الزبائن.',
+  },
+  ventes: { title: 'المبيعات', sub: 'عروض الأسعار، الطلبيات، التسليمات، الفواتير والإشعارات الدائنة', proposals: 'عروض الأسعار', orders: 'الطلبيات', shipments: 'التسليمات', invoices: 'الفواتير', credits: 'الإشعارات الدائنة', search: 'المرجع…', none: 'لا توجد وثيقة.', unpaidOnly: 'غير المدفوعة فقط', counterSale: 'بيع في الكاونتر', noRight: 'حسابك لا يرى أي وثيقة بيع.' },
+  doc: {
+    ref: 'المرجع', status: 'الحالة', remain: 'الباقي', lines: 'الأسطر', unit: 'سعر الوحدة', alreadyPaid: 'مدفوع', payments: 'المدفوعات', due: 'الاستحقاق {{d}}', notFound: 'الوثيقة غير موجودة', privateNote: 'ملاحظة خاصة (أسعار عدلت في الصندوق)',
+    settle: 'تسجيل دفعة', settleBtn: 'سجّل الدفعة', kind_proposal: 'عرض سعر', kind_order: 'طلبية', kind_shipment: 'تسليم', kind_invoice: 'فاتورة', kind_credit: 'إشعار دائن', kind_supplierOrder: 'طلبية مورد',
+    mode_LIQ: 'نقداً', mode_CHQ: 'صك', mode_VIR: 'تحويل', mode_CB: 'بطاقة', draft: 'مسودة', paid: 'مدفوعة', unpaid: 'غير مدفوعة', partial: 'جزئية', abandoned: 'متروكة', used: 'مستعمل', canceled: 'ملغى',
+    sent: 'مرسل', signed: 'موقع', refused: 'مرفوض', billed: 'مفوتر', validated: 'مصادق', shipping: 'قيد التسليم', delivered: 'مسلّم', closed: 'مغلق', approved: 'موافق عليها', ordered: 'مطلوبة', partReceived: 'مستلمة جزئياً', received: 'مستلمة',
+  },
+  achats: { title: 'المشتريات', sub: 'طلبيات الموردين والموردون', orders: 'طلبيات الموردين', suppliers: 'الموردون', noOrder: 'لا توجد طلبية مورد.', noSupplier: 'لا يوجد مورد.' },
+  reg: { title: 'التسديدات', sub: 'حسابات المحل والفواتير للتحصيل', balance: 'الرصيد في Dolibarr', unpaidTotal: 'للتحصيل', unpaidCount: '{{n}} فاتورة غير مدفوعة', unpaid: 'غير المدفوع', dueDate: 'الاستحقاق', operation: 'العملية', type: 'النوع', noLine: 'لا توجد عملية.' },
+  dash: {
+    caDay: 'رقم أعمال اليوم', caMonth: 'رقم أعمال الشهر', unpaid: 'ديون الزبائن', alerts: 'قطع تحت الحد', salesCount: '{{n}} بيع · المتوسط {{avg}}', invoicesCount: '{{n}} فاتورة وإشعار دائن', late: '{{n}} فاتورة متأخرة', alertsSub: 'لإعادة التموين',
+    bySeller: 'مبيعات اليوم حسب البائع', sales: '{{n}} بيع', noSale: 'لا مبيعات اليوم.', register: 'صندوق هذا الجهاز', sessionOpen: 'فتح في {{t}} من طرف {{by}}', expected: 'النقود المتوقعة: {{v}} ({{n}} بيع)',
+    check: 'للتحقق', interrupted: 'البيع {{sale}} بتاريخ {{t}} ({{v}}) توقف: أكمله من الصندوق.', noInterrupted: 'لا يوجد بيع متوقف على هذا الجهاز.', alertsNotice: '{{n}} قطعة تحت حد التنبيه.', lateNotice: '{{n}} فاتورة زبون متأخرة الدفع.',
+  },
+  users: { title: 'المستخدمون', sub: 'حسابات Dolibarr للمحل ودورها', name: 'الاسم', role: 'الدور (المجموعة)', state: 'الحالة', active: 'نشط', disabled: 'معطل', you: 'أنت', admin: 'مدير', updated: 'قرئ من Dolibarr في {{d}}', hint: 'إنشاء أو تعطيل حساب أو تغيير مجموعته يتم في Dolibarr.' },
+  profil: { title: 'ملفي', rights: 'ما يمكن لحسابي فعله', rightsHint: 'مقروء من صلاحيات Dolibarr عند الدخول.', sell: 'البيع في الصندوق', cost: 'رؤية تكاليف الشراء', createProduct: 'إنشاء وتعديل القطع', stockMoves: 'تصحيح وتحويل المخزون', customers: 'رؤية الزبائن', purchases: 'رؤية المشتريات', bank: 'الكتابة في الحسابات (البنك)', users: 'رؤية المستخدمين', shop: 'المحل والجهاز', levels: 'مستويات الأسعار' },
+  scanner: { title: 'الماسح', sub: 'ماسح USB أو إدخال الرمز ثم Enter', placeholder: 'الباركود أو المرجع أو OEM ثم Enter', unknown: 'الرمز «{{c}}» غير معروف.', createHint: 'أنشئ القطعة من القطع ← قطعة جديدة.', card: 'بطاقة القطعة' },
+};

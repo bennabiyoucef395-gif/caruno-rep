@@ -4,7 +4,7 @@
 //   Entrée sur une recherche vide : paiement (espèces pour le total) ; Entrée valide ; Entrée sur le ticket : commande suivante.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, TextInput, useWindowDimensions } from 'react-native';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Text, XStack, YStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 import { useApp, money } from '@/state/app';
@@ -85,6 +85,25 @@ export default function Caisse() {
       setLoaded(true);
     })();
   }, [auth.token, api, shop.counterCustomerId]);
+
+  // Arrivée depuis le back-office : ?add=<pièce> (fiche, scanner) met la pièce au panier, ?client=<id> (fiche client) choisit le client.
+  const params = useLocalSearchParams<{ add?: string; client?: string }>();
+  const handled = useRef('');
+  useEffect(() => {
+    const k = (params.add || '') + '|' + (params.client || '');
+    if (!loaded || k === '|' || handled.current === k) return;
+    handled.current = k;
+    (async () => {
+      try {
+        if (params.client) setCustomer(await api.customer(Number(params.client)));
+        if (params.add) {
+          const p = await api.productFull(Number(params.add));
+          if (p.stock <= 0) { say(t('pos.noStock', { ref: p.ref })); return; }
+          setLines((ls) => { setSel(ls.length); setFocus('price-' + ls.length); return [...ls, { p, qty: 1, price: null }]; });
+        }
+      } catch (e) { setError((e as Error).message); }
+    })();
+  }, [loaded, params.add, params.client]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus demandé par une action (après le rendu).
   useEffect(() => {

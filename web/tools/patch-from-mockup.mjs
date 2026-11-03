@@ -1,0 +1,135 @@
+// Construit web/index.html à partir de la maquette validée (doc/maquette/caruno-maquette.html) :
+// même interface, données et actions branchées sur Dolibarr par caruno-dolibarr.js.
+// Usage : node web/tools/patch-from-mockup.mjs <maquette.html> <sortie.html>
+// Chaque remplacement doit trouver son texte exactement une fois, sinon le script s'arrête.
+import { readFileSync, writeFileSync } from 'node:fs';
+
+const [src, out] = process.argv.slice(2);
+let s = readFileSync(src, 'utf8').replace(/\r\n/g, '\n');
+const rep = (a, b) => {
+  const n = s.split(a).length - 1;
+  if (n !== 1) throw new Error('Texte trouvé ' + n + ' fois : ' + a.slice(0, 90));
+  s = s.replace(a, () => b);
+};
+const repRe = (re, b) => {
+  const m = s.match(re);
+  if (!m) throw new Error('Motif introuvable : ' + re);
+  s = s.replace(re, () => b);
+};
+const between = (start, end, b) => {
+  const i = s.indexOf(start), j = s.indexOf(end, i);
+  if (i < 0 || j < 0) throw new Error('Bloc introuvable : ' + start.slice(0, 60));
+  s = s.slice(0, i) + b + s.slice(j);
+};
+
+// ---------- en-tête, constantes, données ----------
+rep('<script>\n/* ===================================================================\n   CARUNO — maquette autonome du front magasin de pièces auto.\n   Données de test fictives, gardées dans le navigateur (localStorage).\n   Rien n\'est envoyé à Dolibarr.\n   =================================================================== */',
+  '<script src="caruno-dolibarr.js"></script>\n<script>\n/* ===================================================================\n   CARUNO — application du magasin de pièces auto.\n   Interface de la maquette validée ; données lues et écrites dans le Dolibarr du magasin (caruno-dolibarr.js).\n   Gardé sur ce poste : commandes en cours, journal des ventes, session de caisse.\n   =================================================================== */');
+rep("const KEY = 'caruno-maquette-v5';", "const KEY = 'caruno-app-v1';");
+rep("const TODAY = '2026-11-01';", "const TODAY = (() => { const d = new Date(), p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); })();");
+rep("const DEVICE = 'Comptoir 1';", "const DEVICE = (() => { try { return localStorage.getItem('caruno-device') || 'Comptoir 1'; } catch (e) { return 'Comptoir 1'; } })();");
+between('/* ---------- seed data ---------- */', '/* ---------- state ---------- */',
+  `/* ---------- données vides : remplies depuis Dolibarr à la connexion ---------- */
+function seed() {
+  return {
+    parts: [], suppliers: [], clients: [], docs: [], pos: [], moves: [], users: [],
+    day: { base: 0, count: 0, cash: 0, cheque: 0, virement: 0, sellers: {}, orphans: 0 }, months: {}, monthKeys: [],
+    shop: { name: '', address: '', phone: '', rc: '', nif: '', ai: '', nis: '', vat: false },
+    stockMode: 'bill', journal: [], bank: { opening: 0, transfers: [], deposits: [] }, posOrders: [], session: null, sessions: [], counters: { V: 0, CS: 0 }
+  };
+}
+
+`);
+rep(`function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.parts && v.posOrders && v.sessions && 'session' in v) return v; } catch (e) {} return seed(); }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S.db)); }
+  catch (e) { try { const c = JSON.parse(JSON.stringify(S.db)); c.parts.forEach((p) => { p.photos = []; }); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e2) {} }
+}`, `// Les données du magasin viennent de Dolibarr ; seul l'état de ce poste est gardé dans le navigateur.
+function load() { return Object.assign(seed(), loadPoste()); }
+function save() {
+  try { localStorage.setItem(POSTE_KEY, JSON.stringify({ posOrders: S.db.posOrders, journal: S.db.journal, session: S.db.session, sessions: S.db.sessions.slice(0, 30), counters: S.db.counters, stockMode: S.db.stockMode })); } catch (e) {}
+}`);
+rep("return prefix + (prefix === 'V' ? '-' : '2611-')", "return prefix + (prefix === 'V' ? '-' : TODAY.slice(2, 4) + TODAY.slice(5, 7) + '-')");
+rep("function creditOf(cid) { return S.db.docs.filter((d) => d.type === 'avoir' && d.client === cid && d.status === 'a_valoir').reduce((t, d) => t + d.left, 0); }",
+  "// Avoirs Dolibarr à valoir : pas encore utilisables comme paiement à la caisse.\nfunction creditOf() { return 0; }");
+
+// ---------- menu, connexion, caisse ----------
+rep("'</button></div><span>HANOUT VW (DEV)</span></div>'", "'</button></div><span>' + esc(S.db.shop.name) + '</span></div>'");
+rep('flex:1">HANOUT VW</span>', "flex:1\">' + esc(S.db.shop.name) + '</span>");
+between('function viewLogin() {', '/* =================================================================== CAISSE',
+  `function viewLogin() {
+  const L = S.ui.login || (S.ui.login = { url: (() => { try { return localStorage.getItem('caruno-url') || 'http://localhost:8080'; } catch (e) { return 'http://localhost:8080'; } })(), login: '', err: '', busy: false });
+  return '<div class="login"><div class="box">' +
+    '<div><div style="font-weight:700;font-size:34px;letter-spacing:.1em">CARUNO</div><div style="color:#C9CBD2;margin-top:4px">Gestion du magasin de pièces</div></div>' +
+    '<form data-submit="login" style="display:flex;flex-direction:column;gap:16px">' +
+      '<div class="field"><label for="lg-url">Adresse du Dolibarr du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"></div>' +
+      '<div class="field"><label for="lg-user">Identifiant</label><input class="input" id="lg-user" name="login" value="' + esc(L.login) + '" autocomplete="username" autocapitalize="none" required></div>' +
+      '<div class="field"><label for="pw">Mot de passe</label><input class="input" id="pw" name="password" type="password" autocomplete="current-password" required></div>' +
+      (L.err ? '<div class="alert a-bad" role="alert">' + esc(L.err) + '</div>' : '') +
+      '<button class="btn btn-primary btn-lg" type="submit"' + (L.busy ? ' disabled' : '') + '>' + (L.busy ? 'Connexion…' : 'Se connecter') + '</button>' +
+    '</form>' +
+    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">Identifiant et mot de passe Dolibarr du magasin. Les menus et les prix visibles dépendent de vos droits.</p>' +
+    '</div></div>';
+}
+function viewLoading() {
+  const err = S.ui.loadErr;
+  return '<div class="login"><div class="box"><div><div style="font-weight:700;font-size:34px;letter-spacing:.1em">CARUNO</div><div style="color:#C9CBD2;margin-top:4px">' + (err ? 'Chargement impossible' : 'Chargement des données du magasin depuis Dolibarr…') + '</div></div>' +
+    (err ? '<div class="alert a-bad" role="alert">' + esc(err) + '</div><button class="btn btn-primary btn-lg" type="button" data-action="reload">Réessayer</button><button class="btn" type="button" data-action="logout">Se déconnecter</button>' : '') + '</div></div>';
+}
+
+`);
+repRe(/function ribbon\(\) \{ return '<div class="ribbon">.*\n/, "function ribbon() { return ''; }\n");
+rep("function newOrder() { return { ref: nextRef('V'), client: 'c',", "function newOrder() { return { ref: nextRef('V'), uid: Math.random().toString(36).slice(2, 8).toUpperCase(), client: DOLI.counterId,");
+rep("(o.client !== 'c' ?", "(client(o.client) && !client(o.client).fixed ?");
+// Pièces affichées à la caisse : en stock d'abord, puis les plus récentes ; 120 tuiles au plus.
+rep("function posResults() { const u = posUi(); return search(u.q, S.db.parts).filter((p) => u.cat === 'Tous' || p.fam === u.cat); }",
+  "function posResults() { const u = posUi(); return search(u.q, S.db.parts).filter((p) => u.cat === 'Tous' || p.fam === u.cat).sort((a, b) => ((b.stock['Magasin'] > 0) - (a.stock['Magasin'] > 0)) || b.id - a.id).slice(0, 120); }");
+repRe(/ {8}'<div class="demo"><label for="pos-cut">.*\n/, '');
+rep("ic('scanner', 20) + 'Simuler un scan</button></div>' +\n      '<div class=\"kbd-hint\">", "ic('scanner', 20) + 'Scanner</button></div>' +\n      '<div class=\"kbd-hint\">");
+
+// ---------- pièces, stock ----------
+rep("let list = search(f.q, S.db.parts).filter(", "let list = search(f.q, S.db.parts.slice().sort((a, b) => b.id - a.id)).filter(");
+rep("return head('Pièces', S.db.parts.length + ' références · '", "return head('Pièces', (DOLI.total || S.db.parts.length).toLocaleString('fr-FR') + ' références · '");
+rep(`data-action="toast" data-arg="Export CSV généré (maquette)">Exporter</button>`, `data-action="exportCsv">Exporter</button>`);
+rep("function viewPiece(id) {\n  const p = part(id);\n  if (!p) return head('Pièce introuvable', '', '', ['#/pieces', 'Pièces']);",
+  "function viewPiece(id) {\n  const p = part(id);\n  if (!p) { DOLI.need('get:' + id, () => DOLI.fetchParts([Number(id)])); return head(DOLI.lazy['get:' + id] === 'done' ? 'Pièce introuvable' : 'Chargement…', '', '', ['#/pieces', 'Pièces']); }\n  if (!p.extra) DOLI.need('extra:' + id, () => DOLI.loadPartExtra(Number(id)));");
+rep("esc(supplier(p.sups[0].sid).name) + (seeCost() ? ' · ' + fmt(p.sups[0].price) : '')", "(p.sups[0] && supplier(p.sups[0].sid) ? esc(supplier(p.sups[0].sid).name) + (seeCost() ? ' · ' + fmt(p.sups[0].price) : '') : '—')");
+rep("setForm('transfer', { pid: '4',", "setForm('transfer', { pid: String((S.db.parts.find((x) => total(x) > 0) || S.db.parts[0] || {}).id || ''),");
+
+// ---------- catalogue : même session que l'application ----------
+rep("S.ui.cat = { url: saved.url || 'http://localhost:8080', login: saved.login || '', token: saved.token || '',", "S.ui.cat = { url: DOLI.url, login: S.user ? S.user.login : '', token: DOLI.token,");
+rep("'<button class=\"btn\" type=\"button\" data-action=\"catLogout\">Se déconnecter de Dolibarr</button>'", "''");
+
+// ---------- ventes, tableau de bord, règlements, profil ----------
+rep("if (!d) return head('Document introuvable', '', '', ['#/ventes', 'Ventes']);\n  const c = client(d.client)",
+  "if (!d) return head('Document introuvable', '', '', ['#/ventes', 'Ventes']);\n  if (d.type === 'facture' && d.payments === null) DOLI.need('pay:' + d.ref, () => DOLI.loadPayments(d));\n  const c = client(d.client)");
+rep("S.ui.editor = { client: params.get('client') || 'g',", "S.ui.editor = { client: params.get('client') || ((S.db.clients.find((x) => !x.fixed) || S.db.clients[0] || {}).id),");
+rep(`  const oct = mo['2026-10'], sep = mo['2026-09'];
+  const growth = Math.round((oct.ttc - sep.ttc) / sep.ttc * 100);
+  const octHt = oct.ttc / (VAT() ? 1.19 : 1), margin = ((octHt - oct.cost) / octHt * 100).toFixed(1).replace('.', ',');`,
+`  DOLI.need('day', () => DOLI.loadDayPayments());
+  const sep = mo[S.db.monthKeys[0]] || { ttc: 0, cost: 0 }, oct = mo[S.db.monthKeys[1]] || { ttc: 0, cost: 0 };
+  const MN = S.db.monthKeys.map((k) => new Date(k + '-01T12:00').toLocaleDateString('fr-FR', { month: 'long' }));
+  const growth = sep.ttc ? Math.round((oct.ttc - sep.ttc) / sep.ttc * 100) : 0;
+  const octHt = oct.ttc / (VAT() ? 1.19 : 1), margin = octHt ? ((octHt - oct.cost) / octHt * 100).toFixed(1).replace('.', ',') : '0';`);
+rep("return head('Tableau de bord', 'Dimanche 1<sup>er</sup> novembre 2026' +", "return head('Tableau de bord', cap(new Date(TODAY + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })) +");
+rep("tile('Octobre 2026', fmt(oct.ttc), (growth >= 0 ? '+' : '−') + Math.abs(growth) + ' % par rapport à septembre')", "tile(cap(MN[1] || '') + ' ' + (S.db.monthKeys[1] || '').slice(0, 4), fmt(oct.ttc), (growth >= 0 ? '+' : '−') + Math.abs(growth) + ' % par rapport à ' + (MN[0] || ''))");
+rep("tile('Marge brute d’octobre',", "tile('Marge brute de ' + (MN[1] || ''),");
+rep("  const tab = S.ui.regTab || 'paiements';\n  const all = payments();", "  const tab = S.ui.regTab || 'paiements';\n  DOLI.need('payments', () => DOLI.loadDocPayments(S.db.docs));\n  DOLI.need('day', () => DOLI.loadDayPayments());\n  const all = payments();");
+rep("const banque = S.db.bank.opening + all.filter((p) => p.mode === 'virement').reduce((t, p) => t + p.amount, 0) + S.db.bank.deposits.reduce((t, x) => t + x.amount, 0) + cashOut();", "const banque = S.db.bank.opening; // solde du compte banque lu dans Dolibarr");
+rep("Définis dans le profil magasin au déploiement, non modifiables ici. Le bandeau de la maquette permet de changer le mode de stock pour la démo.", "Lus dans Dolibarr (fiche de la société) et le profil du magasin.");
+rep("Se déconnecter annule le jeton d’accès sur tous vos appareils (POST /login avec reset=1).", "Se déconnecter ferme la session sur ce poste.");
+rep("const sc = S.ui.scan, p = S.db.parts.find((x) => x.ean === String(code).trim());", "const sc = S.ui.scan, c = String(code).trim(), p = S.db.parts.find((x) => x.ean === c) || S.db.parts.find((x) => norm(x.ref) === norm(c));");
+s = s.split(' (maquette)').join(' (à venir)');
+// Prix de référence ou coût à zéro (pièce sans prix, coût inconnu) : pas de pourcentage ni de marge calculés.
+rep('const pctTxt = (a, b) => { const v', "const pctTxt = (a, b) => { if (!b) return ''; const v");
+rep("p.prices.map((x) => Math.round((x - p.cost) / x * 100) + ' %')", "p.prices.map((x) => (p.cost && x ? Math.round((x - p.cost) / x * 100) + ' %' : '—'))");
+rep("tile('Marge brute de ' + (MN[1] || ''), margin + ' %',", "tile('Marge brute de ' + (MN[1] || ''), oct.cost ? margin + ' %' : '—',");
+
+// ---------- rendu : écran de chargement tant que les données Dolibarr arrivent ----------
+rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) { app.innerHTML = viewLogin(); return; }\n  if (!S.ready) { app.innerHTML = viewLoading(); return; }");
+
+// ---------- actions branchées sur Dolibarr, puis démarrage ----------
+rep('\nrender();\n</script>', '\n' + readFileSync(new URL('./actions.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n') + '</script>');
+writeFileSync(out, s);
+console.log('OK ' + out);

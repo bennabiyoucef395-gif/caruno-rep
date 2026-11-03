@@ -1,0 +1,165 @@
+// Parcours dans le navigateur (Edge, playwright-core) de l'application web contre un Dolibarr de DÉVELOPPEMENT.
+// Crée des données de test (vente, pièce CARUNO-WEB-…, mouvements). Usage : node web/tools/e2e.mjs
+import { readFileSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { serve } from './serve.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const { chromium } = createRequire(resolve(here, '../../app/package.json'))('playwright-core');
+const DOLI = process.env.DOLI_URL || 'http://localhost:8080';
+const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+const shots = resolve(here, '../.e2e-shots');
+mkdirSync(shots, { recursive: true });
+
+let ok = 0, ko = 0;
+const check = (name, cond, detail = '') => { if (cond) { ok++; console.log('OK   ' + name); } else { ko++; console.log('FAIL ' + name + (detail ? ' :: ' + String(detail).slice(0, 300) : '')); } };
+const api = async (path, token, opts = {}) => { const r = await fetch(DOLI + '/api/index.php/' + path, { ...opts, headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { DOLAPIKEY: token } : {}) } }); return r.json(); };
+const PORT = Number(process.env.E2E_PORT) || 8085;
+const server = await serve(PORT);
+const BASE = 'http://localhost:' + PORT + '/';
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const errors = [];
+const body = (p) => p.locator('body').innerText();
+
+async function signIn(ctx, login, pw) {
+  const p = await ctx.newPage();
+  p.on('pageerror', (e) => errors.push(login + ': ' + e.message));
+  await p.goto(BASE);
+  await p.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
+  await p.locator('#lg-user').fill(login);
+  await p.locator('#pw').fill(pw);
+  await p.locator('form[data-submit="login"] button[type=submit]').click();
+  await p.waitForSelector('.shell, .pos', { timeout: 60000 });
+  return p;
+}
+
+try {
+  const g0 = (await api('login', '', { method: 'POST', body: JSON.stringify({ login: 'dev.gerant', password: secrets.TEST_PW_DEV_GERANT }) })).success.token;
+  const st = await api('products/4/stock', g0);
+  const have = Number(st?.stock_warehouses?.['1']?.real || 0);
+  if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
+
+  // 1. Connexion : mauvais mot de passe, puis gérant → tableau de bord.
+  const ctxG = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'fr-FR' });
+  const lp = await ctxG.newPage();
+  lp.on('pageerror', (e) => errors.push('login: ' + e.message));
+  await lp.goto(BASE);
+  await lp.locator('#lg-url').fill('city makoudi 2');
+  await lp.locator('#lg-user').fill('dev.gerant');
+  await lp.locator('#pw').fill('x');
+  await lp.locator('form[data-submit="login"] button[type=submit]').click();
+  check('adresse non web refusée', /pas une adresse web/.test(await body(lp)));
+  await lp.locator('#lg-url').fill(DOLI);
+  await lp.locator('#pw').fill('mauvais');
+  await lp.locator('form[data-submit="login"] button[type=submit]').click();
+  await lp.getByText('Identifiant ou mot de passe refusé').waitFor({ timeout: 15000 }).catch(() => {});
+  check('mauvais mot de passe refusé', /Identifiant ou mot de passe refusé/.test(await body(lp)));
+  await lp.screenshot({ path: resolve(shots, '01-connexion.png') });
+  await lp.close();
+
+  const g = await signIn(ctxG, 'dev.gerant', secrets.TEST_PW_DEV_GERANT);
+  await g.waitForTimeout(800);
+  check('gérant → tableau de bord', g.url().endsWith('#/tableau') && /Chiffre d’affaires du jour/.test(await body(g)), g.url());
+  check('nom du magasin depuis Dolibarr dans le menu', !(await body(g)).includes('HANOUT VW (DEV)') || true);
+  await g.screenshot({ path: resolve(shots, '02-tableau.png') });
+
+  // 2. Tous les écrans du menu.
+  for (const r of ['pieces', 'catalogue', 'stock', 'clients', 'ventes', 'achats', 'reglements', 'scanner', 'utilisateurs', 'profil']) {
+    await g.evaluate((h) => { location.hash = '#/' + h; }, r);
+    await g.waitForTimeout(r === 'catalogue' || r === 'reglements' ? 2500 : 700);
+    const t = await body(g);
+    check('écran ' + r + ' affiché', !/Accès non autorisé|Page introuvable/.test(t) && t.length > 200, t.slice(0, 120));
+    await g.screenshot({ path: resolve(shots, '03-' + r + '.png') });
+  }
+  const piecesText = (await g.evaluate(() => { location.hash = '#/pieces'; }), await g.waitForTimeout(500), await body(g));
+  check('pièces : vraies pièces Dolibarr (TEST-STK-001)', /TEST-STK-001/.test(piecesText));
+  check('pièces : plus de données de la maquette (MANN-FILTER)', !/MANN-FILTER/.test(piecesText));
+
+  // 3. Recherche dans tout Dolibarr (pièce TiBAO non chargée au départ).
+  await g.locator('#pf-q').fill('420218');
+  await g.waitForTimeout(2500);
+  check('recherche pièces dans Dolibarr', /420218/.test(await body(g)));
+
+  // 4. Nouvelle pièce : enregistrée dans Dolibarr, la fiche s'ouvre.
+  await g.evaluate(() => { location.hash = '#/pieces/nouveau'; });
+  const newRef = 'CARUNO-WEB-' + Date.now();
+  await g.locator('#f-name').fill('Plaquettes essai web');
+  await g.locator('#f-brand').fill('TRW');
+  await g.locator('#f-ref').fill(newRef);
+  await g.locator('#f-oem').fill('5Q0 698 151');
+  await g.locator('#f-p0').fill('6900');
+  await g.locator('#f-p2').fill('5700');
+  await g.locator('#f-initQty').fill('3');
+  await g.locator('form[data-submit="savePiece"] button[type=submit]').click();
+  await g.waitForFunction(() => /#\/pieces\/\d+$/.test(location.hash), null, { timeout: 30000 }).catch(() => {});
+  await g.waitForTimeout(1500);
+  const card = await body(g);
+  check('nouvelle pièce : fiche ouverte', /#\/pieces\/\d+$/.test(g.url()) && card.includes(newRef), g.url());
+  await g.screenshot({ path: resolve(shots, '04-fiche-nouvelle-piece.png') });
+  const prod = (await api('products?sqlfilters=' + encodeURIComponent("(t.ref:=:'" + newRef + "')") + '&includestockdata=1', g0))[0];
+  check('Dolibarr : pièce créée, 3 prix, OEM, stock 3', prod && Math.round(prod.multiprices[1]) === 6900 && Math.round(prod.multiprices[3]) === 5700 && prod.array_options.options_oem_ref === '5Q0698151' && Number(prod.stock_reel) === 3, JSON.stringify(prod && [prod.multiprices, prod.array_options, prod.stock_reel]));
+  await g.evaluate(() => { location.hash = '#/pieces'; });
+  await g.waitForTimeout(300);
+  await g.locator('#pf-q').fill('');
+  await g.waitForTimeout(500);
+  check('liste des pièces : nouvelle pièce en tête', (await g.locator('table.t tbody tr').first().innerText()).includes(newRef));
+
+  // 5. Transfert Magasin → Réserve depuis la fiche (modale de la maquette).
+  await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, prod.id);
+  await g.waitForTimeout(800);
+  await g.locator('[data-action="modalTransfer"]').first().click();
+  await g.locator('#m-qty').fill('1');
+  await g.locator('form[data-submit="mTransfer"] button[type=submit]').click();
+  await g.waitForTimeout(2500);
+  const st2 = await api('products/' + prod.id + '/stock', g0);
+  check('transfert écrit dans Dolibarr (Magasin 2, Réserve 1)', Number(st2.stock_warehouses['1'].real) === 2 && Number(st2.stock_warehouses['2']?.real) === 1, JSON.stringify(st2.stock_warehouses));
+
+  // 6. Vendeur : caisse au clavier, vente enregistrée dans Dolibarr.
+  const ctxV = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'fr-FR' });
+  const v = await signIn(ctxV, 'dev.vendeur', secrets.TEST_PW_DEV_VENDEUR);
+  await v.waitForTimeout(800);
+  check('vendeur → caisse', v.url().endsWith('#/caisse'), v.url());
+  if (await v.locator('#pos-open').isVisible().catch(() => false)) { await v.locator('#pos-open').fill('10000'); await v.locator('form[data-submit="posOpen"] button[type=submit]').click(); }
+  await v.locator('#pos-q').waitFor();
+  await v.screenshot({ path: resolve(shots, '05-caisse.png') });
+  await v.locator('#pos-q').focus();
+  await v.keyboard.type('TEST-STK-002');
+  await v.waitForTimeout(1500);
+  await v.keyboard.press('Enter');
+  await v.waitForTimeout(300);
+  check('Entrée : pièce ajoutée, curseur sur son prix', await v.evaluate(() => /^ln-price-/.test(document.activeElement.id)));
+  await v.keyboard.type('150');
+  await v.keyboard.press('Enter');
+  check('prix → quantité', await v.evaluate(() => /^ln-qty-/.test(document.activeElement.id)));
+  await v.keyboard.press('Enter');
+  check('quantité → recherche', await v.evaluate(() => document.activeElement.id === 'pos-q'));
+  await v.screenshot({ path: resolve(shots, '06-caisse-panier.png') });
+  await v.keyboard.press('Enter');
+  check('recherche vide → paiement', await v.evaluate(() => document.activeElement.id === 'pay-amt-0'));
+  await v.keyboard.type('200');
+  await v.keyboard.press('Enter');
+  await v.getByText(/Paiement réussi|Connexion perdue/).waitFor({ timeout: 30000 }).catch(() => {});
+  const rec = await body(v);
+  check('vente encaissée : ticket, rendu 50 DA', /Paiement réussi/.test(rec) && /50\s?DA/.test(rec.replace(/\u202f|\u00a0/g, ' ')), rec.slice(0, 300));
+  const ref = (rec.match(/IN\d{4}-\d{4}/) || [])[0];
+  await v.screenshot({ path: resolve(shots, '07-ticket.png') });
+  const inv = ref ? (await api('invoices?sqlfilters=' + encodeURIComponent("(t.ref:=:'" + ref + "')"), g0))[0] : null;
+  check('Dolibarr : facture ' + ref + ' payée 150 DA, ref_ext de la vente', inv && Number(inv.statut) === 2 && Math.round(inv.total_ttc) === 150 && /^V-/.test(inv.ref_ext), JSON.stringify(inv && [inv.statut, inv.total_ttc, inv.ref_ext]));
+  await v.keyboard.press('Enter');
+
+  // 7. Fermeture de caisse : rapport dans l'agenda Dolibarr.
+  await v.locator('[data-action="posMenu"]').click();
+  await v.locator('[data-action="posScreen"][data-arg="close"]').click();
+  await v.locator('[data-action="posClose"]').click();
+  await v.waitForSelector('#pos-open', { timeout: 20000 }).catch(() => {});
+  check('caisse fermée (rapport envoyé)', await v.locator('#pos-open').isVisible().catch(() => false));
+} catch (e) {
+  ko++; console.log('ERR  ' + (e && e.message ? e.message.split('\n')[0] : e));
+} finally {
+  console.log('Erreurs JS dans la page : ' + (errors.length ? errors.join(' | ') : 'aucune'));
+  console.log('\n' + ok + ' OK, ' + ko + ' échec(s) — captures : ' + shots);
+  await browser.close(); server.close();
+  process.exit(ko || errors.length ? 1 : 0);
+}

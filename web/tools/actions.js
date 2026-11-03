@@ -344,4 +344,22 @@ F.changePw = (form) => {
   }, 'Changement du mot de passe…');
 };
 
-boot();
+/* =================================================================== ENSEIGNE, PROFIL DU MAGASIN, LANGUE */
+// Logo et nom du magasin (pas de nom de fournisseur ni de CARUNO quand l'enseigne est renseignée).
+function shopMark(compact) {
+  const s = S.db.shop, name = s.name || 'CARUNO', big = !compact && name.length <= 12;
+  return '<span class="shopmark" style="display:inline-flex;align-items:center;gap:8px;min-width:0">' +
+    (s.logo ? '<img src="' + esc(s.logo) + '" alt="" style="height:' + (compact ? 28 : 34) + 'px;width:auto;max-width:' + (compact ? 60 : 70) + 'px;object-fit:contain;border-radius:6px;background:#fff;padding:2px">' : '') +
+    '<b style="font-size:' + (compact ? 16 : big ? 21 : 16) + 'px;letter-spacing:' + (big ? '.09em' : '.02em') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:' + (compact ? 220 : 150) + 'px">' + esc(name) + '</b></span>';
+}
+// Écran de connexion : enseigne mémorisée sur ce poste à la dernière connexion.
+function loginMark(sub) {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('caruno-shop')) || {}; } catch (e) {}
+  return '<div style="display:flex;align-items:center;gap:14px">' + (s.logo ? '<img src="' + esc(s.logo) + '" alt="" style="height:64px;width:auto;max-width:120px;object-fit:contain;border-radius:10px;background:#fff;padding:4px">' : '') +
+    '<div><div style="font-weight:700;font-size:' + (s.name && s.name.length > 12 ? 26 : 34) + 'px;letter-spacing:' + (s.name && s.name.length > 12 ? '.02em' : '.1em') + '">' + esc(s.name || 'CARUNO') + '</div><div style="color:#C9CBD2;margin-top:4px">' + esc(sub) + '</div></div></div>';
+}
+const LANG = () => { try { return localStorage.getItem('caruno-lang') || 'fr'; } catch (e) { return 'fr'; } };
+function applyLang() { const ar = LANG() === 'ar'; document.documentElement.lang = ar ? 'ar' : 'fr'; document.documentElement.dir = ar ? 'rtl' : 'ltr'; }
+A.setLang = (el) => { try { localStorage.setItem('caruno-lang', el.dataset.arg); } catch (e) {} applyLang(); };
+

@@ -1,6 +1,6 @@
 // Parcours dans le navigateur (Edge, playwright-core) de l'application web contre un Dolibarr de DÉVELOPPEMENT.
 // Crée des données de test (vente, pièce CARUNO-WEB-…, mouvements). Usage : node web/tools/e2e.mjs
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -115,6 +115,75 @@ try {
   await g.waitForTimeout(2500);
   const st2 = await api('products/' + prod.id + '/stock', g0);
   check('transfert écrit dans Dolibarr (Magasin 2, Réserve 1)', Number(st2.stock_warehouses['1'].real) === 2 && Number(st2.stock_warehouses['2']?.real) === 1, JSON.stringify(st2.stock_warehouses));
+
+  // 5b. Pas de marque TIBAO à l'écran (pièces, catalogue).
+  await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);
+  check('pièces : marque TIBAO jamais affichée', !/TIBAO/i.test(await body(g)));
+  await g.evaluate(() => { location.hash = '#/catalogue'; }); await g.waitForTimeout(3000);
+  check('catalogue : marque TIBAO jamais affichée', !/TIBAO/i.test(await body(g)));
+
+  // 5c. Mon profil : enseigne du magasin enregistrée dans Dolibarr, affichée dans le menu.
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(600);
+  await g.locator('#sh-name').fill('City Makoudi 2');
+  await g.locator('#sh-address').fill('Rue des pièces, Alger');
+  await g.locator('form[data-submit="saveShop"] button[type=submit]').click();
+  await g.getByText('Magasin enregistré dans Dolibarr.').waitFor({ timeout: 15000 }).catch(() => {});
+  check('profil : enseigne affichée dans le menu', (await g.locator('.side .brand').innerText()).includes('City Makoudi 2'));
+  const prof = await api('documents/download?modulepart=societe&original_file=' + encodeURIComponent('5/caruno-profil.json'), g0);
+  const profJson = prof && prof.content ? JSON.parse(Buffer.from(prof.content, 'base64').toString('utf8')) : {};
+  check('profil : enregistré dans Dolibarr (nom, adresse)', profJson.name === 'City Makoudi 2' && profJson.address === 'Rue des pièces, Alger', JSON.stringify(profJson).slice(0, 120));
+  await g.screenshot({ path: resolve(shots, '05a-profil.png') });
+
+  // 5d. Langue arabe : sens droite-à-gauche et menus traduits, puis retour au français.
+  await g.locator('[data-action="setLang"][data-arg="ar"]').click(); await g.waitForTimeout(400);
+  check('arabe : page en droite-à-gauche', (await g.evaluate(() => document.documentElement.dir)) === 'rtl');
+  check('arabe : menu traduit', /القطع/.test(await body(g)) && /الصندوق/.test(await body(g)));
+  await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);
+  check('arabe : écran Pièces traduit', /قطعة جديدة/.test(await body(g)));
+  await g.screenshot({ path: resolve(shots, '05b-pieces-ar.png') });
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(400);
+  await g.locator('[data-action="setLang"][data-arg="fr"]').click(); await g.waitForTimeout(300);
+  check('retour au français', (await g.evaluate(() => document.documentElement.dir)) === 'ltr' && /Mon profil/.test(await body(g)));
+
+  // 5e. Import Excel puis PDF : pièces créées dans Dolibarr.
+  const XLSX = createRequire(import.meta.url)('../vendor/xlsx.full.min.js');
+  const stamp = Date.now().toString(36).toUpperCase();
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Référence', 'Désignation', 'Marque', 'Prix public', 'Prix gros', 'Stock', 'Famille'], ['XL-' + stamp + '-1', 'Filtre à air essai', 'MANN', '1 500,00', '1200', '4', 'Filtration'], ['XL-' + stamp + '-2', 'Bougie essai', 'NGK', '800', '', '10', 'Moteur']]), 'Tarif');
+  const xlsxPath = resolve(shots, 'import-essai.xlsx');
+  writeFileSync(xlsxPath, XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+  await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(400);
+  await g.locator('[data-action="modalImport"]').click();
+  await g.locator('#imp-file').setInputFiles(xlsxPath);
+  await g.locator('#imp-run').waitFor({ timeout: 15000 });
+  check('import Excel : colonnes reconnues', (await g.locator('#imp-ref').inputValue()) === '0' && (await g.locator('#imp-p0').inputValue()) === '3' && (await g.locator('#imp-qty').inputValue()) === '5');
+  await g.screenshot({ path: resolve(shots, '05c-import-colonnes.png') });
+  await g.locator('#imp-run').click();
+  await g.getByText('Import terminé').first().waitFor({ timeout: 60000 }).catch(() => {});
+  check('import Excel : 2 pièces créées', (await g.locator('#imp-created').innerText()).trim() === '2');
+  const xl1 = (await api('products?includestockdata=1&sqlfilters=' + encodeURIComponent("(t.ref:=:'XL-" + stamp + "-1')"), g0))[0];
+  check('Dolibarr : pièce importée (prix 1500 / 1200, stock 4)', xl1 && Math.round(xl1.multiprices[1]) === 1500 && Math.round(xl1.multiprices[3]) === 1200 && Number(xl1.stock_reel) === 4, JSON.stringify(xl1 && [xl1.multiprices, xl1.stock_reel]));
+  await g.locator('[data-action="closeModal"]').first().click();
+
+  // PDF minimal avec un tableau : Référence, Désignation, Prix.
+  const pdfRows = [['Reference', 'Designation', 'Prix'], ['PDF-' + stamp + '-1', 'Disque de frein essai', '4500'], ['PDF-' + stamp + '-2', 'Plaquettes essai', '3200']];
+  const content = 'BT /F1 11 Tf ' + pdfRows.map((r, i) => r.map((c, k) => '1 0 0 1 ' + (50 + k * 200) + ' ' + (760 - i * 20) + ' Tm (' + c + ') Tj').join(' ')).join(' ') + ' ET';
+  const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>', '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
+  let pdf = '%PDF-1.4\n'; const offs = [];
+  objs.forEach((o, i) => { offs.push(pdf.length); pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
+  const xref = pdf.length;
+  pdf += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n' + offs.map((o) => String(o).padStart(10, '0') + ' 00000 n \n').join('') + 'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n';
+  const pdfPath = resolve(shots, 'import-essai.pdf');
+  writeFileSync(pdfPath, pdf, 'latin1');
+  await g.locator('[data-action="modalImport"]').click();
+  await g.locator('#imp-file').setInputFiles(pdfPath);
+  await g.locator('#imp-run').waitFor({ timeout: 20000 });
+  check('import PDF : tableau lu, colonnes reconnues', (await g.locator('#imp-ref').inputValue()) === '0' && (await g.locator('#imp-name').inputValue()) === '1' && (await g.locator('#imp-p0').inputValue()) === '2');
+  await g.locator('#imp-run').click();
+  await g.getByText('Import terminé').first().waitFor({ timeout: 60000 }).catch(() => {});
+  const pd1 = (await api('products?sqlfilters=' + encodeURIComponent("(t.ref:=:'PDF-" + stamp + "-1')"), g0))[0];
+  check('Dolibarr : pièce importée du PDF (Disque de frein essai, 4500)', pd1 && pd1.label === 'Disque de frein essai' && Math.round(pd1.multiprices[1]) === 4500, JSON.stringify(pd1 && [pd1.label, pd1.multiprices]));
+  await g.locator('[data-action="closeModal"]').first().click();
 
   // 6. Vendeur : caisse au clavier, vente enregistrée dans Dolibarr.
   const ctxV = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'fr-FR' });

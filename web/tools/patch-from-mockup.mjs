@@ -60,7 +60,7 @@ between('function viewLogin() {', '/* ==========================================
   `function viewLogin() {
   const L = S.ui.login || (S.ui.login = { url: (() => { try { return localStorage.getItem('caruno-url') || 'http://localhost:8080'; } catch (e) { return 'http://localhost:8080'; } })(), login: '', err: '', busy: false });
   return '<div class="login"><div class="box">' +
-    '<div><div style="font-weight:700;font-size:34px;letter-spacing:.1em">CARUNO</div><div style="color:#C9CBD2;margin-top:4px">Gestion du magasin de pièces</div></div>' +
+    loginMark('Gestion du magasin de pièces') +
     '<form data-submit="login" style="display:flex;flex-direction:column;gap:16px">' +
       '<div class="field"><label for="lg-url">Adresse du Dolibarr du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"></div>' +
       '<div class="field"><label for="lg-user">Identifiant</label><input class="input" id="lg-user" name="login" value="' + esc(L.login) + '" autocomplete="username" autocapitalize="none" required></div>' +
@@ -73,7 +73,7 @@ between('function viewLogin() {', '/* ==========================================
 }
 function viewLoading() {
   const err = S.ui.loadErr;
-  return '<div class="login"><div class="box"><div><div style="font-weight:700;font-size:34px;letter-spacing:.1em">CARUNO</div><div style="color:#C9CBD2;margin-top:4px">' + (err ? 'Chargement impossible' : 'Chargement des données du magasin depuis Dolibarr…') + '</div></div>' +
+  return '<div class="login"><div class="box">' + loginMark(err ? 'Chargement impossible' : 'Chargement des données du magasin depuis Dolibarr…') +
     (err ? '<div class="alert a-bad" role="alert">' + esc(err) + '</div><button class="btn btn-primary btn-lg" type="button" data-action="reload">Réessayer</button><button class="btn" type="button" data-action="logout">Se déconnecter</button>' : '') + '</div></div>';
 }
 
@@ -126,10 +126,19 @@ rep('const pctTxt = (a, b) => { const v', "const pctTxt = (a, b) => { if (!b) re
 rep("p.prices.map((x) => Math.round((x - p.cost) / x * 100) + ' %')", "p.prices.map((x) => (p.cost && x ? Math.round((x - p.cost) / x * 100) + ' %' : '—'))");
 rep("tile('Marge brute de ' + (MN[1] || ''), margin + ' %',", "tile('Marge brute de ' + (MN[1] || ''), oct.cost ? margin + ' %' : '—',");
 
+// ---------- enseigne du magasin (logo + nom) à la place de CARUNO ; import de pièces ----------
+rep('<div class="brand-row"><b>CARUNO</b>', "<div class=\"brand-row\">' + shopMark() + '");
+rep("'</button></div><span>' + esc(S.db.shop.name) + '</span></div>'", "'</button></div></div>'");
+rep("<b>CARUNO</b><span style=\"font-size:12px;color:#C9CBD2;flex:1\">' + esc(S.db.shop.name) + '</span>", "' + shopMark(true) + '<span style=\"flex:1\"></span>");
+rep('<span class="brand2">CARUNO</span>', "<span class=\"brand2\">' + shopMark(true) + '</span>");
+rep("'Nouvelle pièce</a>' : '')", "'Nouvelle pièce</a><button class=\"btn\" type=\"button\" data-action=\"modalImport\">Importer</button>' : '')");
+// Traduction arabe : dictionnaire chargé avant l'interface.
+rep('<script src="caruno-dolibarr.js"></script>', '<script src="i18n-ar.js"></script>\n<script src="caruno-dolibarr.js"></script>');
+
 // ---------- rendu : écran de chargement tant que les données Dolibarr arrivent ----------
 rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) { app.innerHTML = viewLogin(); return; }\n  if (!S.ready) { app.innerHTML = viewLoading(); return; }");
 
 // ---------- actions branchées sur Dolibarr, puis démarrage ----------
-rep('\nrender();\n</script>', '\n' + readFileSync(new URL('./actions.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n') + '</script>');
+rep('\nrender();\n</script>', '\n' + ['./actions.js', './actions-profil-import.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
 writeFileSync(out, s);
 console.log('OK ' + out);

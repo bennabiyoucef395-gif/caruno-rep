@@ -52,6 +52,8 @@ const DOLI = {
     }
     return out;
   },
+  // Marque du catalogue fournisseur importé (TIBAO) : jamais affichée dans l'application.
+  brand(b) { return /^\s*tibao\s*$/i.test(b || '') ? '' : (b || ''); },
   num(v) { const n = typeof v === 'number' ? v : parseFloat(String(v == null ? '' : v)); return isFinite(n) ? n : 0; },
   txt(s) {
     const E = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', eacute: 'é', egrave: 'è', ecirc: 'ê', agrave: 'à', acirc: 'â', ccedil: 'ç', ocirc: 'ô', ucirc: 'û', icirc: 'î', euml: 'ë', iuml: 'ï', ugrave: 'ù', rsquo: '’', laquo: '«', raquo: '»' };
@@ -101,7 +103,7 @@ const DOLI = {
     loc[WAREHOUSES[0]] = ao.options_emplacement || '';
     const old = S.db.parts.find((p) => p.id === this.num(r.id));
     return {
-      id: this.num(r.id), name: this.txt(r.label), brand: ao.options_brand || '', ref: r.ref, oem: ao.options_oem_ref || '', ean: r.barcode || '',
+      id: this.num(r.id), name: this.txt(r.label), brand: this.brand(ao.options_brand), ref: r.ref, oem: ao.options_oem_ref || '', ean: r.barcode || '',
       fam: old ? old.fam : '', type: ao.options_caruno_part_type || '', stock, loc, prices: [lv(1), lv(2), lv(3)], floor: this.num(r.price_min), cost: this.num(r.pmp) || this.num(r.cost_price),
       seuil: this.num(r.seuil_stock_alerte), souhaite: this.num(r.desiredstock), sups: old ? old.sups : [], photos: old ? old.photos : [], tva: this.num(r.tva_tx),
       refExt: r.ref_ext || '', created: this.num(r.date_creation), extra: old ? old.extra : false,
@@ -215,7 +217,8 @@ const DOLI = {
         orders.map((r) => this.mapDoc('commande', r)), ships.map((r) => this.mapDoc('livraison', r)));
       S.db.pos = pos.map((r) => this.mapPO(r));
       S.db.moves = moves.map((m) => this.mapMove(m));
-      if (company) Object.assign(S.db.shop, { name: this.txt(company.name) || S.db.shop.name, address: [company.address, company.zip, company.town].filter(Boolean).join(', '), phone: company.phone || '', rc: company.idprof1 || '', nif: company.idprof2 || '', ai: company.idprof3 || '', nis: company.idprof4 || '' });
+      if (company && company.name) Object.assign(S.db.shop, { name: this.txt(company.name), address: [company.address, company.zip, company.town].filter(Boolean).join(', '), phone: company.phone || '', rc: company.idprof1 || '', nif: company.idprof2 || '', ai: company.idprof3 || '', nis: company.idprof4 || '' });
+      await this.loadProfile().catch(() => null);
       const bank = banks.find((b) => this.num(b.id) === this.bankAccount);
       S.db.bank = { opening: bank ? this.num(bank.balance) : 0, transfers: [], deposits: [], accounts: banks.map((b) => ({ id: this.num(b.id), label: this.txt(b.label), balance: this.num(b.balance) })) };
 
@@ -233,6 +236,27 @@ const DOLI = {
       this.computeDay();
       this.lazy = {};
     } finally { this.loading = false; }
+  },
+  // Profil du magasin (enseigne, adresse, identifiants, logo) : fichier caruno-profil.json rangé dans les documents
+  // du client comptoir de Dolibarr, lisible par tous les comptes, modifiable par ceux qui gèrent les tiers.
+  PROFILE: 'caruno-profil.json',
+  async loadProfile() {
+    const d = await this.api('documents/download', { query: { modulepart: 'societe', original_file: this.counterId + '/' + this.PROFILE } });
+    if (!d || !d.content) return;
+    const p = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    Object.assign(S.db.shop, p);
+    try { localStorage.setItem('caruno-shop', JSON.stringify({ name: p.name || '', logo: p.logo || '' })); } catch (e) {}
+  },
+  async saveProfile(p) {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(p))));
+    await this.api('documents/upload', { method: 'POST', body: { filename: this.PROFILE, modulepart: 'societe', ref: this.counterId, subdir: '', filecontent: content, fileencoding: 'base64', overwriteifexists: 1 } });
+    Object.assign(S.db.shop, p);
+    try { localStorage.setItem('caruno-shop', JSON.stringify({ name: p.name || '', logo: p.logo || '' })); } catch (e) {}
+  },
+  // Import : pièce déjà dans Dolibarr avec cette référence (null sinon).
+  async findByRef(ref) {
+    const r = await this.api('products/ref/' + encodeURIComponent(ref), { query: { includestockdata: 1 } }).catch((e) => { if (e.status === 404) return null; throw e; });
+    return r && r.id ? this.upsertPart(r) : null;
   },
   async fetchParts(ids) {
     const miss = [...new Set(ids)].filter((id) => id > 0 && !part(id));

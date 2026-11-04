@@ -175,6 +175,16 @@ window.EN = {
   'Bon d’achat': 'Purchase slip', 'BON D’ACHAT': 'PURCHASE SLIP', 'Client :': 'Customer:',
   'Prix inférieur au prix d’achat : vente à perte': 'Price below purchase price: selling at a loss', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'Price below purchase price (# DA): selling at a loss',
   'Vente à perte :': 'Selling at a loss:',
+
+  // ---- recycle bin
+  'Corbeille': 'Recycle bin', 'Supprimer': 'Delete', 'Restaurer': 'Restore', 'Supprimer définitivement': 'Delete permanently', 'Supprimer la pièce ?': 'Delete the part?', 'Supprimer définitivement ?': 'Delete permanently?',
+  'Mettre à la corbeille': 'Move to recycle bin', 'Supprimée le': 'Deleted on', 'La corbeille est vide.': 'The recycle bin is empty.', 'Il reste # pièce(s) en stock.': '# part(s) still in stock.',
+  '# pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées': '# deleted part(s) · no longer shown in parts or at the till, and can be restored',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.': 'A deleted part keeps its history (sales, stock movements). “Restore” puts it back in parts and at the till. “Delete permanently” erases it from Dolibarr, only if it is on no document.',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.': 'A deleted part keeps its history (sales, stock movements). “Restore” puts it back in parts and at the till.',
+  'La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.': 'The part goes to the recycle bin: it is no longer shown in parts or at the till. You can restore it at any time from Parts → Recycle bin.',
+  'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.': 'The part will be erased from Dolibarr. This cannot be undone.',
+  'Mise à la corbeille…': 'Moving to recycle bin…', 'Restauration…': 'Restoring…', 'Suppression…': 'Deleting…', 'Seul le gérant peut supprimer définitivement une pièce.': 'Only the manager can delete a part permanently.',
 };
 // Composed texts: dates, months, titles with a reference.
 (function () {
@@ -192,6 +202,10 @@ window.EN = {
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'Close the till · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'Print ' + T[t] + ' ' + r],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'Import ' + f],
+    [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'Part ' + r + ' moved to the recycle bin. It can be restored from Parts → Recycle bin.'],
+    [/^Pièce (\S*) restaurée\.$/, (s, r) => 'Part ' + r + ' restored.'],
+    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'Part ' + r + ' permanently deleted from Dolibarr.'],
+    [/^Suppression refusée par Dolibarr : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'Dolibarr refused the deletion: the part is on documents (invoices, orders…). It stays in the recycle bin.' + e],
     [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' below purchase price. Check the prices before confirming.'],
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': not connected to Dolibarr yet. Do it in Dolibarr for now.'],
   ];

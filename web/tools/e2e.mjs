@@ -119,6 +119,33 @@ try {
   const st2 = await api('products/' + prod.id + '/stock', g0);
   check('transfert écrit dans Dolibarr (Magasin 2, Réserve 1)', Number(st2.stock_warehouses['1'].real) === 2 && Number(st2.stock_warehouses['2']?.real) === 1, JSON.stringify(st2.stock_warehouses));
 
+  // 5a. Corbeille : supprimer → corbeille → restaurer ; suppression définitive (gérant).
+  await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, prod.id); await g.waitForTimeout(800);
+  await g.locator('[data-action="modalTrash"]').click();
+  await g.locator('#trash-ok').click();
+  await g.waitForFunction(() => location.hash === '#/pieces', null, { timeout: 20000 }).catch(() => {});
+  await g.waitForTimeout(500);
+  check('supprimer : la pièce quitte la liste des pièces', !(await g.locator('table.t').first().innerText()).includes(newRef));
+  const tr1 = await api('products/' + prod.id, g0);
+  check('Dolibarr : pièce hors vente et hors achat (corbeille)', Number(tr1.status) === 0 && Number(tr1.status_buy) === 0, JSON.stringify([tr1.status, tr1.status_buy]));
+  await g.evaluate(() => { location.hash = '#/pieces/corbeille'; }); await g.waitForTimeout(2500);
+  check('corbeille : la pièce y est', (await body(g)).includes(newRef));
+  await g.screenshot({ path: resolve(shots, '04b-corbeille.png') });
+  await g.locator('tr', { hasText: newRef }).locator('[data-action="restorePart"]').click();
+  await g.waitForTimeout(2500);
+  const tr2 = await api('products/' + prod.id, g0);
+  check('restaurer : pièce remise en vente dans Dolibarr', Number(tr2.status) === 1 && Number(tr2.status_buy) === 1, JSON.stringify([tr2.status, tr2.status_buy]));
+  await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);
+  check('restaurer : la pièce revient dans la liste', (await body(g)).includes(newRef));
+  const purgeRef = 'TRASH-' + Date.now();
+  const purgeId = Number(await api('products', g0, { method: 'POST', body: JSON.stringify({ ref: purgeRef, label: 'Essai suppression définitive', type: 0, status: 0, status_buy: 0, price: 10 }) }));
+  await g.evaluate(() => { location.hash = '#/pieces/corbeille'; }); await g.waitForTimeout(2500);
+  await g.locator('tr', { hasText: purgeRef }).locator('[data-action="modalPurge"]').click();
+  await g.locator('#purge-ok').click(); await g.waitForTimeout(2500);
+  const gone = await fetch(DOLI + '/api/index.php/products/' + purgeId, { headers: { DOLAPIKEY: g0 } });
+  check('suppression définitive : pièce effacée de Dolibarr', gone.status === 404, String(gone.status));
+  check('suppression définitive : la pièce quitte la corbeille', !(await g.locator('table.t').first().innerText()).includes(purgeRef));
+
   // 5b. Pas de marque TIBAO à l'écran (pièces, catalogue).
   await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);
   check('pièces : marque TIBAO jamais affichée', !/TIBAO/i.test(await body(g)));

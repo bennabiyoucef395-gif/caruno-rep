@@ -28,8 +28,19 @@ const DOLI = {
     if (this.token) headers.DOLAPIKEY = this.token;
     if (o.body !== undefined) headers['Content-Type'] = 'application/json';
     let res;
-    try { res = await fetch(url, { method: o.method || 'GET', headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) }); }
-    catch (e) { throw this.err('Dolibarr injoignable à l’adresse ' + this.apiRoot(this.url).replace(/\/api\/index\.php$/, '') + ' : vérifiez l’adresse (port compris) et le réseau.', 0); }
+    // Lecture : Dolibarr chargé (démarrage, beaucoup de requêtes) peut couper une requête ; deux nouvelles tentatives.
+    // Les écritures ne sont jamais rejouées (pas de double vente, de double mouvement).
+    const read = (o.method || 'GET') === 'GET';
+    for (let attempt = 0; ; attempt++) {
+      try {
+        res = await fetch(url, { method: o.method || 'GET', headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) });
+        if (read && res.status >= 500 && attempt < 2) { await new Promise((ok) => setTimeout(ok, 600 * (attempt + 1))); continue; }
+        break;
+      } catch (e) {
+        if (read && attempt < 2) { await new Promise((ok) => setTimeout(ok, 600 * (attempt + 1))); continue; }
+        throw this.err('Dolibarr injoignable à l’adresse ' + this.apiRoot(this.url).replace(/\/api\/index\.php$/, '') + ' : vérifiez l’adresse (port compris) et le réseau.', 0);
+      }
+    }
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
@@ -107,6 +118,8 @@ const DOLI = {
       fam: old ? old.fam : '', type: ao.options_caruno_part_type || '', stock, loc, prices: [lv(1), lv(2), lv(3)], floor: this.num(r.price_min), cost: this.num(r.pmp) || this.num(r.cost_price),
       seuil: this.num(r.seuil_stock_alerte), souhaite: this.num(r.desiredstock), sups: old ? old.sups : [], photos: old ? old.photos : [], tva: this.num(r.tva_tx),
       refExt: r.ref_ext || '', created: this.num(r.date_creation), extra: old ? old.extra : false,
+      // Corbeille CARUNO : pièce « hors vente et hors achat » dans Dolibarr.
+      trash: r.status !== undefined && this.num(r.status) === 0 && this.num(r.status_buy) === 0, changed: this.num(r.tms || r.date_modification),
     };
   },
   CAT: { 1: 'Particulier', 2: 'Garage', 3: 'Revendeur' },
@@ -164,13 +177,14 @@ const DOLI = {
     this.loading = true; this.error = '';
     try {
       const [whs, pt, terms, cats] = await Promise.all([
-        this.safeList(this.api('warehouses', { query: { limit: 50, sortfield: 't.rowid', sortorder: 'ASC' } })),
+        // Les entrepôts sont indispensables (stock, ventes) : une erreur ici arrête le chargement, avec « Réessayer ».
+        this.api('warehouses', { query: { limit: 50, sortfield: 't.rowid', sortorder: 'ASC' } }),
         this.safeList(this.api('setup/dictionary/payment_types', { query: { limit: 50 } })),
         this.safeList(this.api('setup/dictionary/payment_terms', { query: { limit: 50 } })),
         this.safeList(this.api('categories', { query: { type: 'product', limit: 100 } })),
       ]);
       WAREHOUSES.splice(0, WAREHOUSES.length, ...whs.map((w) => this.txt(w.label || w.ref)));
-      if (!WAREHOUSES.length) WAREHOUSES.push('Magasin');
+      if (!WAREHOUSES.length) throw this.err('Aucun entrepôt lu dans Dolibarr : vérifiez les droits du compte (stock) puis réessayez.', -2);
       whs.forEach((w) => { const n = this.txt(w.label || w.ref); this.whId[n] = this.num(w.id); this.whName[w.id] = n; });
       pt.forEach((t) => { this.payType[t.code] = this.num(t.id); });
       const TL = { RECEP: 'Comptant', '30D': '30 jours', '30DENDMONTH': '30 jours fin de mois', '45D': '45 jours', '60D': '60 jours' };
@@ -181,8 +195,8 @@ const DOLI = {
       const can = (p) => this.can(p);
       const [users, recent, inStock, clients, suppliers, invoices, propals, orders, ships, pos, moves, banks, company] = await Promise.all([
         can('user.user.lire') ? this.safeList(this.api('users', { query: { limit: 200 } })) : Promise.resolve([]),
-        this.safeList(this.api('products', { query: { limit: 300, sortfield: 't.rowid', sortorder: 'DESC', includestockdata: 1, pagination_data: 'true' } })),
-        this.safeList(this.all('products', { sqlfilters: '(t.stock:>:0) or (t.seuil_stock_alerte:>:0)', includestockdata: 1 }, 1000)),
+        this.safeList(this.api('products', { query: { limit: 300, sortfield: 't.rowid', sortorder: 'DESC', includestockdata: 1, pagination_data: 'true', sqlfilters: '(t.tosell:=:1)' } })),
+        this.safeList(this.all('products', { sqlfilters: '((t.stock:>:0) or (t.seuil_stock_alerte:>:0)) and (t.tosell:=:1)', includestockdata: 1 }, 1000)),
         this.safeList(this.all('thirdparties', { mode: 1, sortfield: 't.nom', sortorder: 'ASC' }, 1000)),
         this.safeList(this.all('thirdparties', { mode: 4, sortfield: 't.nom', sortorder: 'ASC' }, 500)),
         can('facture.lire') ? this.safeList(this.all('invoices', { sortfield: 't.rowid', sortorder: 'DESC' }, 400)) : Promise.resolve([]),
@@ -253,6 +267,29 @@ const DOLI = {
     Object.assign(S.db.shop, p);
     try { localStorage.setItem('caruno-shop', JSON.stringify({ name: p.name || '', logo: p.logo || '' })); } catch (e) {}
   },
+  // Corbeille : pièces mises hors vente et hors achat par CARUNO, restaurables ; suppression définitive pour le gérant.
+  async loadTrash() {
+    const rows = await this.safeList(this.api('products', { query: { sqlfilters: '(t.tosell:=:0) and (t.tobuy:=:0)', limit: 300, sortfield: 't.tms', sortorder: 'DESC', includestockdata: 1 } }));
+    S.db.trash = rows.map((r) => this.upsertPart(r));
+  },
+  async setTrash(id, inTrash) {
+    const r = await this.api('products/' + id);
+    const line = (inTrash ? 'Mise à la corbeille' : 'Restaurée de la corbeille') + ' le ' + nowStr() + ' par ' + S.user.login + ' (CARUNO)';
+    await this.api('products/' + id, { method: 'PUT', body: { status: inTrash ? 0 : 1, status_buy: inTrash ? 0 : 1, note_private: [this.txt(r.note_private || ''), line].filter(Boolean).join('\n') } });
+    await this.refreshParts([Number(id)]);
+    S.db.trash = (S.db.trash || []).filter((p) => p.id !== Number(id));
+    if (inTrash && part(id)) S.db.trash.unshift(part(id));
+    this.total += inTrash ? -1 : 1;
+  },
+  async purge(id) {
+    try { await this.api('products/' + id, { method: 'DELETE' }); }
+    catch (e) {
+      if (e.status === 403) throw this.err('Seul le gérant peut supprimer définitivement une pièce.', 403);
+      throw this.err('Suppression refusée par Dolibarr : la pièce figure sur des documents (factures, commandes…). Elle reste dans la corbeille. (' + e.message + ')', e.status);
+    }
+    S.db.trash = (S.db.trash || []).filter((p) => p.id !== Number(id));
+    S.db.parts = S.db.parts.filter((p) => p.id !== Number(id));
+  },
   // Import : pièce déjà dans Dolibarr avec cette référence (null sinon).
   async findByRef(ref) {
     const r = await this.api('products/ref/' + encodeURIComponent(ref), { query: { includestockdata: 1 } }).catch((e) => { if (e.status === 404) return null; throw e; });
@@ -295,7 +332,7 @@ const DOLI = {
     if (s.length < 2) return [];
     const like = '%' + s.replace(/\s+/g, '%') + '%';
     const filter = "(t.ref:like:'" + like + "') or (t.label:like:'" + like + "') or (t.barcode:=:'" + s + "') or (ef.oem_ref:like:'%" + this.oem(s) + "%') or (ef.brand:like:'" + like + "')";
-    const rows = await this.safeList(this.api('products', { query: { sqlfilters: filter, limit: limit || 60, includestockdata: 1, sortfield: 't.ref', sortorder: 'ASC' } }));
+    const rows = await this.safeList(this.api('products', { query: { sqlfilters: '(' + filter + ') and (t.tosell:=:1)', limit: limit || 60, includestockdata: 1, sortfield: 't.ref', sortorder: 'ASC' } }));
     const ps = rows.map((r) => this.upsertPart(r));
     await this.fillFamilies(ps.filter((p) => !p.fam).map((p) => p.id));
     return ps.map((p) => p.id);

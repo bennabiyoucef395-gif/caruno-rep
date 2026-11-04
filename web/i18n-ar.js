@@ -175,6 +175,16 @@ window.AR = {
   'Bon d’achat': 'وصل شراء', 'BON D’ACHAT': 'وصل شراء', 'Client :': 'الزبون:',
   'Prix inférieur au prix d’achat : vente à perte': 'السعر أقل من سعر الشراء: بيع بخسارة', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'السعر أقل من سعر الشراء (# دج): بيع بخسارة',
   'Vente à perte :': 'بيع بخسارة:',
+
+  // ---- corbeille
+  'Corbeille': 'سلة المحذوفات', 'Supprimer': 'حذف', 'Restaurer': 'استرجاع', 'Supprimer définitivement': 'حذف نهائي', 'Supprimer la pièce ?': 'حذف القطعة؟', 'Supprimer définitivement ?': 'حذف نهائي؟',
+  'Mettre à la corbeille': 'نقل إلى سلة المحذوفات', 'Supprimée le': 'حذفت في', 'La corbeille est vide.': 'سلة المحذوفات فارغة.', 'Il reste # pièce(s) en stock.': 'بقي # قطعة في المخزون.',
+  '# pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées': '# قطعة محذوفة · لا تظهر في القطع ولا في الصندوق، ويمكن استرجاعها',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.': 'القطعة المحذوفة تحتفظ بسجلها (المبيعات، حركات المخزون). «استرجاع» يعيدها إلى القطع والصندوق. «حذف نهائي» يمحوها من Dolibarr، فقط إذا لم تظهر في أي وثيقة.',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.': 'القطعة المحذوفة تحتفظ بسجلها (المبيعات، حركات المخزون). «استرجاع» يعيدها إلى القطع والصندوق.',
+  'La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.': 'تنقل القطعة إلى سلة المحذوفات: لا تظهر في القطع ولا في الصندوق. يمكنك استرجاعها في أي وقت من القطع ← سلة المحذوفات.',
+  'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.': 'ستمحى القطعة من Dolibarr. لا يمكن التراجع عن هذا الإجراء.',
+  'Mise à la corbeille…': 'جارٍ النقل إلى سلة المحذوفات…', 'Restauration…': 'جارٍ الاسترجاع…', 'Suppression…': 'جارٍ الحذف…', 'Seul le gérant peut supprimer définitivement une pièce.': 'فقط المسير يمكنه حذف قطعة نهائياً.',
 };
 // Textes composés : dates, mois, titres avec une référence.
 (function () {
@@ -191,6 +201,10 @@ window.AR = {
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'إغلاق الصندوق · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'طباعة ' + ({ facture: 'فاتورة', devis: 'عرض سعر', commande: 'طلبية', livraison: 'تسليم', avoir: 'إشعار دائن' })[t] + ' ' + r],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'استيراد ' + f],
+    [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'نقلت القطعة ' + r + ' إلى سلة المحذوفات. يمكن استرجاعها من القطع ← سلة المحذوفات.'],
+    [/^Pièce (\S*) restaurée\.$/, (s, r) => 'تم استرجاع القطعة ' + r + '.'],
+    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'حذفت القطعة ' + r + ' نهائياً من Dolibarr.'],
+    [/^Suppression refusée par Dolibarr : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'رفض Dolibarr الحذف: القطعة موجودة في وثائق (فواتير، طلبيات…). تبقى في سلة المحذوفات.' + e],
     [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' تحت سعر الشراء. تحقق من الأسعار قبل التأكيد.'],
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم في Dolibarr حالياً.'],
   ];

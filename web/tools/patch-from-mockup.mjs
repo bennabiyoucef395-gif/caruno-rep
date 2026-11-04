@@ -154,6 +154,12 @@ between('  const tiles = res.length ? res.map((p, idx) => {', '  return posOrder
 rep(`'<div class="pos-grid">' + tiles + '</div>'`, `'<div class="pos-grid pos-listwrap">' + tiles + '</div>'`);
 rep('</style>', '.pos-grid.pos-listwrap{display:block}\n.pos-list tr.hi td{background:#FFF4EC}\n.pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}\n</style>');
 
+// ---------- pièces : corbeille (supprimer → corbeille → restaurer ; suppression définitive pour le gérant) ----------
+rep(`'/modifier">Modifier</a>' : ''), ['#/pieces', 'Pièces · ' + p.fam])`, `'/modifier">Modifier</a><button class="btn" type="button" data-action="modalTrash" data-arg="' + p.id + '">' + ic('trash', 18) + 'Supprimer</button>' : ''), ['#/pieces', 'Pièces' + (p.fam ? ' · ' + p.fam : '')])`);
+rep(`data-action="modalImport">Importer</button>' : '')`, `data-action="modalImport">Importer</button><a class="btn" href="#/pieces/corbeille">' + ic('trash', 18) + 'Corbeille</a>' : '')`);
+rep('search(f.q, S.db.parts.slice().sort((a, b) => b.id - a.id))', 'search(f.q, S.db.parts.filter((x) => !x.trash).sort((a, b) => b.id - a.id))');
+rep("search(u.q, S.db.parts).filter((p) => u.cat === 'Tous'", "search(u.q, S.db.parts.filter((x) => !x.trash)).filter((p) => u.cat === 'Tous'");
+
 // ---------- caisse : alerte quand le prix tapé passe sous le prix d'achat (vente à perte) ----------
 rep(`'</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`, `'</b></button>' + costWarn(x) + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`);
 rep(`<input class="input num price-in" id="ln-price-' + i + '"`, `<input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '"`);

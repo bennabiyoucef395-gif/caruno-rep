@@ -239,6 +239,53 @@ render = function () {
   const hi = document.querySelector('.pos-list tr.hi');
   if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
 };
+/* =================================================================== PIÈCES : CORBEILLE */
+P.trash = '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';
+const viewPieceBase = viewPiece;
+viewPiece = function (id) { return id === 'corbeille' ? viewTrash() : viewPieceBase(id); };
+function viewTrash() {
+  DOLI.need('trash', () => DOLI.loadTrash());
+  const list = S.db.trash || [], loading = DOLI.lazy.trash !== 'done', purge = DOLI.can('produit.supprimer');
+  return head('Corbeille', list.length + ' pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées', '', ['#/pieces', 'Pièces']) +
+    '<div class="alert a-info">' + ic('info', 20) + '<div>Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.' + (purge ? ' « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.' : '') + '</div></div>' +
+    '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th class="right">Stock</th><th>Supprimée le</th><th></th></tr></thead><tbody>' +
+    (list.length ? list.map((p) => '<tr><td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
+      '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td><td class="right num">' + total(p) + '</td>' +
+      '<td class="num">' + (p.changed ? DOLI.stamp(p.changed).split(' ').map((x, i) => (i ? x : dateFr(x))).join(' ') : '—') + '</td>' +
+      '<td class="right"><div class="actions" style="justify-content:flex-end"><button class="btn btn-primary" type="button" data-action="restorePart" data-arg="' + p.id + '">' + ic('undo', 18) + 'Restaurer</button>' +
+        (purge ? '<button class="btn" type="button" data-action="modalPurge" data-arg="' + p.id + '">Supprimer définitivement</button>' : '') + '</div></td></tr>').join('')
+      : '<tr><td colspan="5" class="empty">' + (loading ? 'Chargement…' : 'La corbeille est vide.') + '</td></tr>') +
+    '</tbody></table></div></div>';
+}
+// La corbeille est relue dans Dolibarr à chaque ouverture.
+window.addEventListener('hashchange', () => { if (location.hash !== '#/pieces/corbeille') DOLI.lazy.trash = ''; });
+A.modalTrash = (el) => { S.ui.modal = { kind: 'trash', pid: Number(el.dataset.arg) }; };
+A.modalPurge = (el) => { S.ui.modal = { kind: 'purge', pid: Number(el.dataset.arg) }; };
+A.trashPart = () => {
+  const id = S.ui.modal.pid, p = part(id);
+  run(async () => { await DOLI.setTrash(id, true); S.ui.modal = null; toast('Pièce ' + p.ref + ' mise à la corbeille. Elle peut être restaurée depuis Pièces → Corbeille.'); go('#/pieces'); }, 'Mise à la corbeille…');
+};
+A.restorePart = (el) => {
+  const id = Number(el.dataset.arg), p = part(id);
+  run(async () => { await DOLI.setTrash(id, false); toast('Pièce ' + (p ? p.ref : '') + ' restaurée.'); }, 'Restauration…');
+};
+A.purgePart = () => {
+  const id = S.ui.modal.pid, p = part(id);
+  run(async () => { S.ui.modal = null; await DOLI.purge(id); toast('Pièce ' + (p ? p.ref : '') + ' supprimée définitivement de Dolibarr.'); }, 'Suppression…');
+};
+function trashModal(m) {
+  const p = part(m.pid), cancel = '<button class="btn" type="button" data-action="closeModal">Annuler</button>';
+  if (!p) return '';
+  const who = '<div style="display:flex;gap:12px;align-items:center">' + thumb(p, 48) + '<div><b>' + esc(p.name) + '</b><div class="mono muted">' + esc((p.brand ? p.brand + ' ' : '') + p.ref) + '</div></div></div>';
+  if (m.kind === 'trash') return modal('Supprimer la pièce ?', who + (total(p) ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + 'Il reste ' + total(p) + ' pièce(s) en stock.</div>' : '') +
+    '<span class="muted" style="font-size:14px">La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.</span>',
+    cancel + '<button class="btn btn-primary" type="button" id="trash-ok" data-action="trashPart">' + ic('trash', 18) + 'Mettre à la corbeille</button>');
+  return modal('Supprimer définitivement ?', who + '<div class="alert a-bad">' + ic('warn', 18) + 'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.</div>',
+    cancel + '<button class="btn btn-dark" type="button" id="purge-ok" data-action="purgePart">Supprimer définitivement</button>');
+}
+const renderModalTrash = renderModal;
+renderModal = function () { return S.ui.modal && (S.ui.modal.kind === 'trash' || S.ui.modal.kind === 'purge') ? trashModal(S.ui.modal) : renderModalTrash(); };
+
 /* =================================================================== CAISSE : VENTE SOUS LE PRIX D'ACHAT */
 // Prix de vente de la ligne sous le coût d'achat (PMP connu). Le vendeur est averti sans voir le coût ;
 // les rôles qui voient les coûts ont le montant.

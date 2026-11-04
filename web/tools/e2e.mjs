@@ -219,6 +219,31 @@ try {
   await g.evaluate(() => { location.hash = '#/catalogue'; }); await g.waitForTimeout(500);
   await g.locator('#cat-q').fill(''); await g.waitForTimeout(500);
 
+  // 5b2. Fiche client : toutes ses factures, période du … au …, sélection, impression (bons d'achat, relevé).
+  await g.evaluate(() => { location.hash = '#/clients/5'; });
+  await g.waitForFunction(() => document.querySelectorAll('#client-docs tbody input[data-change="cdPick"]').length > 1, null, { timeout: 30000 }).catch(() => {});
+  const allRows = await g.locator('#client-docs tbody input[data-change="cdPick"]').count();
+  check('fiche client : toutes les factures du client', allRows > 1, String(allRows));
+  const todayIso = await g.evaluate(() => TODAY);
+  await g.locator('#cd-from').fill(todayIso); await g.waitForTimeout(300);
+  await g.locator('#cd-to').fill(todayIso); await g.waitForTimeout(300);
+  const dayRows = await g.locator('#client-docs tbody input[data-change="cdPick"]').count();
+  const dayDates = await g.$$eval('#client-docs tbody tr td:nth-child(3)', (tds) => tds.map((t) => t.textContent));
+  const dFr = todayIso.slice(8, 10) + '/' + todayIso.slice(5, 7) + '/' + todayIso.slice(0, 4);
+  check('période du … au … : seulement les factures du jour', dayRows >= 1 && dayRows < allRows && dayDates.every((x) => x === dFr), dayRows + ' / ' + allRows);
+  await g.locator('#client-docs tbody input[data-change="cdPick"]').first().uncheck(); await g.waitForTimeout(300);
+  check('case décochée : la sélection diminue', (await g.locator('#cd-print').innerText()).includes('(' + (dayRows - 1) + ')'), await g.locator('#cd-print').innerText());
+  await g.screenshot({ path: resolve(shots, '06c-client-factures.png') });
+  if (dayRows > 1) {
+    await g.locator('#cd-print').click();
+    await g.locator('#pm-print').waitFor({ timeout: 30000 });
+    check('impression : un bon d’achat par document choisi', (await g.locator('.print-multi .print-area.bon').count()) === dayRows - 1, String(await g.locator('.print-multi .print-area').count()));
+    await g.locator('[data-action="pmFmt"][data-arg="releve"]').click(); await g.waitForTimeout(300);
+    check('impression : relevé de compte sur une page', (await g.locator('.print-multi .print-area').count()) === 1 && /RELEVÉ DE COMPTE/.test(await g.locator('.print-multi').innerText()));
+    await g.screenshot({ path: resolve(shots, '06d-releve.png') });
+    await g.locator('[data-action="closeModal"]').first().click();
+  }
+
   // 5c. Mon profil : enseigne du magasin enregistrée dans Dolibarr, affichée dans le menu.
   await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(600);
   await g.locator('#sh-name').fill('City Makoudi 2');

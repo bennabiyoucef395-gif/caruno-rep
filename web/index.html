@@ -295,6 +295,8 @@ kbd{display:inline-block;min-width:20px;padding:1px 6px;margin-right:3px;border:
 .pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
 .price-in.under-cost{border-color:var(--bad);box-shadow:0 0 0 3px #FDECEC;color:var(--bad)}
 .cost-warn{display:flex;gap:8px;align-items:center;margin:0 14px 8px;padding:7px 10px;border-radius:8px;background:#FDECEC;color:#991B1B;font-size:13px;font-weight:600}
+.print-multi{display:flex;flex-direction:column;gap:16px}
+@media print{.print-multi,.print-multi *{visibility:visible}.print-multi{position:absolute;left:0;top:0;width:100%;gap:0}.print-multi .print-area{position:static;break-after:page;page-break-after:always}.print-multi .print-area:last-child{break-after:auto;page-break-after:auto}}
 </style>
 </head>
 <body>
@@ -2963,6 +2965,78 @@ function translateParts(root) {
     if (t && t !== core) n.nodeValue = n.nodeValue.replace(core, t);
   });
 }
+
+/* =================================================================== CLIENT : FACTURES ET IMPRESSION D'UNE SÉLECTION */
+// Sur la fiche client : toutes ses factures et avoirs (lus dans Dolibarr), période « du … au … », cases à cocher,
+// puis impression de la sélection en bons d'achat, factures A4, tickets ou relevé de compte.
+function cdUi(cid) { if (!S.ui.cd || S.ui.cd.cid !== cid) S.ui.cd = { cid, from: '', to: '', unpaid: false, off: {} }; return S.ui.cd; }
+function clientDocs(cid) {
+  return S.db.docs.filter((d) => d.client === cid && (d.type === 'facture' || d.type === 'avoir') && d.status !== 'brouillon')
+    .sort((a, b) => (a.date === b.date ? (a.ref < b.ref ? 1 : -1) : a.date < b.date ? 1 : -1));
+}
+const cdIn = (u, d) => (!u.from || d.date >= u.from) && (!u.to || d.date <= u.to) && (!u.unpaid || (d.type === 'facture' && d.status !== 'payee'));
+const cdSel = (cid) => { const u = cdUi(cid); return clientDocs(cid).filter((d) => cdIn(u, d) && !u.off[d.ref]); };
+const cdSign = (d) => (d.type === 'avoir' ? -1 : 1);
+const cdRest = (d) => (d.type === 'facture' ? Math.max(0, d.ttc - (d.paid || 0)) : 0);
+function clientDocsSection(cid) {
+  DOLI.need('cdocs:' + cid, () => DOLI.loadClientInvoices(cid));
+  const u = cdUi(cid), shown = clientDocs(cid).filter((d) => cdIn(u, d)), sel = shown.filter((d) => !u.off[d.ref]);
+  const tot = sel.reduce((t, d) => t + cdSign(d) * d.ttc, 0), paid = sel.reduce((t, d) => t + (d.type === 'facture' ? d.paid || 0 : 0), 0), rest = sel.reduce((t, d) => t + cdRest(d), 0);
+  const month = TODAY.slice(0, 8) + '01', year = TODAY.slice(0, 4) + '-01-01';
+  const cur = u.unpaid ? 'unpaid' : !u.from && !u.to ? 'all' : u.from === month && !u.to ? 'month' : u.from === year && !u.to ? 'year' : '';
+  return '<section class="card" style="overflow:hidden" id="client-docs"><div class="card-head" style="flex-wrap:wrap;gap:10px;align-items:flex-end"><h2>Factures et bons d’achat</h2>' +
+    '<div class="actions" style="align-items:flex-end;flex-wrap:wrap">' +
+      '<div class="chips" role="group" aria-label="Période">' + [['all', 'Tout'], ['month', 'Ce mois'], ['year', 'Cette année'], ['unpaid', 'Impayées']].map((q) => '<button class="chip" type="button" data-action="cdQuick" data-arg="' + q[0] + '" aria-pressed="' + (cur === q[0]) + '">' + q[1] + '</button>').join('') + '</div>' +
+      '<div class="field"><label for="cd-from">Du</label><input class="input" type="date" id="cd-from" value="' + esc(u.from) + '" data-change="cdFrom"></div>' +
+      '<div class="field"><label for="cd-to">Au</label><input class="input" type="date" id="cd-to" value="' + esc(u.to) + '" data-change="cdTo"></div>' +
+      '<button class="btn btn-primary" type="button" id="cd-print" data-action="cdPrint" data-arg="' + esc(cid) + '"' + (sel.length ? '' : ' disabled') + '>' + ic('print', 18) + 'Imprimer la sélection (' + sel.length + ')</button>' +
+    '</div></div>' +
+    '<div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th><input type="checkbox" id="cd-all" aria-label="Tout cocher" data-change="cdAll"' + (shown.length && !shown.some((d) => u.off[d.ref]) ? ' checked' : '') + ' style="width:20px;height:20px"></th><th>Référence</th><th>Date</th><th>Statut</th><th class="right">Montant</th><th class="right">Payé</th><th class="right">Reste dû</th></tr></thead><tbody>' +
+    (shown.length ? shown.map((d) => '<tr><td><input type="checkbox" data-change="cdPick" data-arg="' + esc(d.ref) + '"' + (u.off[d.ref] ? '' : ' checked') + ' aria-label="Choisir ' + esc(d.ref) + '" style="width:20px;height:20px"></td>' +
+      '<td><a class="mono" href="#/ventes/' + esc(d.ref) + '">' + esc(d.ref) + '</a>' + (d.saleRef ? '<div class="muted mono" style="font-size:12px">' + esc(d.saleRef) + '</div>' : '') + '</td><td class="num">' + dateFr(d.date) + '</td><td>' + statusBadge(d.type, d) + '</td>' +
+      '<td class="right num">' + (d.type === 'avoir' ? '−' : '') + fmt(d.ttc) + '</td><td class="right num">' + (d.type === 'facture' ? fmt(d.paid || 0) : '—') + '</td><td class="right num"><b>' + (d.type === 'facture' ? fmt(cdRest(d)) : '—') + '</b></td></tr>').join('')
+      : '<tr><td colspan="7" class="empty">' + (DOLI.lazy['cdocs:' + cid] !== 'done' ? 'Chargement…' : 'Aucune facture sur cette période.') + '</td></tr>') +
+    '</tbody></table></div>' +
+    '<div class="num" style="display:flex;justify-content:flex-end;gap:24px;padding:12px 18px;flex-wrap:wrap;border-top:1px solid var(--line2)"><span class="muted">Sélection : ' + sel.length + ' document(s)</span><span>Total <b id="cd-total">' + fmt(tot) + '</b></span><span>Payé <b>' + fmt(paid) + '</b></span><span>Reste dû <b style="color:' + (rest ? 'var(--bad)' : 'inherit') + '">' + fmt(rest) + '</b></span></div></section>';
+}
+const viewClientBase = viewClient;
+viewClient = function (id) { const html = viewClientBase(id); return client(id) ? html + clientDocsSection(id) : html; };
+C.cdFrom = (v) => { const u = S.ui.cd; u.from = v; u.unpaid = false; };
+C.cdTo = (v) => { const u = S.ui.cd; u.to = v; u.unpaid = false; };
+C.cdPick = (v, el) => { S.ui.cd.off[el.dataset.arg] = !el.checked; };
+C.cdAll = (v, el) => { const u = S.ui.cd; clientDocs(u.cid).filter((d) => cdIn(u, d)).forEach((d) => { u.off[d.ref] = !el.checked; }); };
+A.cdQuick = (el) => { const u = S.ui.cd, k = el.dataset.arg; u.unpaid = k === 'unpaid'; u.to = ''; u.from = k === 'month' ? TODAY.slice(0, 8) + '01' : k === 'year' ? TODAY.slice(0, 4) + '-01-01' : ''; u.off = {}; };
+A.cdPrint = (el) => {
+  const cid = el.dataset.arg, list = cdSel(cid);
+  if (!list.length) return;
+  run(async () => { await DOLI.loadDocPayments(list); S.ui.modal = { kind: 'printMany', cid, refs: list.map((d) => d.ref), format: 'bon' }; }, 'Préparation de l’impression…');
+};
+A.pmFmt = (el) => { S.ui.modal.format = el.dataset.arg; };
+// Relevé de compte : une page avec les documents choisis, payé et reste dû.
+function statement(cid, docs) {
+  const shop = S.db.shop, c = client(cid) || {}, dates = docs.map((d) => d.date).sort();
+  const tot = docs.reduce((t, d) => t + cdSign(d) * d.ttc, 0), paid = docs.reduce((t, d) => t + (d.type === 'facture' ? d.paid || 0 : 0), 0), rest = docs.reduce((t, d) => t + cdRest(d), 0);
+  const row = (a, b, st) => '<div style="display:flex;justify-content:space-between;gap:16px' + (st || '') + '"><span>' + a + '</span><span>' + b + '</span></div>';
+  return '<div class="print-area releve">' +
+    '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:52px;width:auto;max-width:96px;object-fit:contain">' : '') +
+      '<div><b style="font-size:16px">' + esc(shop.name) + '</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + '</div></div>' +
+      '<div style="text-align:right"><b style="font-size:18px">RELEVÉ DE COMPTE</b><br>Du ' + dateFr(dates[0]) + ' au ' + dateFr(dates[dates.length - 1]) + '<br>Édité le ' + dateFr(TODAY) + '</div></div>' +
+    '<div style="border:1px solid #CCC;border-radius:6px;padding:8px 10px;align-self:flex-end;min-width:min(260px,100%)"><b>' + esc(c.name || '') + '</b>' + (c.address ? '<br>' + esc(c.address) : '') + (c.town ? '<br>' + esc(c.town) : '') + (c.phone ? '<br>' + esc(c.phone) : '') + '</div>' +
+    '<table><thead><tr><th>Date</th><th>Document</th><th class="r">Montant</th><th class="r">Payé</th><th class="r">Reste dû</th></tr></thead><tbody>' +
+      docs.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.ref < b.ref ? -1 : 1)).map((d) => '<tr><td>' + dateFr(d.date) + '</td><td>' + (d.type === 'avoir' ? 'Avoir ' : 'Facture ') + esc(d.ref) + '</td><td class="r">' + (d.type === 'avoir' ? '−' : '') + fmt(d.ttc) + '</td><td class="r">' + (d.type === 'facture' ? fmt(d.paid || 0) : '—') + '</td><td class="r">' + (d.type === 'facture' ? fmt(cdRest(d)) : '—') + '</td></tr>').join('') + '</tbody></table>' +
+    '<div style="align-self:flex-end;min-width:min(260px,100%);display:flex;flex-direction:column;gap:2px">' + row('Total', fmt(tot)) + row('Payé', fmt(paid)) + row('Reste dû', fmt(rest), ';font-weight:700;font-size:15px;border-top:1px solid #000;padding-top:4px') + '</div></div>';
+}
+function printManyModal(m) {
+  const docs = m.refs.map(doc).filter(Boolean);
+  const body = m.format === 'releve' ? statement(m.cid, docs) : docs.map((d) => printDoc(d, m.format === 'bon' && d.type === 'avoir' ? 'a4' : m.format)).join('');
+  return modal('Imprimer ' + docs.length + ' document(s)',
+    '<div class="chips" role="group" aria-label="Format">' + [['bon', 'Bon d’achat'], ['a4', 'Facture A4'], ['ticket', 'Ticket 80 mm'], ['releve', 'Relevé de compte']].map((f) => '<button class="chip" type="button" data-action="pmFmt" data-arg="' + f[0] + '" aria-pressed="' + (m.format === f[0]) + '">' + f[1] + '</button>').join('') + '</div>' +
+    '<span class="muted" style="font-size:13px">' + (m.format === 'releve' ? 'Une page récapitulative.' : 'Une page par document, dans l’ordre de la liste.') + '</span>' +
+    '<div class="print-multi">' + body + '</div>',
+    '<button class="btn" type="button" data-action="closeModal">Fermer</button><button class="btn btn-primary" type="button" id="pm-print" data-action="printNow">' + ic('print', 18) + 'Imprimer ou PDF</button>', null, true);
+}
+const renderModalMany = renderModal;
+renderModal = function () { return S.ui.modal && S.ui.modal.kind === 'printMany' ? printManyModal(S.ui.modal) : renderModalMany(); };
 
 /* =================================================================== PIÈCES : CORBEILLE */
 P.trash = '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';

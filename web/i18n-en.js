@@ -179,6 +179,12 @@ window.EN = {
   'Dernier achat': 'Last purchase', 'Alerte caisse sous': 'Till warning below', '— Aucun —': '— None —', 'Le plus élevé du coût moyen et du dernier achat': 'The higher of average cost and last purchase',
   'réception': 'receipt', 'saisie': 'entered by hand',
 
+  // ---- customer card: invoices and printing a selection
+  'Factures et bons d’achat': 'Invoices and purchase slips', 'Ce mois': 'This month', 'Cette année': 'This year', 'Impayées': 'Unpaid', 'Du': 'From', 'Au': 'To', 'Période': 'Period',
+  'Imprimer la sélection (#)': 'Print selection (#)', 'Tout cocher': 'Select all', 'Payé': 'Paid', 'Aucune facture sur cette période.': 'No invoice in this period.', 'Sélection : # document(s)': 'Selection: # document(s)',
+  'Imprimer # document(s)': 'Print # document(s)', 'Une page récapitulative.': 'One summary page.', 'Une page par document, dans l’ordre de la liste.': 'One page per document, in list order.', 'RELEVÉ DE COMPTE': 'ACCOUNT STATEMENT',
+  'Du #/#/# au #/#/#': 'From #/#/# to #/#/#', 'Édité le #/#/#': 'Issued on #/#/#', 'Préparation de l’impression…': 'Preparing printing…', 'Relevé de compte': 'Account statement',
+
   // ---- recycle bin
   'Corbeille': 'Recycle bin', 'Supprimer': 'Delete', 'Restaurer': 'Restore', 'Supprimer définitivement': 'Delete permanently', 'Supprimer la pièce ?': 'Delete the part?', 'Supprimer définitivement ?': 'Delete permanently?',
   'Mettre à la corbeille': 'Move to recycle bin', 'Supprimée le': 'Deleted on', 'La corbeille est vide.': 'The recycle bin is empty.', 'Il reste # pièce(s) en stock.': '# part(s) still in stock.',

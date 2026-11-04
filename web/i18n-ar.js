@@ -179,6 +179,12 @@ window.AR = {
   'Dernier achat': 'آخر شراء', 'Alerte caisse sous': 'تنبيه الصندوق تحت', '— Aucun —': '— لا شيء —', 'Le plus élevé du coût moyen et du dernier achat': 'الأعلى بين متوسط التكلفة وآخر شراء',
   'réception': 'استلام', 'saisie': 'إدخال يدوي',
 
+  // ---- fiche client : factures et impression d'une sélection
+  'Factures et bons d’achat': 'الفواتير ووصولات الشراء', 'Ce mois': 'هذا الشهر', 'Cette année': 'هذه السنة', 'Impayées': 'غير المدفوعة', 'Du': 'من', 'Au': 'إلى', 'Période': 'الفترة',
+  'Imprimer la sélection (#)': 'طباعة المختار (#)', 'Tout cocher': 'اختيار الكل', 'Payé': 'المدفوع', 'Aucune facture sur cette période.': 'لا توجد فاتورة في هذه الفترة.', 'Sélection : # document(s)': 'المختار: # وثيقة',
+  'Imprimer # document(s)': 'طباعة # وثيقة', 'Une page récapitulative.': 'صفحة ملخصة واحدة.', 'Une page par document, dans l’ordre de la liste.': 'صفحة لكل وثيقة، بترتيب القائمة.', 'RELEVÉ DE COMPTE': 'كشف الحساب',
+  'Du #/#/# au #/#/#': 'من #/#/# إلى #/#/#', 'Édité le #/#/#': 'صدر في #/#/#', 'Préparation de l’impression…': 'جارٍ تحضير الطباعة…', 'Document': 'الوثيقة',
+
   // ---- corbeille
   'Corbeille': 'سلة المحذوفات', 'Supprimer': 'حذف', 'Restaurer': 'استرجاع', 'Supprimer définitivement': 'حذف نهائي', 'Supprimer la pièce ?': 'حذف القطعة؟', 'Supprimer définitivement ?': 'حذف نهائي؟',
   'Mettre à la corbeille': 'نقل إلى سلة المحذوفات', 'Supprimée le': 'حذفت في', 'La corbeille est vide.': 'سلة المحذوفات فارغة.', 'Il reste # pièce(s) en stock.': 'بقي # قطعة في المخزون.',

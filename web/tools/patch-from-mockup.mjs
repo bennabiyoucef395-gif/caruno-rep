@@ -187,6 +187,9 @@ rep('<script src="i18n-en.js"></script>', '<script src="i18n-en.js"></script>\n<
 rep(`(t.description:like:'%" + words + "%')" : '';`, `(t.description:like:'%" + words + "%')" + searchExtra(q) : '';`);
 rep('[p.name, p.brand, p.ref, p.oem, p.ean, p.fam, p.type].some(', '[p.name, p.brand, p.ref, p.oem, p.ean, p.fam, p.type, partAlt(p)].some(');
 
+// Impression de plusieurs documents (fiche client) : une page par document.
+rep('</style>', '.print-multi{display:flex;flex-direction:column;gap:16px}\n@media print{.print-multi,.print-multi *{visibility:visible}.print-multi{position:absolute;left:0;top:0;width:100%;gap:0}.print-multi .print-area{position:static;break-after:page;page-break-after:always}.print-multi .print-area:last-child{break-after:auto;page-break-after:auto}}\n</style>');
+
 // ---------- impression : bon d'achat par défaut, facture A4 ou ticket 80 mm au choix ----------
 rep(`printDoc(d, 'ticket') +
       '<div class="actions" style="justify-content:center"><button class="btn btn-outline" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer le ticket</button><button class="btn btn-outline" type="button" data-action="modalPrint" data-arg="' + d.ref + ':a4">Facture A4</button>`,

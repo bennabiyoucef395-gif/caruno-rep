@@ -357,6 +357,15 @@ const DOLI = {
     if (d.type === 'facture') await this.loadPayments(d);
     return d;
   },
+  // Toutes les factures et avoirs d'un client (fiche client, impression d'une sélection), au-delà des 400 chargées au départ.
+  async loadClientInvoices(cid) {
+    const rows = await this.safeList(this.all('invoices', { thirdparty_ids: cid, sortfield: 't.datef', sortorder: 'DESC' }, 2000));
+    rows.forEach((r) => {
+      const d = this.mapDoc('facture', r), i = S.db.docs.findIndex((x) => x.id === d.id && (x.type === 'facture' || x.type === 'avoir'));
+      if (i >= 0) { if (S.db.docs[i].payments) d.payments = S.db.docs[i].payments; S.db.docs[i] = d; } else S.db.docs.push(d);
+    });
+    await this.fetchParts(rows.flatMap((r) => (r.lines || []).map((l) => this.num(l.fk_product))));
+  },
   MODE: { LIQ: 'especes', CHQ: 'cheque', VIR: 'virement', CB: 'virement' },
   async loadPayments(d) {
     const rows = await this.safeList(this.api('invoices/' + d.id + '/payments'));

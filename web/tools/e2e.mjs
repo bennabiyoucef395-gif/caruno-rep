@@ -197,6 +197,27 @@ try {
   check('pièces : marque TIBAO jamais affichée', !/TIBAO/i.test(await body(g)));
   await g.evaluate(() => { location.hash = '#/catalogue'; }); await g.waitForTimeout(3000);
   check('catalogue : marque TIBAO jamais affichée', !/TIBAO/i.test(await body(g)));
+  // Catalogue : noms en français, modèles de voitures au lieu des codes, recherche par nom français ou par modèle.
+  const catTable = async () => (await g.locator('table.t').first().innerText().catch(() => '')).replace(/[  ]/g, ' ');
+  const catWait = () => g.waitForFunction(() => !catUi().loading && catUi().items.length > 0, null, { timeout: 20000 }).catch(() => {});
+  await g.locator('#cat-q').fill('golf 5'); await g.waitForTimeout(600); await catWait();
+  const golf = await catTable();
+  check('catalogue : recherche « golf 5 » trouve des pièces, modèles en clair', /VW Golf 5/.test(golf) && !/(^|[\s/])GF5([\s/]|$)/m.test(golf), golf.slice(0, 200));
+  await g.screenshot({ path: resolve(shots, '06a-catalogue-golf5.png') });
+  await g.locator('#cat-q').fill('amortisseur'); await g.waitForTimeout(600); await catWait();
+  const amo = await catTable();
+  check('catalogue : recherche « amortisseur » (nom français) trouve les pièces, noms en français', /Amortisseur/.test(amo) && !/Shock Absorber/i.test(amo), amo.slice(0, 200));
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(300);
+  await g.locator('[data-action="setLang"][data-arg="ar"]').click(); await g.waitForTimeout(300);
+  await g.evaluate(() => { location.hash = '#/catalogue'; }); await g.waitForTimeout(800);
+  await g.locator('#cat-q').fill('ممتص'); await g.waitForTimeout(600); await catWait();
+  const amoAr = await catTable();
+  check('catalogue en arabe : recherche « ممتص » et noms des pièces en arabe', /ممتص الصدمات/.test(amoAr) && !/Shock Absorber/i.test(amoAr), amoAr.slice(0, 200));
+  await g.screenshot({ path: resolve(shots, '06b-catalogue-ar.png') });
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(300);
+  await g.locator('[data-action="setLang"][data-arg="fr"]').click(); await g.waitForTimeout(300);
+  await g.evaluate(() => { location.hash = '#/catalogue'; }); await g.waitForTimeout(500);
+  await g.locator('#cat-q').fill(''); await g.waitForTimeout(500);
 
   // 5c. Mon profil : enseigne du magasin enregistrée dans Dolibarr, affichée dans le menu.
   await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(600);

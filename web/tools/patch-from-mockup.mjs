@@ -97,7 +97,7 @@ rep("esc(supplier(p.sups[0].sid).name) + (seeCost() ? ' · ' + fmt(p.sups[0].pri
 rep("setForm('transfer', { pid: '4',", "setForm('transfer', { pid: String((S.db.parts.find((x) => total(x) > 0) || S.db.parts[0] || {}).id || ''),");
 
 // ---------- catalogue : même session que l'application ----------
-rep("S.ui.cat = { url: saved.url || 'http://localhost:8080', login: saved.login || '', token: saved.token || '',", "S.ui.cat = { url: DOLI.url, login: S.user ? S.user.login : '', token: DOLI.token,");
+rep("S.ui.cat = { url: saved.url || 'http://localhost:8080', login: saved.login || '', token: saved.token || '',", "S.ui.cat = { url: DOLI.apiRoot(DOLI.url).replace(/\\/api\\/index\\.php$/, ''), login: S.user ? S.user.login : '', token: DOLI.token,");
 rep("'<button class=\"btn\" type=\"button\" data-action=\"catLogout\">Se déconnecter de Dolibarr</button>'", "''");
 
 // ---------- ventes, tableau de bord, règlements, profil ----------
@@ -181,6 +181,11 @@ rep(`'</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`, `'</b
 rep(`<input class="input num price-in" id="ln-price-' + i + '"`, `<input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '"`);
 rep(`(pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') +`, `(pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') + costAlert(T) +`);
 rep('</style>', '.price-in.under-cost{border-color:var(--bad);box-shadow:0 0 0 3px #FDECEC;color:var(--bad)}\n.cost-warn{display:flex;gap:8px;align-items:center;margin:0 14px 8px;padding:7px 10px;border-radius:8px;background:#FDECEC;color:#991B1B;font-size:13px;font-weight:600}\n</style>');
+
+// ---------- catalogue : noms des pièces en français / arabe, modèles de voitures au lieu des codes ----------
+rep('<script src="i18n-en.js"></script>', '<script src="i18n-en.js"></script>\n<script src="parts-i18n.js"></script>\n<script src="car-models.js"></script>');
+rep(`(t.description:like:'%" + words + "%')" : '';`, `(t.description:like:'%" + words + "%')" + searchExtra(q) : '';`);
+rep('[p.name, p.brand, p.ref, p.oem, p.ean, p.fam, p.type].some(', '[p.name, p.brand, p.ref, p.oem, p.ean, p.fam, p.type, partAlt(p)].some(');
 
 // ---------- impression : bon d'achat par défaut, facture A4 ou ticket 80 mm au choix ----------
 rep(`printDoc(d, 'ticket') +

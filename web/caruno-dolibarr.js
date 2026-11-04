@@ -121,6 +121,8 @@ const DOLI = {
       // Corbeille CARUNO : pièce « hors vente et hors achat » dans Dolibarr.
       trash: r.status !== undefined && this.num(r.status) === 0 && this.num(r.status_buy) === 0, changed: this.num(r.tms || r.date_modification),
       lastBuy: (this.lastBuy || {})[this.num(r.id)] || (old ? old.lastBuy : null),
+      // Codes modèles du catalogue fournisseur (« Modèles : GF5/JD5 ») : affichés en noms de voitures, utilisés par la recherche.
+      models: r.description !== undefined ? ((this.txt(r.description).match(/Modèles\s*:\s*([^\n<]*)/) || [])[1] || '').trim() : (old ? old.models : ''),
     };
   },
   CAT: { 1: 'Particulier', 2: 'Garage', 3: 'Revendeur' },
@@ -333,7 +335,7 @@ const DOLI = {
     const s = this.safe(q);
     if (s.length < 2) return [];
     const like = '%' + s.replace(/\s+/g, '%') + '%';
-    const filter = "(t.ref:like:'" + like + "') or (t.label:like:'" + like + "') or (t.barcode:=:'" + s + "') or (ef.oem_ref:like:'%" + this.oem(s) + "%') or (ef.brand:like:'" + like + "')";
+    const filter = "(t.ref:like:'" + like + "') or (t.label:like:'" + like + "') or (t.barcode:=:'" + s + "') or (ef.oem_ref:like:'%" + this.oem(s) + "%') or (ef.brand:like:'" + like + "')" + (typeof searchExtra === 'function' ? searchExtra(s) : '');
     const rows = await this.safeList(this.api('products', { query: { sqlfilters: '(' + filter + ') and (t.tosell:=:1)', limit: limit || 60, includestockdata: 1, sortfield: 't.ref', sortorder: 'ASC' } }));
     const ps = rows.map((r) => this.upsertPart(r));
     await this.fillFamilies(ps.filter((p) => !p.fam).map((p) => p.id));

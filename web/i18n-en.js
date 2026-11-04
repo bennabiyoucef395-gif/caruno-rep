@@ -204,6 +204,7 @@ window.EN = {
     [/^Client · (\S+)$/, (s, r) => 'Customer · ' + r],
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'Close the till · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'Print ' + T[t] + ' ' + r],
+    [/^([\d\s  ]+) pièce\(s\)(?: pour « (.*) »)? · connecté :$/, (s, n, q) => n.trim() + ' part(s)' + (q ? ' for “' + q + '”' : '') + ' · signed in:'],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'Import ' + f],
     [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'Part ' + r + ' moved to the recycle bin. It can be restored from Parts → Recycle bin.'],
     [/^Pièce (\S*) restaurée\.$/, (s, r) => 'Part ' + r + ' restored.'],

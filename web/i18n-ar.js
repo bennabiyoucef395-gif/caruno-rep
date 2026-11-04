@@ -203,6 +203,7 @@ window.AR = {
     [/^Client · (\S+)$/, (s, r) => 'الزبون · ' + r],
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'إغلاق الصندوق · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'طباعة ' + ({ facture: 'فاتورة', devis: 'عرض سعر', commande: 'طلبية', livraison: 'تسليم', avoir: 'إشعار دائن' })[t] + ' ' + r],
+    [/^([\d\s  ]+) pièce\(s\)(?: pour « (.*) »)? · connecté :$/, (s, n, q) => n.trim() + ' قطعة' + (q ? ' لـ «' + q + '»' : '') + ' · متصل:'],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'استيراد ' + f],
     [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'نقلت القطعة ' + r + ' إلى سلة المحذوفات. يمكن استرجاعها من القطع ← سلة المحذوفات.'],
     [/^Pièce (\S*) restaurée\.$/, (s, r) => 'تم استرجاع القطعة ' + r + '.'],

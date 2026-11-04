@@ -235,11 +235,54 @@ function translateDom(root) {
 const renderFr = render;
 render = function () {
   renderFr();
+  translateParts(document.getElementById('app'));
   if (dict()) translateDom(document.getElementById('app'));
   // Caisse : la pièce en surbrillance (flèches ↑ ↓) reste visible dans la liste.
   const hi = document.querySelector('.pos-list tr.hi');
   if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
 };
+/* =================================================================== CATALOGUE : NOMS TRADUITS, MODÈLES DE VOITURES */
+// Codes « Modèles » du fournisseur → noms de modèles (VW Golf 5, BMW Série 3 (E90)…), dans la langue choisie.
+const catInfoRaw = catInfo;
+catInfo = function (desc) {
+  const info = catInfoRaw(desc);
+  if (info['Modèles'] && window.CAR_MODELS) info['Modèles'] = CAR_MODELS.text(info['Modèles'], LANG());
+  return info;
+};
+// Recherche : un nom français ou arabe (« amortisseur », « ممتص ») ou un modèle (« golf 5 ») trouve aussi
+// les pièces dont le nom anglais ou le code modèle correspond.
+function searchExtra(q) {
+  const out = [];
+  if (window.PARTS_I18N && LANG() !== 'en') {
+    const n = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const nq = n(q).trim(), H = PARTS_I18N.heads, i = LANG() === 'ar' ? 2 : 0;
+    // Le nom anglais doit finir par la pièce (« Front Shock Absorber », « … Shock Absorber R »), pas seulement la citer.
+    if (nq.length >= 3) Object.keys(H).filter((k) => !/[(),，]/.test(k) && n(H[k][i]).indexOf(nq) !== -1).sort((a, b) => a.length - b.length).slice(0, 6)
+      .forEach((k) => { const s = DOLI.safe(k); out.push("(t.label:like:'%" + s + "')", "(t.label:like:'%" + s + " %')"); });
+  }
+  if (window.CAR_MODELS) CAR_MODELS.codesFor(q).slice(0, 12).forEach((c) => out.push("(t.description:like:'%" + DOLI.safe(c) + "%')"));
+  return out.length ? ' or ' + out.join(' or ') : '';
+}
+// Recherche locale : nom traduit et modèles de voitures de la pièce, en plus de ses champs.
+function partAlt(p) {
+  const t = window.PARTS_I18N ? [PARTS_I18N.translate(p.name, 'fr'), PARTS_I18N.translate(p.name, 'ar')].filter(Boolean).join(' ') : '';
+  return t + (p.models ? ' ' + p.models + (window.CAR_MODELS ? ' ' + CAR_MODELS.text(p.models, 'fr') : '') : '');
+}
+// Noms des pièces (anglais du fournisseur) affichés en français ou en arabe ; en anglais, le nom d'origine.
+function translateParts(root) {
+  if (!root || !window.PARTS_I18N || LANG() === 'en') return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
+  while (w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach((n) => {
+    const p = n.parentNode;
+    if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(p.nodeName)) return;
+    const core = n.nodeValue.trim();
+    if (core.length < 3 || !/[A-Za-z]/.test(core) || /[à-ÿ؀-ۿ]/i.test(core)) return;
+    const t = PARTS_I18N.translate(core, LANG());
+    if (t && t !== core) n.nodeValue = n.nodeValue.replace(core, t);
+  });
+}
+
 /* =================================================================== PIÈCES : CORBEILLE */
 P.trash = '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';
 const viewPieceBase = viewPiece;

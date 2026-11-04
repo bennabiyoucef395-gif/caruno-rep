@@ -290,6 +290,9 @@ kbd{display:inline-block;min-width:20px;padding:1px 6px;margin-right:3px;border:
   .pos-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
   .pos-menu{right:6px;left:6px;min-width:0}
 }
+.pos-grid.pos-listwrap{display:block}
+.pos-list tr.hi td{background:#FFF4EC}
+.pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
 </style>
 </head>
 <body>
@@ -680,15 +683,18 @@ function posProducts() {
   const oemHits = S.db.parts.filter((p) => u.q && norm(p.oem) === norm(u.q));
   const inCart = (pid) => o.lines.filter((l) => l.pid === pid).reduce((t, l) => t + l.qty, 0);
   const banner = S.db.journal.map((j) => '<div class="alert a-warn" role="status" style="margin:10px 12px 0">' + ic('warn', 20, '#9A3412') + '<div style="flex:1 1 auto"><strong>Vente ' + j.sale + ' interrompue</strong> à ' + j.time.slice(11) + ', étape « ' + STEP_LABEL[j.step] + ' » : ' + j.invoice + ', ' + fmt(j.ttc) + '.</div><button class="btn btn-dark" type="button" data-action="resumeSale" data-arg="' + j.sale + '">Reprendre</button></div>').join('');
-  const tiles = res.length ? res.map((p, idx) => {
-    const n = inCart(p.id), mag = p.stock['Magasin'], price = ttc(Math.round(p.prices[T.L] * (1 - (c.remise || 0) / 100)), p.tva);
-    const act = mag > 0 ? 'data-action="posAdd"' : p.stock['Réserve'] > 0 ? 'data-action="modalTransfer"' : 'data-action="posInfo"';
-    return '<div class="tile-wrap"><button class="tile' + (u.q && idx === u.hi ? ' hi' : '') + '" type="button" ' + act + ' data-arg="' + p.id + '" aria-label="' + esc(p.name + ' ' + p.brand + ' ' + p.ref) + '">' +
-      '<span class="img">' + (p.photos && p.photos[0] ? '<img alt="" src="' + p.photos[0].url + '">' : ic('pieces', 34, '#8A8F9C')) + '</span>' + (n ? '<span class="qtyb">' + n + '</span>' : '') +
-      '<span class="tx"><span class="nm">' + esc(p.name) + '</span><span class="rf">' + esc(p.brand + ' ' + p.ref) + '</span><span class="pr num">' + fmt(price) + '</span>' +
-      '<span class="st ' + (mag > 0 ? (total(p) < p.seuil ? 'lo' : 'ok') : 'no') + '">' + (mag > 0 ? 'Magasin ' + mag + ' · ' + esc(p.loc['Magasin']) : p.stock['Réserve'] > 0 ? 'Réserve ' + p.stock['Réserve'] + ' · transférer' : 'Rupture · équivalences') + '</span></span></button>' +
-      '<button class="tile-i" type="button" data-action="posInfo" data-arg="' + p.id + '" aria-label="Infos ' + esc(p.brand + ' ' + p.ref) + '">' + ic('info', 16) + '</button></div>';
-  }).join('') : '<p class="empty" style="grid-column:1/-1">Aucune pièce. Essayez la référence OEM ou une autre marque.</p>';
+  const tiles = res.length ? '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t pos-list" style="min-width:660px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th>Empl.</th><th class="right">Magasin</th><th class="right">Réserve</th><th>État</th><th class="right">Prix</th><th></th></tr></thead><tbody>' +
+    res.map((p, idx) => {
+      const n = inCart(p.id), mag = p.stock['Magasin'], price = ttc(Math.round(p.prices[T.L] * (1 - (c.remise || 0) / 100)), p.tva);
+      const act = mag > 0 ? 'data-action="posAdd"' : p.stock['Réserve'] > 0 ? 'data-action="modalTransfer"' : 'data-action="posInfo"';
+      return '<tr class="click' + (u.q && idx === u.hi ? ' hi' : '') + '" ' + act + ' data-arg="' + p.id + '">' +
+        '<td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (n ? ' <span class="badge b-accent">' + n + ' au panier</span>' : '') + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
+        '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td>' +
+        '<td class="mono">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td>' +
+        '<td>' + stockBadge(p) + '</td><td class="right num"><b>' + fmt(price) + '</b></td>' +
+        '<td class="right"><button class="icon-btn" type="button" data-action="posInfo" data-arg="' + p.id + '" aria-label="Infos ' + esc(p.brand + ' ' + p.ref) + '">' + ic('info', 16) + '</button></td></tr>';
+    }).join('') + '</tbody></table></div></div>'
+    : '<p class="empty">Aucune pièce. Essayez la référence OEM ou une autre marque.</p>';
   return posOrderPanel(o, T) +
     '<section class="pos-products" aria-label="Pièces">' +
       '<div class="pos-bar"><label class="search" for="pos-q" style="flex:1 1 260px">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher une pièce</span><input id="pos-q" type="search" autocomplete="off" placeholder="Référence, OEM, marque, désignation… ou douchette" value="' + esc(u.q) + '" data-input="posQ" data-enter="posEnter"></label><button class="btn" type="button" data-action="posScanSim">' + ic('scanner', 20) + 'Scanner</button></div>' +
@@ -696,7 +702,7 @@ function posProducts() {
       '<div class="pos-cats chips" role="group" aria-label="Familles">' + famList.map((f) => '<button class="chip" type="button" data-action="posCat" data-arg="' + esc(f) + '" aria-pressed="' + (u.cat === f) + '">' + esc(f.split(' et ')[0]) + '</button>').join('') + '</div>' +
       banner +
       (oemHits.length > 1 ? '<div class="card card-pad" style="margin:10px 12px 0;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 14px"><strong>Équivalences OEM</strong><span class="mono" style="background:#F0F0EC;padding:2px 8px;border-radius:6px">' + esc(oemHits[0].oem) + '</span><span class="muted" style="font-size:14px">' + oemHits.length + ' marques pour la même pièce, ' + oemHits.filter((p) => p.stock['Magasin'] > 0).length + ' disponibles au magasin</span></div>' : '') +
-      '<div class="pos-grid">' + tiles + '</div>' +
+      '<div class="pos-grid pos-listwrap">' + tiles + '</div>' +
       '<div class="pos-cartbar"><button class="btn btn-primary btn-lg" type="button" data-action="posCart" style="flex:1;justify-content:space-between"><span>Panier · ' + T.count + ' article' + (T.count > 1 ? 's' : '') + '</span><span class="num">' + fmt(T.ttc) + '</span></button></div>' +
     '</section>';
 }
@@ -2893,7 +2899,13 @@ function translateDom(root) {
   document.title = trText(document.title);
 }
 const renderFr = render;
-render = function () { renderFr(); if (dict()) translateDom(document.getElementById('app')); };
+render = function () {
+  renderFr();
+  if (dict()) translateDom(document.getElementById('app'));
+  // Caisse : la pièce en surbrillance (flèches ↑ ↓) reste visible dans la liste.
+  const hi = document.querySelector('.pos-list tr.hi');
+  if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
+};
 /* =================================================================== IMPRESSION : bon d'achat par défaut */
 // Choix du format (bon d'achat, facture A4, ticket 80 mm) pour une facture.
 function printFormats(cur, action) {

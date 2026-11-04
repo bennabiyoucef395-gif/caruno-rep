@@ -203,6 +203,9 @@ try {
   await v.locator('#pos-q').focus();
   await v.keyboard.type('TEST-STK-002');
   await v.waitForTimeout(1500);
+  check('caisse : pièces en liste comme Pièces (pas de tuiles)', (await v.locator('table.pos-list tbody tr').count()) > 0 && (await v.locator('.tile').count()) === 0);
+  check('caisse : la pièce cherchée est en surbrillance', /TEST-STK-002/.test(await v.locator('table.pos-list tr.hi').innerText().catch(() => '')));
+  await v.screenshot({ path: resolve(shots, '05b-caisse-liste.png') });
   await v.keyboard.press('Enter');
   await v.waitForTimeout(300);
   check('Entrée : pièce ajoutée, curseur sur son prix', await v.evaluate(() => /^ln-price-/.test(document.activeElement.id)));

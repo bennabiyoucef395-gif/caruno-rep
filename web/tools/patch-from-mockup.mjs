@@ -135,6 +135,25 @@ rep("'Nouvelle pièce</a>' : '')", "'Nouvelle pièce</a><button class=\"btn\" ty
 // Traductions arabe et anglaise : dictionnaires chargés avant l'interface.
 rep('<script src="caruno-dolibarr.js"></script>', '<script src="i18n-ar.js"></script>\n<script src="i18n-en.js"></script>\n<script src="caruno-dolibarr.js"></script>');
 
+// ---------- caisse : les pièces en liste comme l'écran Pièces (et non en tuiles carrées) ----------
+// Même clavier : la ligne en surbrillance (u.hi) est ajoutée par Entrée ; ↑ ↓ changent de ligne.
+between('  const tiles = res.length ? res.map((p, idx) => {', '  return posOrderPanel(o, T) +',
+`  const tiles = res.length ? '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t pos-list" style="min-width:660px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th>Empl.</th><th class="right">Magasin</th><th class="right">Réserve</th><th>État</th><th class="right">Prix</th><th></th></tr></thead><tbody>' +
+    res.map((p, idx) => {
+      const n = inCart(p.id), mag = p.stock['Magasin'], price = ttc(Math.round(p.prices[T.L] * (1 - (c.remise || 0) / 100)), p.tva);
+      const act = mag > 0 ? 'data-action="posAdd"' : p.stock['Réserve'] > 0 ? 'data-action="modalTransfer"' : 'data-action="posInfo"';
+      return '<tr class="click' + (u.q && idx === u.hi ? ' hi' : '') + '" ' + act + ' data-arg="' + p.id + '">' +
+        '<td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (n ? ' <span class="badge b-accent">' + n + ' au panier</span>' : '') + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
+        '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td>' +
+        '<td class="mono">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td>' +
+        '<td>' + stockBadge(p) + '</td><td class="right num"><b>' + fmt(price) + '</b></td>' +
+        '<td class="right"><button class="icon-btn" type="button" data-action="posInfo" data-arg="' + p.id + '" aria-label="Infos ' + esc(p.brand + ' ' + p.ref) + '">' + ic('info', 16) + '</button></td></tr>';
+    }).join('') + '</tbody></table></div></div>'
+    : '<p class="empty">Aucune pièce. Essayez la référence OEM ou une autre marque.</p>';
+`);
+rep(`'<div class="pos-grid">' + tiles + '</div>'`, `'<div class="pos-grid pos-listwrap">' + tiles + '</div>'`);
+rep('</style>', '.pos-grid.pos-listwrap{display:block}\n.pos-list tr.hi td{background:#FFF4EC}\n.pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}\n</style>');
+
 // ---------- impression : bon d'achat par défaut, facture A4 ou ticket 80 mm au choix ----------
 rep(`printDoc(d, 'ticket') +
       '<div class="actions" style="justify-content:center"><button class="btn btn-outline" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer le ticket</button><button class="btn btn-outline" type="button" data-action="modalPrint" data-arg="' + d.ref + ':a4">Facture A4</button>`,

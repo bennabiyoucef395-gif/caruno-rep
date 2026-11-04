@@ -232,7 +232,13 @@ function translateDom(root) {
   document.title = trText(document.title);
 }
 const renderFr = render;
-render = function () { renderFr(); if (dict()) translateDom(document.getElementById('app')); };
+render = function () {
+  renderFr();
+  if (dict()) translateDom(document.getElementById('app'));
+  // Caisse : la pièce en surbrillance (flèches ↑ ↓) reste visible dans la liste.
+  const hi = document.querySelector('.pos-list tr.hi');
+  if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
+};
 /* =================================================================== IMPRESSION : bon d'achat par défaut */
 // Choix du format (bon d'achat, facture A4, ticket 80 mm) pour une facture.
 function printFormats(cur, action) {

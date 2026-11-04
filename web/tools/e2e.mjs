@@ -244,6 +244,43 @@ try {
     await g.locator('[data-action="closeModal"]').first().click();
   }
 
+  // 5b3. Opérations du client : deux factures à crédit, un versement qui les couvre (un seul règlement), solde et relevé.
+  const invRefs = [];
+  for (const amount of [1000, 2000]) {
+    const iid = Number(await api('invoices', g0, { method: 'POST', body: JSON.stringify({ socid: 5, type: 0, note_private: 'Essai versement e2e', lines: [{ desc: 'Essai versement e2e', qty: 1, subprice: amount, tva_tx: 0, product_type: 1 }] }) }));
+    await api('invoices/' + iid + '/validate', g0, { method: 'POST', body: JSON.stringify({ idwarehouse: 0, notrigger: 0 }) });
+    invRefs.push((await api('invoices/' + iid, g0)).ref);
+  }
+  await g.evaluate(async () => { await DOLI.loadClientInvoices('5'); render(); });
+  await g.locator('[data-action="modalSettle"]').click();
+  await g.locator('#m-samt').fill('3000'); await g.waitForTimeout(300);
+  await g.locator('#m-smode').selectOption('especes');
+  await g.locator('.modal button[type="submit"]').click();
+  await g.waitForFunction(() => !S.ui.modal && !S.ui.busy, null, { timeout: 30000 }).catch(() => {});
+  await g.locator('[data-action="cdTab"][data-arg="ops"]').click();
+  await g.waitForFunction(() => { const b = document.getElementById('cd-ledger'); return b && !b.disabled && document.querySelector('#cd-ops tr[data-kind="versement"]'); }, null, { timeout: 60000 }).catch(() => {});
+  const vers = await g.$$eval('#cd-ops tr[data-kind="versement"]', (trs) => trs.map((t) => t.innerText));
+  const oneVers = vers.find((t) => invRefs.every((r) => t.includes(r)));
+  check('opérations : le versement de 3 000 DA est un seul règlement qui couvre les deux factures', !!oneVers && /3\s?000 DA/.test(oneVers), vers.slice(0, 2).join(' | '));
+  const opsKinds = await g.$$eval('#cd-ops tbody tr[data-kind]', (trs) => [...new Set(trs.map((t) => t.dataset.kind))]);
+  check('opérations : factures et versements dans la même liste', opsKinds.includes('facture') && opsKinds.includes('versement'), opsKinds.join(','));
+  const balShown = await g.locator('#cd-balance').innerText(), encTxt = await g.evaluate(() => fmt(encours('5')));
+  check('opérations : le solde final égale l’encours du client', balShown.trim() === encTxt.trim(), balShown + ' / ' + encTxt);
+  await g.screenshot({ path: resolve(shots, '06e-client-operations.png') });
+  await g.locator('[data-action="cdKind"][data-arg="versement"]').click(); await g.waitForTimeout(300);
+  check('opérations : filtre « Versements »', await g.$$eval('#cd-ops tbody tr[data-kind]', (trs) => trs.length > 0 && trs.every((t) => t.dataset.kind === 'versement')));
+  await g.locator('[data-action="cdKind"][data-arg=""]').click(); await g.waitForTimeout(200);
+  await g.locator('#cd-ledger').click();
+  await g.locator('#lg-print').waitFor({ timeout: 10000 });
+  const lg = await g.locator('.print-multi').innerText();
+  check('relevé des opérations : solde au début, versement et reste dû', /RELEVÉ DE COMPTE/.test(lg) && /Solde au début/.test(lg) && /Versement/.test(lg) && invRefs.every((r) => lg.includes(r)), lg.slice(0, 160));
+  await g.screenshot({ path: resolve(shots, '06f-releve-operations.png') });
+  await g.locator('[data-action="closeModal"]').first().click(); await g.waitForTimeout(200);
+  await g.locator('[data-action="cdStatement"]').click();
+  await g.locator('#lg-print').waitFor({ timeout: 30000 }).catch(() => {});
+  check('carte Encours : « Relevé de compte » ouvre le relevé des opérations', (await g.locator('#lg-print').count()) === 1);
+  await g.locator('[data-action="closeModal"]').first().click();
+
   // 5c. Mon profil : enseigne du magasin enregistrée dans Dolibarr, affichée dans le menu.
   await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForTimeout(600);
   await g.locator('#sh-name').fill('City Makoudi 2');

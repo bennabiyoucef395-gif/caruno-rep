@@ -184,6 +184,8 @@ window.AR = {
   'Imprimer la sélection (#)': 'طباعة المختار (#)', 'Tout cocher': 'اختيار الكل', 'Payé': 'المدفوع', 'Aucune facture sur cette période.': 'لا توجد فاتورة في هذه الفترة.', 'Sélection : # document(s)': 'المختار: # وثيقة',
   'Imprimer # document(s)': 'طباعة # وثيقة', 'Une page récapitulative.': 'صفحة ملخصة واحدة.', 'Une page par document, dans l’ordre de la liste.': 'صفحة لكل وثيقة، بترتيب القائمة.', 'RELEVÉ DE COMPTE': 'كشف الحساب',
   'Du #/#/# au #/#/#': 'من #/#/# إلى #/#/#', 'Édité le #/#/#': 'صدر في #/#/#', 'Préparation de l’impression…': 'جارٍ تحضير الطباعة…', 'Document': 'الوثيقة',
+  'Toutes les opérations': 'كل العمليات', 'Imprimer le relevé': 'طباعة الكشف', 'Type d’opération': 'نوع العملية', 'Versements': 'الدفعات', 'Avoirs et remboursements': 'الإشعارات الدائنة والاسترجاعات', 'Détail': 'التفاصيل', 'Débit': 'مدين', 'Crédit': 'دائن', 'Solde': 'الرصيد', 'Versement': 'دفعة', 'Remboursement': 'استرجاع', 'Facturé': 'المفوتر', 'Versé': 'المدفوع', 'n° #': 'رقم #',
+  'Chargement des règlements… # / #': 'جارٍ تحميل التسديدات… # / #', 'Aucune opération sur cette période.': 'لا توجد عملية في هذه الفترة.', 'Solde au début de la période': 'الرصيد في بداية الفترة', 'le client doit': 'على الزبون', 'en faveur du client': 'لصالح الزبون', 'compte soldé': 'الحساب مسدد', 'En faveur du client': 'لصالح الزبون',
 
   // ---- corbeille
   'Corbeille': 'سلة المحذوفات', 'Supprimer': 'حذف', 'Restaurer': 'استرجاع', 'Supprimer définitivement': 'حذف نهائي', 'Supprimer la pièce ?': 'حذف القطعة؟', 'Supprimer définitivement ?': 'حذف نهائي؟',

@@ -143,7 +143,7 @@ const DOLI = {
     return (r.lines || []).map((l) => this.num(l.qty) + ' × ' + (l.product_ref || this.txt(l.product_label || l.desc || ''))).slice(0, 3).join(', ');
   },
   mapDoc(kind, r) {
-    const base = { id: this.num(r.id), ref: r.ref, client: String(r.socid), date: this.day(r.date || r.datef || r.date_commande || r.date_creation), lines: this.lines(r), desc: this.desc(r), ttc: Math.abs(this.num(r.total_ttc)), note: this.txt(r.note_public || '') };
+    const base = { id: this.num(r.id), ref: r.ref, client: String(r.socid), date: this.day(r.date || r.datef || r.date_commande || r.date_creation), lines: this.lines(r), desc: this.desc(r), ttc: Math.abs(this.num(r.total_ttc)), note: this.txt(r.note_public || ''), at: this.stamp(r.date_creation) };
     const st = this.num(r.statut !== undefined ? r.statut : r.status);
     if (kind === 'facture' && this.num(r.type) === 2) {
       return Object.assign(base, { type: 'avoir', status: this.num(r.paye) ? 'rembourse' : st === 0 ? 'impute' : 'a_valoir', left: this.num(r.paye) ? 0 : base.ttc, why: '', restocked: true, payments: [], origin: '' });
@@ -362,14 +362,15 @@ const DOLI = {
     const rows = await this.safeList(this.all('invoices', { thirdparty_ids: cid, sortfield: 't.datef', sortorder: 'DESC' }, 2000));
     rows.forEach((r) => {
       const d = this.mapDoc('facture', r), i = S.db.docs.findIndex((x) => x.id === d.id && (x.type === 'facture' || x.type === 'avoir'));
-      if (i >= 0) { if (S.db.docs[i].payments) d.payments = S.db.docs[i].payments; S.db.docs[i] = d; } else S.db.docs.push(d);
+      if (i >= 0) { if (S.db.docs[i].payments) d.payments = S.db.docs[i].payments; d.payLoaded = S.db.docs[i].payLoaded; S.db.docs[i] = d; } else S.db.docs.push(d);
     });
     await this.fetchParts(rows.flatMap((r) => (r.lines || []).map((l) => this.num(l.fk_product))));
   },
   MODE: { LIQ: 'especes', CHQ: 'cheque', VIR: 'virement', CB: 'virement' },
   async loadPayments(d) {
     const rows = await this.safeList(this.api('invoices/' + d.id + '/payments'));
-    d.payments = rows.map((p) => ({ date: String(p.date || '').slice(0, 10), mode: this.MODE[p.type] || 'especes', amount: this.num(p.amount), label: p.num || '', ref: p.ref }));
+    d.payments = rows.map((p) => ({ date: String(p.date || '').slice(0, 10), mode: this.MODE[p.type] || 'especes', amount: this.num(p.amount), label: p.num || '', ref: p.ref, at: String(p.date || ''), line: p.typeline || 'payment' }));
+    d.payLoaded = true;
     return d.payments;
   },
   // Chargements à la demande (écran ouvert) : une seule fois, puis nouveau rendu.
@@ -498,8 +499,12 @@ const DOLI = {
   },
   account(mode) { return mode === 'especes' ? this.cashAccount : this.bankAccount; },
   typeId(mode) { return this.payType[{ especes: 'LIQ', cheque: 'CHQ', virement: 'VIR' }[mode]]; },
-  async pay(d, mode, amount, comment) {
-    await this.api('invoices/paymentsdistributed', { method: 'POST', body: { arrayofamounts: { [d.id]: { amount: String(amount), multicurrency_amount: '' } }, datepaye: Math.floor(Date.now() / 1000), paymentid: this.typeId(mode), closepaidinvoices: 'yes', accountid: this.account(mode), num_payment: '', comment: comment || 'CARUNO' } });
+  pay(d, mode, amount, comment) { return this.paySplit([{ d, take: amount }], mode, comment); },
+  // Un versement = un seul règlement Dolibarr, réparti sur une ou plusieurs factures.
+  async paySplit(alloc, mode, comment) {
+    const arrayofamounts = {};
+    alloc.forEach((a) => { arrayofamounts[a.d.id] = { amount: String(a.take), multicurrency_amount: '' }; });
+    await this.api('invoices/paymentsdistributed', { method: 'POST', body: { arrayofamounts, datepaye: Math.floor(Date.now() / 1000), paymentid: this.typeId(mode), closepaidinvoices: 'yes', accountid: this.account(mode), num_payment: '', comment: comment || 'CARUNO' } });
   },
   // Vente comptoir : facture (retrouvée par ref_ext si elle existe déjà), validation sur le Magasin, règlements relus avant écriture.
   async sale(j, steps) {

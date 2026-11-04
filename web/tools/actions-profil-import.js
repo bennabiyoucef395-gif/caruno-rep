@@ -283,10 +283,12 @@ function translateParts(root) {
   });
 }
 
-/* =================================================================== CLIENT : FACTURES ET IMPRESSION D'UNE SÉLECTION */
-// Sur la fiche client : toutes ses factures et avoirs (lus dans Dolibarr), période « du … au … », cases à cocher,
-// puis impression de la sélection en bons d'achat, factures A4, tickets ou relevé de compte.
-function cdUi(cid) { if (!S.ui.cd || S.ui.cd.cid !== cid) S.ui.cd = { cid, from: '', to: '', unpaid: false, off: {} }; return S.ui.cd; }
+/* =================================================================== CLIENT : FACTURES, OPÉRATIONS ET IMPRESSION */
+// Sur la fiche client, même période « du … au … » pour deux onglets :
+// - Factures et bons d'achat : toutes ses factures et avoirs (lus dans Dolibarr), cases à cocher, impression de la sélection
+//   en bons d'achat, factures A4, tickets ou relevé de compte ;
+// - Toutes les opérations : factures, versements, avoirs et remboursements, avec le solde après chaque opération.
+function cdUi(cid) { if (!S.ui.cd || S.ui.cd.cid !== cid) S.ui.cd = { cid, tab: 'docs', from: '', to: '', unpaid: false, off: {}, kind: '' }; return S.ui.cd; }
 function clientDocs(cid) {
   return S.db.docs.filter((d) => d.client === cid && (d.type === 'facture' || d.type === 'avoir') && d.status !== 'brouillon')
     .sort((a, b) => (a.date === b.date ? (a.ref < b.ref ? 1 : -1) : a.date < b.date ? 1 : -1));
@@ -297,24 +299,100 @@ const cdSign = (d) => (d.type === 'avoir' ? -1 : 1);
 const cdRest = (d) => (d.type === 'facture' ? Math.max(0, d.ttc - (d.paid || 0)) : 0);
 function clientDocsSection(cid) {
   DOLI.need('cdocs:' + cid, () => DOLI.loadClientInvoices(cid));
-  const u = cdUi(cid), shown = clientDocs(cid).filter((d) => cdIn(u, d)), sel = shown.filter((d) => !u.off[d.ref]);
-  const tot = sel.reduce((t, d) => t + cdSign(d) * d.ttc, 0), paid = sel.reduce((t, d) => t + (d.type === 'facture' ? d.paid || 0 : 0), 0), rest = sel.reduce((t, d) => t + cdRest(d), 0);
+  const u = cdUi(cid), ops = u.tab === 'ops';
   const month = TODAY.slice(0, 8) + '01', year = TODAY.slice(0, 4) + '-01-01';
-  const cur = u.unpaid ? 'unpaid' : !u.from && !u.to ? 'all' : u.from === month && !u.to ? 'month' : u.from === year && !u.to ? 'year' : '';
-  return '<section class="card" style="overflow:hidden" id="client-docs"><div class="card-head" style="flex-wrap:wrap;gap:10px;align-items:flex-end"><h2>Factures et bons d’achat</h2>' +
-    '<div class="actions" style="align-items:flex-end;flex-wrap:wrap">' +
-      '<div class="chips" role="group" aria-label="Période">' + [['all', 'Tout'], ['month', 'Ce mois'], ['year', 'Cette année'], ['unpaid', 'Impayées']].map((q) => '<button class="chip" type="button" data-action="cdQuick" data-arg="' + q[0] + '" aria-pressed="' + (cur === q[0]) + '">' + q[1] + '</button>').join('') + '</div>' +
+  const cur = u.unpaid && !ops ? 'unpaid' : !u.from && !u.to ? 'all' : u.from === month && !u.to ? 'month' : u.from === year && !u.to ? 'year' : '';
+  const quick = [['all', 'Tout'], ['month', 'Ce mois'], ['year', 'Cette année']].concat(ops ? [] : [['unpaid', 'Impayées']]);
+  const sel = ops ? [] : cdSel(cid), ready = DOLI.lazy['cdocs:' + cid] === 'done' && !u.loading;
+  const btn = ops
+    ? '<button class="btn btn-primary" type="button" id="cd-ledger" data-action="cdLedgerPrint" data-arg="' + esc(cid) + '"' + (ready ? '' : ' disabled') + '>' + ic('print', 18) + 'Imprimer le relevé</button>'
+    : '<button class="btn btn-primary" type="button" id="cd-print" data-action="cdPrint" data-arg="' + esc(cid) + '"' + (sel.length ? '' : ' disabled') + '>' + ic('print', 18) + 'Imprimer la sélection (' + sel.length + ')</button>';
+  return '<section class="card" style="overflow:hidden" id="client-docs"><div style="padding:0 12px">' + tabs([['docs', 'Factures et bons d’achat'], ['ops', 'Toutes les opérations']], u.tab, 'cdTab') + '</div>' +
+    '<div class="card-head" style="flex-wrap:wrap;gap:10px;align-items:flex-end"><div class="actions" style="align-items:flex-end;flex-wrap:wrap">' +
+      '<div class="chips" role="group" aria-label="Période">' + quick.map((q) => '<button class="chip" type="button" data-action="cdQuick" data-arg="' + q[0] + '" aria-pressed="' + (cur === q[0]) + '">' + q[1] + '</button>').join('') + '</div>' +
       '<div class="field"><label for="cd-from">Du</label><input class="input" type="date" id="cd-from" value="' + esc(u.from) + '" data-change="cdFrom"></div>' +
-      '<div class="field"><label for="cd-to">Au</label><input class="input" type="date" id="cd-to" value="' + esc(u.to) + '" data-change="cdTo"></div>' +
-      '<button class="btn btn-primary" type="button" id="cd-print" data-action="cdPrint" data-arg="' + esc(cid) + '"' + (sel.length ? '' : ' disabled') + '>' + ic('print', 18) + 'Imprimer la sélection (' + sel.length + ')</button>' +
-    '</div></div>' +
-    '<div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th><input type="checkbox" id="cd-all" aria-label="Tout cocher" data-change="cdAll"' + (shown.length && !shown.some((d) => u.off[d.ref]) ? ' checked' : '') + ' style="width:20px;height:20px"></th><th>Référence</th><th>Date</th><th>Statut</th><th class="right">Montant</th><th class="right">Payé</th><th class="right">Reste dû</th></tr></thead><tbody>' +
+      '<div class="field"><label for="cd-to">Au</label><input class="input" type="date" id="cd-to" value="' + esc(u.to) + '" data-change="cdTo"></div>' + btn +
+    '</div></div>' + (ops ? cdOpsBody(cid) : cdDocsBody(cid, sel)) + '</section>';
+}
+function cdDocsBody(cid, sel) {
+  const u = cdUi(cid), shown = clientDocs(cid).filter((d) => cdIn(u, d));
+  const tot = sel.reduce((t, d) => t + cdSign(d) * d.ttc, 0), paid = sel.reduce((t, d) => t + (d.type === 'facture' ? d.paid || 0 : 0), 0), rest = sel.reduce((t, d) => t + cdRest(d), 0);
+  return '<div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th><input type="checkbox" id="cd-all" aria-label="Tout cocher" data-change="cdAll"' + (shown.length && !shown.some((d) => u.off[d.ref]) ? ' checked' : '') + ' style="width:20px;height:20px"></th><th>Référence</th><th>Date</th><th>Statut</th><th class="right">Montant</th><th class="right">Payé</th><th class="right">Reste dû</th></tr></thead><tbody>' +
     (shown.length ? shown.map((d) => '<tr><td><input type="checkbox" data-change="cdPick" data-arg="' + esc(d.ref) + '"' + (u.off[d.ref] ? '' : ' checked') + ' aria-label="Choisir ' + esc(d.ref) + '" style="width:20px;height:20px"></td>' +
       '<td><a class="mono" href="#/ventes/' + esc(d.ref) + '">' + esc(d.ref) + '</a>' + (d.saleRef ? '<div class="muted mono" style="font-size:12px">' + esc(d.saleRef) + '</div>' : '') + '</td><td class="num">' + dateFr(d.date) + '</td><td>' + statusBadge(d.type, d) + '</td>' +
       '<td class="right num">' + (d.type === 'avoir' ? '−' : '') + fmt(d.ttc) + '</td><td class="right num">' + (d.type === 'facture' ? fmt(d.paid || 0) : '—') + '</td><td class="right num"><b>' + (d.type === 'facture' ? fmt(cdRest(d)) : '—') + '</b></td></tr>').join('')
       : '<tr><td colspan="7" class="empty">' + (DOLI.lazy['cdocs:' + cid] !== 'done' ? 'Chargement…' : 'Aucune facture sur cette période.') + '</td></tr>') +
     '</tbody></table></div>' +
-    '<div class="num" style="display:flex;justify-content:flex-end;gap:24px;padding:12px 18px;flex-wrap:wrap;border-top:1px solid var(--line2)"><span class="muted">Sélection : ' + sel.length + ' document(s)</span><span>Total <b id="cd-total">' + fmt(tot) + '</b></span><span>Payé <b>' + fmt(paid) + '</b></span><span>Reste dû <b style="color:' + (rest ? 'var(--bad)' : 'inherit') + '">' + fmt(rest) + '</b></span></div></section>';
+    '<div class="num" style="display:flex;justify-content:flex-end;gap:24px;padding:12px 18px;flex-wrap:wrap;border-top:1px solid var(--line2)"><span class="muted">Sélection : ' + sel.length + ' document(s)</span><span>Total <b id="cd-total">' + fmt(tot) + '</b></span><span>Payé <b>' + fmt(paid) + '</b></span><span>Reste dû <b style="color:' + (rest ? 'var(--bad)' : 'inherit') + '">' + fmt(rest) + '</b></span></div>';
+}
+
+// Opérations du compte client : chaque facture (débit), chaque versement (un règlement Dolibarr, qui peut couvrir
+// plusieurs factures), chaque avoir (crédit) et chaque remboursement d'avoir (débit). Solde > 0 : le client doit.
+// Dans une même journée, ordre de l'heure de saisie. Les avoirs imputés sur une facture ne sont comptés qu'une fois (ligne Avoir).
+const cdNeedPay = (d) => (d.type === 'facture' ? d.payments === null : d.status === 'rembourse' && !d.payLoaded);
+function clientOps(cid) {
+  const ops = [], pays = {};
+  clientDocs(cid).forEach((d) => {
+    ops.push({ date: d.date, at: d.at || '', kind: d.type, ref: d.ref, doc: d, refs: [d.ref], debit: d.type === 'facture' ? d.ttc : 0, credit: d.type === 'avoir' ? d.ttc : 0 });
+    (d.payments || []).filter((p) => !p.line || p.line === 'payment').forEach((p) => {
+      const back = p.amount < 0, k = (p.ref || d.ref + '/' + p.date) + (back ? '-' : '+');
+      const o = pays[k] || (pays[k] = { date: p.date || d.date, at: p.at || '', kind: back ? 'rembourse' : 'versement', ref: p.ref || '', mode: p.mode, num: p.label, refs: [], debit: 0, credit: 0 });
+      if (back) o.debit -= p.amount; else o.credit += p.amount;
+      o.refs.push(d.ref);
+    });
+  });
+  const rank = { facture: 0, avoir: 1, versement: 2, rembourse: 3 };
+  const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+  return ops.concat(Object.values(pays)).sort((a, b) => cmp(a.date, b.date) || cmp(a.at, b.at) || rank[a.kind] - rank[b.kind] || cmp(a.ref, b.ref));
+}
+function cdLedger(cid) {
+  const u = cdUi(cid), all = clientOps(cid);
+  let bal = all.filter((o) => u.from && o.date < u.from).reduce((t, o) => t + o.debit - o.credit, 0);
+  const open = bal, rows = all.filter((o) => (!u.from || o.date >= u.from) && (!u.to || o.date <= u.to)).map((o) => Object.assign({ bal: (bal += o.debit - o.credit) }, o));
+  const sum = (k, f) => rows.filter(f).reduce((t, o) => t + o[k], 0);
+  return { open, rows, close: bal, billed: sum('debit', (o) => o.kind === 'facture'), paid: sum('credit', (o) => o.kind === 'versement'), credits: sum('credit', (o) => o.kind === 'avoir'), refunds: sum('debit', (o) => o.kind === 'rembourse'),
+    first: u.from || (rows[0] || {}).date || TODAY, last: u.to || TODAY };
+}
+const OP_NAMES = { facture: ['Facture', 'b-grey'], avoir: ['Avoir', 'b-info'], versement: ['Versement', 'b-ok'], rembourse: ['Remboursement', 'b-warn'] };
+const opDetail = (o) => (o.doc ? esc(o.doc.desc || '') : '<span>' + (MODES[o.mode] || '') + '</span>' + (o.num ? ' <span class="mono">n° ' + esc(o.num) + '</span>' : '') + '<div class="muted mono" style="font-size:12px">' + o.refs.map(esc).join(', ') + '</div>');
+const balTxt = (b) => (b < 0 ? '−' + fmt(-b) : fmt(b));
+// Les règlements de chaque facture sont lus par paquets de 6, avec l'avancement affiché.
+function cdLoadPays(cid) {
+  const u = cdUi(cid);
+  if (u.loading || u.payErr || DOLI.lazy['cdocs:' + cid] !== 'done') return;
+  const todo = clientDocs(cid).filter(cdNeedPay);
+  if (!todo.length) return;
+  u.loading = true; u.prog = [0, todo.length];
+  (async () => {
+    for (let i = 0; i < todo.length; i += 6) {
+      await Promise.all(todo.slice(i, i + 6).map((d) => DOLI.loadPayments(d)));
+      u.prog = [Math.min(todo.length, i + 6), todo.length];
+      if (i + 6 < todo.length) render();
+    }
+  })().catch((e) => { u.payErr = true; toast(e.message); }).finally(() => {
+    u.loading = false;
+    if (u.printWhenReady && !u.payErr) { u.printWhenReady = false; S.ui.modal = { kind: 'ledger', cid }; }
+    render();
+  });
+}
+function cdOpsBody(cid) {
+  cdLoadPays(cid);
+  const u = cdUi(cid), L = cdLedger(cid), wait = DOLI.lazy['cdocs:' + cid] !== 'done' || u.loading;
+  const rows = L.rows.filter((o) => !u.kind || o.kind === u.kind || (u.kind === 'avoir' && o.kind === 'rembourse')).slice().reverse();
+  const kinds = [['', 'Tout'], ['facture', 'Factures'], ['versement', 'Versements'], ['avoir', 'Avoirs et remboursements']];
+  const td = (v) => '<td class="right num">' + (v ? fmt(v) : '') + '</td>';
+  return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 18px 12px"><div class="chips" role="group" aria-label="Type d’opération">' + kinds.map((k) => '<button class="chip" type="button" data-action="cdKind" data-arg="' + k[0] + '" aria-pressed="' + (u.kind === k[0]) + '">' + k[1] + '</button>').join('') + '</div>' +
+      (u.loading ? '<span class="muted num" style="font-size:14px">Chargement des règlements… ' + u.prog[0] + ' / ' + u.prog[1] + '</span>' : '') + '</div>' +
+    '<div class="table-wrap"><table class="t" id="cd-ops" style="min-width:820px"><thead><tr><th>Date</th><th>Opération</th><th>Détail</th><th class="right">Débit</th><th class="right">Crédit</th><th class="right">Solde</th></tr></thead><tbody>' +
+    (rows.length ? rows.map((o) => '<tr data-kind="' + o.kind + '"><td class="num">' + dateFr(o.date) + (o.at.length > 15 ? '<div class="muted" style="font-size:12px">' + o.at.slice(11, 16) + '</div>' : '') + '</td>' +
+      '<td><span class="badge ' + OP_NAMES[o.kind][1] + '">' + OP_NAMES[o.kind][0] + '</span><div class="mono" style="font-size:12px;margin-top:4px">' + (o.doc ? '<a href="#/ventes/' + esc(o.ref) + '">' + esc(o.ref) + '</a>' : esc(o.ref)) + '</div></td>' +
+      '<td style="font-size:14px;max-width:320px">' + opDetail(o) + '</td>' + td(o.debit) + td(o.credit) + '<td class="right num"><b style="color:' + (o.bal > 0 ? 'var(--bad)' : o.bal < 0 ? 'var(--info)' : 'inherit') + '">' + balTxt(o.bal) + '</b></td></tr>').join('')
+      : '<tr><td colspan="6" class="empty">' + (wait ? 'Chargement…' : 'Aucune opération sur cette période.') + '</td></tr>') +
+    (u.from ? '<tr class="muted"><td class="num">' + dateFr(u.from) + '</td><td colspan="4">Solde au début de la période</td><td class="right num"><b>' + balTxt(L.open) + '</b></td></tr>' : '') +
+    '</tbody></table></div>' +
+    '<div class="num" style="display:flex;justify-content:flex-end;gap:24px;padding:12px 18px;flex-wrap:wrap;border-top:1px solid var(--line2)"><span>Facturé <b>' + fmt(L.billed) + '</b></span><span>Versé <b id="cd-paid">' + fmt(L.paid) + '</b></span>' +
+      (L.credits ? '<span>Avoirs <b>' + fmt(L.credits) + '</b></span>' : '') + (L.refunds ? '<span>Remboursé <b>' + fmt(L.refunds) + '</b></span>' : '') +
+      '<span>Solde <b id="cd-balance" style="color:' + (L.close > 0 ? 'var(--bad)' : L.close < 0 ? 'var(--info)' : 'inherit') + '">' + balTxt(L.close) + '</b> <span class="muted" style="font-size:13px">' + (L.close > 0 ? 'le client doit' : L.close < 0 ? 'en faveur du client' : 'compte soldé') + '</span></span></div>';
 }
 const viewClientBase = viewClient;
 viewClient = function (id) { const html = viewClientBase(id); return client(id) ? html + clientDocsSection(id) : html; };
@@ -329,16 +407,30 @@ A.cdPrint = (el) => {
   run(async () => { await DOLI.loadDocPayments(list); S.ui.modal = { kind: 'printMany', cid, refs: list.map((d) => d.ref), format: 'bon' }; }, 'Préparation de l’impression…');
 };
 A.pmFmt = (el) => { S.ui.modal.format = el.dataset.arg; };
+A.cdTab = (el) => { cdUi(S.ui.cd.cid).tab = el.dataset.arg; };
+A.cdKind = (el) => { S.ui.cd.kind = el.dataset.arg; };
+A.cdLedgerPrint = (el) => { S.ui.modal = { kind: 'ledger', cid: el.dataset.arg }; };
+// Bouton « Relevé de compte » de la carte Encours : onglet des opérations, puis impression une fois les règlements lus.
+A.cdStatement = (el) => {
+  const cid = el.dataset.arg, u = cdUi(cid);
+  u.tab = 'ops';
+  if (DOLI.lazy['cdocs:' + cid] === 'done' && !u.loading && !clientDocs(cid).some(cdNeedPay)) S.ui.modal = { kind: 'ledger', cid };
+  else { u.printWhenReady = true; u.payErr = false; setTimeout(() => { const s = document.getElementById('client-docs'); if (s) s.scrollIntoView({ block: 'start' }); }, 50); }
+};
+const prRow = (a, b, st) => '<div style="display:flex;justify-content:space-between;gap:16px' + (st || '') + '"><span>' + a + '</span><span>' + b + '</span></div>';
+// En-tête commun des relevés : magasin, titre, période, client.
+function stmtHead(cid, from, to) {
+  const shop = S.db.shop, c = client(cid) || {};
+  return '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:52px;width:auto;max-width:96px;object-fit:contain">' : '') +
+      '<div><b style="font-size:16px">' + esc(shop.name) + '</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + '</div></div>' +
+      '<div style="text-align:right"><b style="font-size:18px">RELEVÉ DE COMPTE</b><br>Du ' + dateFr(from) + ' au ' + dateFr(to) + '<br>Édité le ' + dateFr(TODAY) + '</div></div>' +
+    '<div style="border:1px solid #CCC;border-radius:6px;padding:8px 10px;align-self:flex-end;min-width:min(260px,100%)"><b>' + esc(c.name || '') + '</b>' + (c.address ? '<br>' + esc(c.address) : '') + (c.town ? '<br>' + esc(c.town) : '') + (c.phone ? '<br>' + esc(c.phone) : '') + '</div>';
+}
 // Relevé de compte : une page avec les documents choisis, payé et reste dû.
 function statement(cid, docs) {
-  const shop = S.db.shop, c = client(cid) || {}, dates = docs.map((d) => d.date).sort();
+  const dates = docs.map((d) => d.date).sort(), row = prRow;
   const tot = docs.reduce((t, d) => t + cdSign(d) * d.ttc, 0), paid = docs.reduce((t, d) => t + (d.type === 'facture' ? d.paid || 0 : 0), 0), rest = docs.reduce((t, d) => t + cdRest(d), 0);
-  const row = (a, b, st) => '<div style="display:flex;justify-content:space-between;gap:16px' + (st || '') + '"><span>' + a + '</span><span>' + b + '</span></div>';
-  return '<div class="print-area releve">' +
-    '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:52px;width:auto;max-width:96px;object-fit:contain">' : '') +
-      '<div><b style="font-size:16px">' + esc(shop.name) + '</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + '</div></div>' +
-      '<div style="text-align:right"><b style="font-size:18px">RELEVÉ DE COMPTE</b><br>Du ' + dateFr(dates[0]) + ' au ' + dateFr(dates[dates.length - 1]) + '<br>Édité le ' + dateFr(TODAY) + '</div></div>' +
-    '<div style="border:1px solid #CCC;border-radius:6px;padding:8px 10px;align-self:flex-end;min-width:min(260px,100%)"><b>' + esc(c.name || '') + '</b>' + (c.address ? '<br>' + esc(c.address) : '') + (c.town ? '<br>' + esc(c.town) : '') + (c.phone ? '<br>' + esc(c.phone) : '') + '</div>' +
+  return '<div class="print-area releve">' + stmtHead(cid, dates[0], dates[dates.length - 1]) +
     '<table><thead><tr><th>Date</th><th>Document</th><th class="r">Montant</th><th class="r">Payé</th><th class="r">Reste dû</th></tr></thead><tbody>' +
       docs.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.ref < b.ref ? -1 : 1)).map((d) => '<tr><td>' + dateFr(d.date) + '</td><td>' + (d.type === 'avoir' ? 'Avoir ' : 'Facture ') + esc(d.ref) + '</td><td class="r">' + (d.type === 'avoir' ? '−' : '') + fmt(d.ttc) + '</td><td class="r">' + (d.type === 'facture' ? fmt(d.paid || 0) : '—') + '</td><td class="r">' + (d.type === 'facture' ? fmt(cdRest(d)) : '—') + '</td></tr>').join('') + '</tbody></table>' +
     '<div style="align-self:flex-end;min-width:min(260px,100%);display:flex;flex-direction:column;gap:2px">' + row('Total', fmt(tot)) + row('Payé', fmt(paid)) + row('Reste dû', fmt(rest), ';font-weight:700;font-size:15px;border-top:1px solid #000;padding-top:4px') + '</div></div>';
@@ -352,8 +444,25 @@ function printManyModal(m) {
     '<div class="print-multi">' + body + '</div>',
     '<button class="btn" type="button" data-action="closeModal">Fermer</button><button class="btn btn-primary" type="button" id="pm-print" data-action="printNow">' + ic('print', 18) + 'Imprimer ou PDF</button>', null, true);
 }
+// Relevé des opérations : solde au début, chaque opération dans l'ordre des dates avec le solde, puis les totaux.
+function ledgerPrint(cid) {
+  const L = cdLedger(cid), cell = (v) => '<td class="r">' + (v ? fmt(v) : '') + '</td>';
+  const what = (o) => '<span>' + OP_NAMES[o.kind][0] + '</span> <span>' + esc(o.ref) + '</span>' + (o.doc ? '' : ' · <span>' + (MODES[o.mode] || '') + '</span>' + (o.num ? ' <span>n° ' + esc(o.num) + '</span>' : '') + ' <span>(' + o.refs.map(esc).join(', ') + ')</span>');
+  return '<div class="print-area releve">' + stmtHead(cid, L.first, L.last) +
+    '<table><thead><tr><th>Date</th><th>Opération</th><th class="r">Débit</th><th class="r">Crédit</th><th class="r">Solde</th></tr></thead><tbody>' +
+      '<tr><td>' + dateFr(L.first) + '</td><td>Solde au début de la période</td><td></td><td></td><td class="r">' + balTxt(L.open) + '</td></tr>' +
+      L.rows.map((o) => '<tr><td>' + dateFr(o.date) + '</td><td>' + what(o) + '</td>' + cell(o.debit) + cell(o.credit) + '<td class="r">' + balTxt(o.bal) + '</td></tr>').join('') + '</tbody></table>' +
+    '<div style="align-self:flex-end;min-width:min(280px,100%);display:flex;flex-direction:column;gap:2px">' + prRow('Facturé', fmt(L.billed)) + prRow('Versé', fmt(L.paid)) + (L.credits ? prRow('Avoirs', fmt(L.credits)) : '') + (L.refunds ? prRow('Remboursé', fmt(L.refunds)) : '') +
+      prRow(L.close < 0 ? 'En faveur du client' : 'Reste dû', fmt(Math.abs(L.close)), ';font-weight:700;font-size:15px;border-top:1px solid #000;padding-top:4px') + '</div></div>';
+}
 const renderModalMany = renderModal;
-renderModal = function () { return S.ui.modal && S.ui.modal.kind === 'printMany' ? printManyModal(S.ui.modal) : renderModalMany(); };
+renderModal = function () {
+  const m = S.ui.modal;
+  if (m && m.kind === 'printMany') return printManyModal(m);
+  if (m && m.kind === 'ledger') return modal('Relevé de compte', '<div class="print-multi">' + ledgerPrint(m.cid) + '</div>',
+    '<button class="btn" type="button" data-action="closeModal">Fermer</button><button class="btn btn-primary" type="button" id="lg-print" data-action="printNow">' + ic('print', 18) + 'Imprimer ou PDF</button>', null, true);
+  return renderModalMany();
+};
 
 /* =================================================================== PIÈCES : CORBEILLE */
 P.trash = '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>';

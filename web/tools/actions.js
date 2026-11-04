@@ -249,7 +249,8 @@ F.mPay = (form, fd) => {
 F.mSettle = (form, fd) => {
   const m = S.ui.modal, alloc = allocate(m.cid, Number(m.amount) || 0), mode = fd.get('mode');
   run(async () => {
-    for (const a of alloc) { await DOLI.pay(a.d, mode, a.take, 'Règlement client'); await DOLI.refreshDoc('facture', a.d.id); }
+    await DOLI.paySplit(alloc, mode, 'Versement client');
+    for (const a of alloc) await DOLI.refreshDoc('facture', a.d.id);
     DOLI.computeDay(); S.ui.modal = null; toast('Règlement de ' + fmt(Number(m.amount)) + ' réparti sur ' + alloc.length + ' facture(s).');
   }, 'Enregistrement du règlement…');
 };

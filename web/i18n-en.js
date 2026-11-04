@@ -184,6 +184,8 @@ window.EN = {
   'Imprimer la sélection (#)': 'Print selection (#)', 'Tout cocher': 'Select all', 'Payé': 'Paid', 'Aucune facture sur cette période.': 'No invoice in this period.', 'Sélection : # document(s)': 'Selection: # document(s)',
   'Imprimer # document(s)': 'Print # document(s)', 'Une page récapitulative.': 'One summary page.', 'Une page par document, dans l’ordre de la liste.': 'One page per document, in list order.', 'RELEVÉ DE COMPTE': 'ACCOUNT STATEMENT',
   'Du #/#/# au #/#/#': 'From #/#/# to #/#/#', 'Édité le #/#/#': 'Issued on #/#/#', 'Préparation de l’impression…': 'Preparing printing…', 'Relevé de compte': 'Account statement',
+  'Toutes les opérations': 'All transactions', 'Imprimer le relevé': 'Print statement', 'Type d’opération': 'Transaction type', 'Versements': 'Payments', 'Avoirs et remboursements': 'Credit notes and refunds', 'Détail': 'Details', 'Débit': 'Debit', 'Crédit': 'Credit', 'Solde': 'Balance', 'Versement': 'Payment', 'Remboursement': 'Refund', 'Facturé': 'Invoiced', 'Versé': 'Paid in', 'n° #': 'no. #',
+  'Chargement des règlements… # / #': 'Loading payments… # / #', 'Aucune opération sur cette période.': 'No transaction in this period.', 'Solde au début de la période': 'Opening balance', 'le client doit': 'owed by the customer', 'en faveur du client': 'in the customer’s favour', 'compte soldé': 'account settled', 'En faveur du client': 'In the customer’s favour',
 
   // ---- recycle bin
   'Corbeille': 'Recycle bin', 'Supprimer': 'Delete', 'Restaurer': 'Restore', 'Supprimer définitivement': 'Delete permanently', 'Supprimer la pièce ?': 'Delete the part?', 'Supprimer définitivement ?': 'Delete permanently?',

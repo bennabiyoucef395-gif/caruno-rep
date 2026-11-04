@@ -173,11 +173,24 @@ if (!isset($decreaseRules[$decreaseOn])) {
 		}
 	}
 }
-$supplierRules = array('STOCK_CALCULATE_ON_SUPPLIER_BILL', 'STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER', 'STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER', 'STOCK_CALCULATE_ON_RECEPTION', 'STOCK_CALCULATE_ON_RECEPTION_CLOSE');
-$active = array_filter($supplierRules, function ($r) {
-	return getDolGlobalString($r) !== '';
-});
-report('INFO', 'Supplier-side stock rules (not set by this script yet): '.($active ? implode(', ', $active) : 'none'));
+// Supplier-side increase: exactly one rule. "supplier_dispatch": stock enters when a supplier order is received
+// (dispatched into a warehouse), at the order line's price, which also updates the weighted average cost (PMP).
+$increaseRules = array('supplier_dispatch' => 'STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER');
+$increaseOn = isset($profile['stock']['increase_on']) ? $profile['stock']['increase_on'] : '';
+if (!isset($increaseRules[$increaseOn])) {
+	report('ERROR', 'stock.increase_on must be "supplier_dispatch", got "'.$increaseOn.'"');
+} else {
+	foreach (array('STOCK_CALCULATE_ON_SUPPLIER_BILL', 'STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER', 'STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER', 'STOCK_CALCULATE_ON_RECEPTION', 'STOCK_CALCULATE_ON_RECEPTION_CLOSE') as $rule) {
+		if ($rule === $increaseRules[$increaseOn]) {
+			setConst($rule, '1');
+		} elseif (getDolGlobalString($rule) === '') {
+			report('UNCHANGED', $rule.' off');
+		} else {
+			$res = dolibarr_del_const($db, $rule, $conf->entity);
+			report($res > 0 ? 'CHANGED' : 'ERROR', $rule.' off');
+		}
+	}
+}
 
 foreach ($profile['warehouses'] as $w) {
 	$wh = new Entrepot($db);

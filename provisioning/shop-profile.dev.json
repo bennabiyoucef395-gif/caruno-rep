@@ -48,7 +48,9 @@
   "stock": {
     "disallow_negative": true,
     "_decrease_on": "Chosen by each shop. bill: stock leaves when the invoice is validated (counter sale = invoice -> validate -> payment). shipment: stock leaves when the shipment is validated (every sale, counter included, goes order -> shipment -> invoice). The CARUNO front adapts its sale flow to this value.",
-    "decrease_on": "bill"
+    "decrease_on": "bill",
+    "_increase_on": "supplier_dispatch: stock enters when a supplier order is received (CARUNO Achats -> Valider la reception), at the order price, which updates the weighted average cost (PMP) used for margins and the till's below-cost warning.",
+    "increase_on": "supplier_dispatch"
   },
 
   "warehouses": [

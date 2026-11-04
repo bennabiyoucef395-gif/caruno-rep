@@ -317,13 +317,23 @@ A.poValidate = (el) => {
   const o = po(el.dataset.arg), lines = o.lines.filter((l) => l.rec - l.done > 0);
   if (!lines.length) return;
   run(async () => {
-    await DOLI.api('supplierorders/' + o.id + '/receive', { method: 'POST', body: { closeopenorder: o.lines.every((l) => l.rec >= l.qty) ? 1 : 0, comment: 'Réception CARUNO', lines: lines.map((l) => ({ id: l.lineId, fk_product: l.pid, qty: l.rec - l.done, warehouse: DOLI.whId[WAREHOUSES[0]] })) } });
+    await DOLI.api('supplierorders/' + o.id + '/receive', { method: 'POST', body: { closeopenorder: o.lines.every((l) => l.rec >= l.qty) ? 1 : 0, comment: 'Réception CARUNO', lines: lines.map((l) => ({ id: l.lineId, fk_product: l.pid, qty: l.rec - l.done, warehouse: DOLI.whId[WAREHOUSES[0]], price: l.price })) } });
     lines.forEach((l) => { l.done = l.rec; });
     await DOLI.refreshParts(lines.map((l) => l.pid));
+    // Réception : nouveau coût moyen (PMP) relu ci-dessus, et dernier prix d'achat mis à jour.
+    await DOLI.loadBuyPrices().catch(() => null);
     o.status = o.lines.every((l) => l.rec >= l.qty) ? 'recue' : 'reception';
     toast(lines.reduce((t, l) => t + l.rec, 0) + ' pièce(s) entrées en ' + WAREHOUSES[0] + '.');
   }, 'Réception dans Dolibarr…');
 };
+// Ligne de commande fournisseur : prix proposé = dernier prix d'achat, sinon coût moyen ; modifiable.
+A.poAdd = (el) => {
+  const e = S.ui.poEd, p = part(el.dataset.arg);
+  const lb = p.lastBuy && (!p.lastBuy.sid || p.lastBuy.sid === e.supplier) ? p.lastBuy.price : 0;
+  e.lines.push({ pid: p.id, qty: Math.max(p.souhaite - total(p), 1), rec: 0, done: 0, price: lb || (p.lastBuy && p.lastBuy.price) || Math.round(p.cost) || 0 });
+  e.q = '';
+};
+I.poPrice = (v, el) => { S.ui.poEd.lines[Number(el.dataset.arg)].price = Number(v.replace(/\D/g, '')) || 0; return false; };
 A.poScan = (el) => { S.ui.scan = { mode: 'reception', code: '', pid: null, count: '', wh: WAREHOUSES[0], po: el.dataset.arg }; go('#/scanner'); focusNext('scan-code'); };
 A.prepareOrders = notYet('Préparation automatique des commandes fournisseurs');
 

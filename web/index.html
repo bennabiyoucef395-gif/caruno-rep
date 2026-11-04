@@ -875,7 +875,7 @@ function viewPiece(id) {
   const p = part(id);
   if (!p) { DOLI.need('get:' + id, () => DOLI.fetchParts([Number(id)])); return head(DOLI.lazy['get:' + id] === 'done' ? 'Pièce introuvable' : 'Chargement…', '', '', ['#/pieces', 'Pièces']); }
   if (!p.extra) DOLI.need('extra:' + id, () => DOLI.loadPartExtra(Number(id)));
-  const eq = S.db.parts.filter((x) => x.oem === p.oem);
+  const eq = S.db.parts.filter((x) => !x.trash && (x.id === p.id || (p.oem && x.oem === p.oem)));
   const moves = S.db.moves.filter((m) => m.pid === p.id).slice(0, 8);
   const photos = p.photos || [];
   return head(esc(p.name),
@@ -1359,7 +1359,7 @@ function viewPOEditor() {
     '<section class="card card-pad"><div class="form-grid"><div class="field"><label for="po-sup">Fournisseur</label><select id="po-sup" data-change="poSup">' + S.db.suppliers.map((s) => '<option value="' + s.id + '"' + (s.id === e.supplier ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select></div></div>' +
     '<div style="position:relative"><label class="search" for="po-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Ajouter</span><input id="po-q" type="search" placeholder="Ajouter une pièce…" value="' + esc(e.q) + '" data-input="poQ" autocomplete="off"></label>' +
     (res.length ? '<div class="card" style="position:absolute;left:0;right:0;top:52px;z-index:5;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12)">' + res.map((p) => '<button type="button" data-action="poAdd" data-arg="' + p.id + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;padding:10px 14px;border:0;border-bottom:1px solid var(--line2);background:#fff;cursor:pointer;text-align:left;min-height:48px"><span><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></span><span class="num">stock ' + total(p) + ' / seuil ' + p.seuil + '</span></button>').join('') + '</div>' : '') + '</div>' +
-    (e.lines.length ? '<div class="table-wrap"><table class="t" style="min-width:560px"><thead><tr><th>Pièce</th><th class="right">Qté</th>' + (seeCost() ? '<th class="right">PU' + xHT() + '</th>' : '') + '<th></th></tr></thead><tbody>' + e.lines.map((l, i) => { const p = part(l.pid); return '<tr><td><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></td><td class="right"><label class="sr" for="poe-' + i + '">Quantité</label><input class="input num" style="width:80px" id="poe-' + i + '" inputmode="numeric" value="' + l.qty + '" data-input="poQty" data-arg="' + i + '"></td>' + (seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel" data-arg="' + i + '" aria-label="Retirer">' + ic('x', 18) + '</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty" style="border:1px dashed var(--line);border-radius:12px">Aucune ligne.</p>') +
+    (e.lines.length ? '<div class="table-wrap"><table class="t" style="min-width:560px"><thead><tr><th>Pièce</th><th class="right">Qté</th>' + (seeCost() ? '<th class="right">PU' + xHT() + '</th>' : '') + '<th></th></tr></thead><tbody>' + e.lines.map((l, i) => { const p = part(l.pid); return '<tr><td><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></td><td class="right"><label class="sr" for="poe-' + i + '">Quantité</label><input class="input num" style="width:80px" id="poe-' + i + '" inputmode="numeric" value="' + l.qty + '" data-input="poQty" data-arg="' + i + '"></td>' + (seeCost() ? '<td class="right"><label class="sr" for="poep-' + i + '">Prix d’achat</label><input class="input num" style="width:110px" id="poep-' + i + '" inputmode="numeric" value="' + esc(l.price || '') + '" data-input="poPrice" data-arg="' + i + '"></td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel" data-arg="' + i + '" aria-label="Retirer">' + ic('x', 18) + '</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty" style="border:1px dashed var(--line);border-radius:12px">Aucune ligne.</p>') +
     '<div class="actions" style="justify-content:flex-end"><a class="btn" href="#/achats">Annuler</a><button class="btn btn-primary" type="button" data-action="poCreate"' + (e.lines.length ? '' : ' disabled') + '>Créer la commande</button></div></section>';
 }
 
@@ -1569,7 +1569,7 @@ function renderModal() {
     return modal('Imprimer ' + TYPE_LABEL[d.type].toLowerCase() + ' ' + d.ref, (canTicket ? '<div class="chips" role="group" aria-label="Format">' + (d.type === 'facture' ? [['bon', 'Bon d’achat'], ['a4', 'Facture A4'], ['ticket', 'Ticket 80 mm']] : [['a4', 'Format A4'], ['ticket', 'Ticket 80 mm']]).map((f) => '<button class="chip" type="button" data-action="printFmt" data-arg="' + f[0] + '" aria-pressed="' + (m.format === f[0]) + '">' + f[1] + '</button>').join('') + '</div>' : '') +
       printDoc(d, canTicket ? m.format : 'a4') + '<span class="muted" style="font-size:13px">Identifiants légaux repris du profil magasin et de la fiche client (valeurs de test).</span>',
       '<button class="btn" type="button" data-action="closeModal">Fermer</button><button class="btn btn-primary" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer ou PDF</button>', null, true); }
-  if (m.kind === 'partInfo') { const p = part(m.pid), o = curOrder(), c = client(o.client), L = lvl(c), eq = S.db.parts.filter((x) => x.oem === p.oem && x.id !== p.id);
+  if (m.kind === 'partInfo') { const p = part(m.pid), o = curOrder(), c = client(o.client), L = lvl(c), eq = S.db.parts.filter((x) => p.oem && !x.trash && x.oem === p.oem && x.id !== p.id);
     const price = (x) => fmt(ttc(Math.round(x.prices[L] * (1 - (c.remise || 0) / 100)), x.tva));
     return modal(esc(p.name) + ' · ' + esc(p.brand + ' ' + p.ref),
       '<div style="display:flex;gap:14px;align-items:center">' + thumb(p, 72) + '<dl class="kv" style="flex:1"><dt>OEM</dt><dd class="mono">' + esc(p.oem) + '</dd><dt>EAN</dt><dd class="mono">' + esc(p.ean) + '</dd><dt>Famille</dt><dd>' + esc(p.fam) + '</dd></dl></div>' +
@@ -2616,13 +2616,23 @@ A.poValidate = (el) => {
   const o = po(el.dataset.arg), lines = o.lines.filter((l) => l.rec - l.done > 0);
   if (!lines.length) return;
   run(async () => {
-    await DOLI.api('supplierorders/' + o.id + '/receive', { method: 'POST', body: { closeopenorder: o.lines.every((l) => l.rec >= l.qty) ? 1 : 0, comment: 'Réception CARUNO', lines: lines.map((l) => ({ id: l.lineId, fk_product: l.pid, qty: l.rec - l.done, warehouse: DOLI.whId[WAREHOUSES[0]] })) } });
+    await DOLI.api('supplierorders/' + o.id + '/receive', { method: 'POST', body: { closeopenorder: o.lines.every((l) => l.rec >= l.qty) ? 1 : 0, comment: 'Réception CARUNO', lines: lines.map((l) => ({ id: l.lineId, fk_product: l.pid, qty: l.rec - l.done, warehouse: DOLI.whId[WAREHOUSES[0]], price: l.price })) } });
     lines.forEach((l) => { l.done = l.rec; });
     await DOLI.refreshParts(lines.map((l) => l.pid));
+    // Réception : nouveau coût moyen (PMP) relu ci-dessus, et dernier prix d'achat mis à jour.
+    await DOLI.loadBuyPrices().catch(() => null);
     o.status = o.lines.every((l) => l.rec >= l.qty) ? 'recue' : 'reception';
     toast(lines.reduce((t, l) => t + l.rec, 0) + ' pièce(s) entrées en ' + WAREHOUSES[0] + '.');
   }, 'Réception dans Dolibarr…');
 };
+// Ligne de commande fournisseur : prix proposé = dernier prix d'achat, sinon coût moyen ; modifiable.
+A.poAdd = (el) => {
+  const e = S.ui.poEd, p = part(el.dataset.arg);
+  const lb = p.lastBuy && (!p.lastBuy.sid || p.lastBuy.sid === e.supplier) ? p.lastBuy.price : 0;
+  e.lines.push({ pid: p.id, qty: Math.max(p.souhaite - total(p), 1), rec: 0, done: 0, price: lb || (p.lastBuy && p.lastBuy.price) || Math.round(p.cost) || 0 });
+  e.q = '';
+};
+I.poPrice = (v, el) => { S.ui.poEd.lines[Number(el.dataset.arg)].price = Number(v.replace(/\D/g, '')) || 0; return false; };
 A.poScan = (el) => { S.ui.scan = { mode: 'reception', code: '', pid: null, count: '', wh: WAREHOUSES[0], po: el.dataset.arg }; go('#/scanner'); focusNext('scan-code'); };
 A.prepareOrders = notYet('Préparation automatique des commandes fournisseurs');
 

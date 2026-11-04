@@ -44,6 +44,9 @@ try {
   const sups0 = await api('thirdparties?mode=4&limit=50&sqlfilters=' + encodeURIComponent("(t.nom:=:'Fournisseur essai e2e')"), g0);
   const supId = Array.isArray(sups0) && sups0[0] ? Number(sups0[0].id) : Number(await api('thirdparties', g0, { method: 'POST', body: JSON.stringify({ name: 'Fournisseur essai e2e', fournisseur: 1, client: 0, code_fournisseur: -1, country_id: 13 }) }));
   await api('products/3/purchase_prices', g0, { method: 'POST', body: JSON.stringify({ qty: 1, buyprice: 1000, price_base_type: 'HT', fourn_id: supId, availability: 0, ref_fourn: 'E2E-STK-001', tva_tx: 0 }) });
+  // Pièce neuve pour le parcours d'achat (chargée à la connexion, la plus récente).
+  const buyRef = 'BUY-' + Date.now();
+  const buyId = Number(await api('products', g0, { method: 'POST', body: JSON.stringify({ ref: buyRef, label: 'Essai achats coût moyen', type: 0, status: 1, status_buy: 1, price: 1500 }) }));
   const st1 = await api('products/3/stock', g0);
   if (Number(st1?.stock_warehouses?.['1']?.real || 0) < 3) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 3, warehouse_id: 1, qty: 3, movementlabel: 'Réassort essai e2e web' }) });
   if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
@@ -158,6 +161,36 @@ try {
   const gone = await fetch(DOLI + '/api/index.php/products/' + purgeId, { headers: { DOLAPIKEY: g0 } });
   check('suppression définitive : pièce effacée de Dolibarr', gone.status === 404, String(gone.status));
   check('suppression définitive : la pièce quitte la corbeille', !(await g.locator('table.t').first().innerText()).includes(purgeRef));
+
+  // 5a2. Achats : deux commandes fournisseurs (800 puis 1 000 DA), envoyées puis reçues dans l'app.
+  // Règle Dolibarr « stock à la réception de la commande fournisseur » : stock 10 puis 20, coût moyen 800 puis 900.
+  async function buyInApp(qty, price) {
+    await g.evaluate(() => { location.hash = '#/achats/nouveau'; }); await g.waitForTimeout(600);
+    await g.locator('#po-sup').selectOption(String(supId)); await g.waitForTimeout(200);
+    await g.locator('#po-q').fill(buyRef); await g.waitForTimeout(1500);
+    await g.locator('[data-action="poAdd"]').first().click(); await g.waitForTimeout(200);
+    await g.locator('#poe-0').fill(String(qty)); await g.waitForTimeout(200);
+    await g.locator('#poep-0').fill(String(price));
+    await g.locator('[data-action="poCreate"]').click();
+    await g.waitForFunction(() => /#\/achats\/./.test(location.hash) && !/nouveau/.test(location.hash), null, { timeout: 30000 });
+    await g.waitForTimeout(800);
+    await g.locator('[data-action="poSend"]').click();
+    await g.locator('#po-0').waitFor({ timeout: 30000 });
+    await g.locator('#po-0').fill(String(qty)); await g.waitForTimeout(300);
+    await g.locator('[data-action="poValidate"]').click();
+    await g.getByText(/pièce\(s\) entrées en/).first().waitFor({ timeout: 30000 }).catch(() => {});
+    await g.waitForTimeout(800);
+    return api('products/' + buyId + '?includestockdata=1', g0);
+  }
+  const b1 = await buyInApp(10, 800);
+  check('achat 10 × 800 DA reçu : stock 10, coût moyen 800', Number(b1.stock_reel) === 10 && Math.round(Number(b1.pmp)) === 800, JSON.stringify([b1.stock_reel, b1.pmp]));
+  await g.screenshot({ path: resolve(shots, '04d-reception.png') });
+  const b2 = await buyInApp(10, 1000);
+  check('achat 10 × 1 000 DA reçu : stock 20, coût moyen 900', Number(b2.stock_reel) === 20 && Math.round(Number(b2.pmp)) === 900, JSON.stringify([b2.stock_reel, b2.pmp]));
+  await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, buyId); await g.waitForTimeout(1500);
+  const cardB = (await body(g)).replace(/[  ]/g, ' ');
+  check('fiche : coût moyen 900, dernier achat 1 000, alerte caisse sous 1 000', /Coût moyen \(PMP\)\s*900 DA/.test(cardB) && /Dernier achat\s*1 000 DA/.test(cardB) && /Alerte caisse sous\s*1 000 DA/.test(cardB), cardB.slice(cardB.indexOf('Coût moyen'), cardB.indexOf('Coût moyen') + 200));
+  await g.screenshot({ path: resolve(shots, '04e-fiche-apres-achats.png') });
 
   // 5b. Pas de marque TIBAO à l'écran (pièces, catalogue).
   await g.evaluate(() => { location.hash = '#/pieces'; }); await g.waitForTimeout(500);

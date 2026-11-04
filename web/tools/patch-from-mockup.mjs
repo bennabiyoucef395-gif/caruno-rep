@@ -168,6 +168,14 @@ rep(`<select id="f-sid" name="sid">' + S.db.suppliers.map(`, `<select id="f-sid"
 rep("'<span class=\"pc info\" title=\"Coût moyen d’achat (PMP)\"><span>Prix d’achat</span><b class=\"num\">' + fmt(x.p.cost) + xHT()", "'<span class=\"pc info\" title=\"Le plus élevé du coût moyen et du dernier achat\"><span>Prix d’achat</span><b class=\"num\">' + fmt(costRef(x.p)) + xHT()");
 rep(`<span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>`, `<span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>' + lastBuyRows(p) + '`);
 
+// Commande fournisseur : le prix d'achat se saisit sur la ligne (il devient le coût du stock à la réception).
+rep(`(seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel"`,
+  `(seeCost() ? '<td class="right"><label class="sr" for="poep-' + i + '">Prix d’achat</label><input class="input num" style="width:110px" id="poep-' + i + '" inputmode="numeric" value="' + esc(l.price || '') + '" data-input="poPrice" data-arg="' + i + '"></td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel"`);
+
+// Équivalences : seulement entre pièces qui ont un OEM (deux OEM vides ne sont pas « la même pièce »).
+rep('const eq = S.db.parts.filter((x) => x.oem === p.oem);', 'const eq = S.db.parts.filter((x) => !x.trash && (x.id === p.id || (p.oem && x.oem === p.oem)));');
+rep('eq = S.db.parts.filter((x) => x.oem === p.oem && x.id !== p.id);', 'eq = S.db.parts.filter((x) => p.oem && !x.trash && x.oem === p.oem && x.id !== p.id);');
+
 // ---------- caisse : alerte quand le prix tapé passe sous le prix d'achat (vente à perte) ----------
 rep(`'</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`, `'</b></button>' + costWarn(x) + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`);
 rep(`<input class="input num price-in" id="ln-price-' + i + '"`, `<input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '"`);

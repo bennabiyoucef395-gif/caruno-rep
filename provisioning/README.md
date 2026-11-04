@@ -50,8 +50,17 @@ Non-admin users cannot read constants through the API (`setup/conf` is admin-onl
 
 Purchase prices: the products API returns `cost_price` and `pmp` to every user who can read products. The front hides them for roles that should not see them; this is a display choice, not a protection.
 
+## Stock increase mode (purchases)
+
+`stock.increase_on` sets exactly one supplier-side rule and turns the others off (`STOCK_CALCULATE_ON_SUPPLIER_BILL`, `_SUPPLIER_VALIDATE_ORDER`, `_RECEPTION`, `_RECEPTION_CLOSE`):
+
+| Value | Dolibarr constant | Stock enters when | Why |
+|---|---|---|---|
+| `supplier_dispatch` | `STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER` | a supplier order is received into a warehouse (`POST /supplierorders/{id}/receive`, CARUNO Achats → Valider la réception) | only the quantity really received enters, at the order price; Dolibarr recalculates the weighted average cost (PMP) at each receipt |
+
+Decided 2026-11-04. Not chosen: on order validation (stock before the goods arrive), on supplier invoice (invoice often days after the goods, the till would refuse parts on the shelf), separate Reception documents (extra module and step).
+
 ## What it deliberately does not do
 
-- Supplier-side stock rules (`STOCK_CALCULATE_ON_SUPPLIER_*`, `STOCK_CALCULATE_ON_RECEPTION*`): decision pending.
 - Users, groups, API keys, demo data.
 - Any direct SQL write.

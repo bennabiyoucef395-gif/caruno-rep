@@ -59,7 +59,7 @@ const IMP_FIELDS = [
   ['brand', 'Marque', false, /marque|brand|fabricant/i], ['oem', 'Référence OEM', false, /oem|origine/i], ['ean', 'Code-barres', false, /ean|barre|barcode|gtin/i],
   ['fam', 'Famille', false, /famille|cat[ée]gorie/i], ['p0', 'Prix public', false, /public|vente|^prix$|pvp|price|tarif/i], ['p1', 'Prix garage', false, /garage/i],
   ['p2', 'Prix gros', false, /gros|revendeur/i], ['qty', 'Stock initial', false, /stock|qt[ée]|quantit/i], ['loc', 'Emplacement', false, /emplacement|casier|location|rayon/i],
-  ['seuil', 'Seuil d’alerte', false, /seuil|alerte/i],
+  ['seuil', 'Seuil d’alerte', false, /seuil|alerte/i], ['sprice', 'Prix d’achat', false, /achat|co[uû]t|purchase|cost/i],
 ];
 function loadScript(src) {
   return new Promise((ok, ko) => {
@@ -114,7 +114,7 @@ function impGuess(m) {
 }
 function impItems(m) {
   const data = m.header ? m.rows.slice(1) : m.rows, get = (r, k) => (m.map[k] === undefined ? '' : String(r[m.map[k]] || '').trim());
-  return data.map((r) => ({ ref: get(r, 'ref'), name: get(r, 'name'), brand: get(r, 'brand'), oem: get(r, 'oem'), ean: get(r, 'ean'), fam: get(r, 'fam'), p0: impNum(get(r, 'p0')), p1: impNum(get(r, 'p1')), p2: impNum(get(r, 'p2')), qty: impNum(get(r, 'qty')), loc: get(r, 'loc'), seuil: impNum(get(r, 'seuil')) }))
+  return data.map((r) => ({ ref: get(r, 'ref'), name: get(r, 'name'), brand: get(r, 'brand'), oem: get(r, 'oem'), ean: get(r, 'ean'), fam: get(r, 'fam'), p0: impNum(get(r, 'p0')), p1: impNum(get(r, 'p1')), p2: impNum(get(r, 'p2')), qty: impNum(get(r, 'qty')), loc: get(r, 'loc'), seuil: impNum(get(r, 'seuil')), sprice: impNum(get(r, 'sprice')) }))
     .filter((it) => it.ref && it.name);
 }
 A.modalImport = () => { S.ui.modal = { kind: 'import', step: 'file', rows: [], header: true, map: {}, existing: 'update', name: '' }; };
@@ -151,6 +151,7 @@ A.impRun = () => {
           if (it.fam && DOLI.famCat[it.fam]) f.fam = it.fam;
           if (it.loc) f.locM = it.loc;
           if (it.seuil) f.seuil = it.seuil;
+          if (it.sprice) f.sprice = it.sprice;
           const prices = it.p0 ? [it.p0, it.p1 || it.p0, it.p2 || it.p1 || it.p0] : old ? old.prices : [0, 0, 0];
           const pid = await DOLI.savePart(old ? old.id : null, f, prices);
           if (!old && it.qty > 0) await DOLI.move(pid, 'Stock initial (import ' + m.name + ')', it.qty, WAREHOUSES[0]);
@@ -289,10 +290,19 @@ renderModal = function () { return S.ui.modal && (S.ui.modal.kind === 'trash' ||
 /* =================================================================== CAISSE : VENTE SOUS LE PRIX D'ACHAT */
 // Prix de vente de la ligne sous le coût d'achat (PMP connu). Le vendeur est averti sans voir le coût ;
 // les rôles qui voient les coûts ont le montant.
-function underCost(x) { return x.p.cost > 0 && x.unit < x.p.cost; }
+// Prix d'achat retenu : le plus élevé du coût moyen (PMP) et du dernier achat (protège quand le fournisseur augmente).
+function costRef(p) { return Math.max(p.cost || 0, (p.lastBuy && p.lastBuy.price) || 0); }
+function underCost(x) { const c = costRef(x.p); return c > 0 && x.unit < c; }
 function costWarn(x) {
   if (!underCost(x)) return '';
-  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(x.p.cost) + ')' : '') + ' : vente à perte</span></div>';
+  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(costRef(x.p)) + ')' : '') + ' : vente à perte</span></div>';
+}
+// Fiche pièce (rôles qui voient les coûts) : dernier achat et seuil de l'alerte de la caisse.
+function lastBuyRows(p) {
+  const row = (a, b) => '<div style="display:flex;justify-content:space-between;width:100%;gap:10px"><span>' + a + '</span><b>' + b + '</b></div>';
+  const lb = p.lastBuy;
+  return row('Dernier achat', lb ? fmt(lb.price) : '—') + (lb ? '<span class="muted" style="font-size:12px;align-self:flex-end">' + esc(lb.from) + ' · ' + dateFr(DOLI.day(lb.date)) + '</span>' : '') +
+    (costRef(p) ? row('Alerte caisse sous', fmt(costRef(p))) : '');
 }
 function costAlert(T) {
   const lines = T.lines.filter(underCost);

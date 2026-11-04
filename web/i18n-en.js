@@ -176,6 +176,9 @@ window.EN = {
   'Prix inférieur au prix d’achat : vente à perte': 'Price below purchase price: selling at a loss', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'Price below purchase price (# DA): selling at a loss',
   'Vente à perte :': 'Selling at a loss:',
 
+  'Dernier achat': 'Last purchase', 'Alerte caisse sous': 'Till warning below', '— Aucun —': '— None —', 'Le plus élevé du coût moyen et du dernier achat': 'The higher of average cost and last purchase',
+  'réception': 'receipt', 'saisie': 'entered by hand',
+
   // ---- recycle bin
   'Corbeille': 'Recycle bin', 'Supprimer': 'Delete', 'Restaurer': 'Restore', 'Supprimer définitivement': 'Delete permanently', 'Supprimer la pièce ?': 'Delete the part?', 'Supprimer définitivement ?': 'Delete permanently?',
   'Mettre à la corbeille': 'Move to recycle bin', 'Supprimée le': 'Deleted on', 'La corbeille est vide.': 'The recycle bin is empty.', 'Il reste # pièce(s) en stock.': '# part(s) still in stock.',

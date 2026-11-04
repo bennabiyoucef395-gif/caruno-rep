@@ -120,6 +120,7 @@ const DOLI = {
       refExt: r.ref_ext || '', created: this.num(r.date_creation), extra: old ? old.extra : false,
       // Corbeille CARUNO : pièce « hors vente et hors achat » dans Dolibarr.
       trash: r.status !== undefined && this.num(r.status) === 0 && this.num(r.status_buy) === 0, changed: this.num(r.tms || r.date_modification),
+      lastBuy: (this.lastBuy || {})[this.num(r.id)] || (old ? old.lastBuy : null),
     };
   },
   CAT: { 1: 'Particulier', 2: 'Garage', 3: 'Revendeur' },
@@ -247,6 +248,7 @@ const DOLI = {
       (S.db.posOrders || []).forEach((o) => { o.lines = o.lines.filter((l) => part(l.pid)); if (!client(o.client)) o.client = this.counterId; });
       S.db.moves = S.db.moves.filter((m) => part(m.pid));
       await this.fillFamilies(S.db.parts.map((p) => p.id));
+      await this.loadBuyPrices().catch(() => null);
       this.computeDay();
       this.lazy = {};
     } finally { this.loading = false; }
@@ -426,9 +428,36 @@ const DOLI = {
       if (old && old.fam && this.famCat[old.fam]) await this.api('categories/' + this.famCat[old.fam] + '/objects/product/' + pid, { method: 'DELETE' }).catch(() => null);
       await this.api('categories/' + this.famCat[f.fam] + '/objects/product/' + pid, { method: 'POST' }).catch(() => null);
     }
+    await this.saveBuyPrice(pid, f);
     await this.refreshParts([pid]);
     if (part(pid)) part(pid).fam = f.fam || part(pid).fam;
     return pid;
+  },
+  // Prix d'achat saisi sur la fiche : prix du fournisseur choisi (liste de prix fournisseur Dolibarr),
+  // sinon prix de revient de la pièce. Devient le « dernier achat » retenu par l'alerte de la caisse.
+  async saveBuyPrice(pid, f) {
+    const price = Math.round(Number(f.sprice) || 0);
+    if (!(price > 0)) return;
+    const cur = (this.lastBuy || {})[pid];
+    if (cur && cur.price === price && (cur.sid || '') === (f.sid || '')) return;
+    if (f.sid) await this.api('products/' + pid + '/purchase_prices', { method: 'POST', body: { qty: 1, buyprice: price, price_base_type: 'HT', fourn_id: Number(f.sid), availability: 0, ref_fourn: f.sref || f.ref, tva_tx: 0 } });
+    else await this.api('products/' + pid, { method: 'PUT', body: { cost_price: price } });
+    const s = f.sid && supplier(f.sid);
+    this.lastBuy = this.lastBuy || {};
+    this.lastBuy[pid] = { price, date: Math.floor(Date.now() / 1000), from: s ? s.name : 'saisie', sid: f.sid || '' };
+  },
+  // Dernier prix d'achat de chaque pièce : le plus récent entre les prix fournisseurs et les réceptions de commandes fournisseurs.
+  async loadBuyPrices() {
+    const [all, moves] = await Promise.all([
+      this.api('products/purchase_prices', { query: { limit: 5000 } }).catch(() => ({})),
+      this.safeList(this.api('stockmovements', { query: { limit: 2000, sortfield: 't.datem', sortorder: 'DESC', properties: 'product_id,price,datem,qty,origintype', sqlfilters: "(t.origintype:=:'order_supplier')" } })),
+    ]);
+    const last = {};
+    const take = (pid, price, date, from, sid) => { if (!(price > 0)) return; const c = last[pid]; if (!c || date > c.date) last[pid] = { price: Math.round(price), date, from, sid: sid || '' }; };
+    Object.entries(all && !Array.isArray(all) ? all : {}).forEach(([pid, list]) => (list || []).forEach((e) => take(Number(pid), this.num(e.fourn_unitprice), this.num(e.fourn_date_modification || e.fourn_date_creation), this.txt(e.fourn_name || ''), String(e.fourn_id || ''))));
+    moves.forEach((m) => { if (this.num(m.qty) > 0) take(this.num(m.product_id), this.num(m.price), this.num(m.datem), 'réception'); });
+    this.lastBuy = last;
+    S.db.parts.forEach((p) => { p.lastBuy = last[p.id] || null; });
   },
   async uploadPhoto(p, ph, n) {
     await this.api('documents/upload', { method: 'POST', body: { filename: p.ref.replace(/[^\w.-]+/g, '_') + '-' + Date.now().toString(36) + '-' + n + '.jpg', modulepart: 'product', ref: p.ref, subdir: '', filecontent: ph.url.split(',')[1], fileencoding: 'base64', overwriteifexists: 0 } });

@@ -160,6 +160,14 @@ rep(`data-action="modalImport">Importer</button>' : '')`, `data-action="modalImp
 rep('search(f.q, S.db.parts.slice().sort((a, b) => b.id - a.id))', 'search(f.q, S.db.parts.filter((x) => !x.trash).sort((a, b) => b.id - a.id))');
 rep("search(u.q, S.db.parts).filter((p) => u.cat === 'Tous'", "search(u.q, S.db.parts.filter((x) => !x.trash)).filter((p) => u.cat === 'Tous'");
 
+// ---------- prix d'achat : coût moyen (PMP) et dernier achat ; l'alerte retient le plus élevé ----------
+rep("sid: p.sups[0] ? p.sups[0].sid : 's1', sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.sups[0] ? p.sups[0].price : '',",
+  "sid: p.lastBuy && p.lastBuy.sid ? p.lastBuy.sid : (p.sups[0] ? p.sups[0].sid : ''), sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.lastBuy ? p.lastBuy.price : (p.sups[0] ? p.sups[0].price : ''),");
+rep("sid: 's1', sref: '', sprice: '',", "sid: '', sref: '', sprice: '',");
+rep(`<select id="f-sid" name="sid">' + S.db.suppliers.map(`, `<select id="f-sid" name="sid"><option value="">— Aucun —</option>' + S.db.suppliers.map(`);
+rep("'<span class=\"pc info\" title=\"Coût moyen d’achat (PMP)\"><span>Prix d’achat</span><b class=\"num\">' + fmt(x.p.cost) + xHT()", "'<span class=\"pc info\" title=\"Le plus élevé du coût moyen et du dernier achat\"><span>Prix d’achat</span><b class=\"num\">' + fmt(costRef(x.p)) + xHT()");
+rep(`<span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>`, `<span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>' + lastBuyRows(p) + '`);
+
 // ---------- caisse : alerte quand le prix tapé passe sous le prix d'achat (vente à perte) ----------
 rep(`'</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`, `'</b></button>' + costWarn(x) + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`);
 rep(`<input class="input num price-in" id="ln-price-' + i + '"`, `<input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '"`);

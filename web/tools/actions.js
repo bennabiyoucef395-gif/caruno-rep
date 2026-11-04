@@ -102,7 +102,7 @@ A.posValidate = () => {
   if (!pp.ok) { toast(pp.msg); return; }
   if (S.ui.busy) return false;
   // Chaque prix modifié à la main part dans la note privée de la facture.
-  const log = T.lines.filter((x) => x.l.price != null || x.l.disc || underCost(x)).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (underCost(x) ? ', sous le prix d’achat (' + fmt(x.p.cost) + ')' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
+  const log = T.lines.filter((x) => x.l.price != null || x.l.disc || underCost(x)).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (underCost(x) ? ', sous le prix d’achat (' + fmt(costRef(x.p)) + ')' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
   if (!o.uid) o.uid = Math.random().toString(36).slice(2, 8).toUpperCase();
   const j = { sale: o.ref, ext: o.ref + '-' + o.uid, invoice: '', device: DEVICE, time: nowStr(), step: 'validation', client: o.client, ttc: T.ttc,
     lines: T.lines.map((x) => ({ pid: x.p.id, qty: x.l.qty, price: x.unit })), pay: pp.pay, credit: pp.credit, notePrivate: log.length ? log : undefined, note: o.note, change: pp.change };
@@ -159,7 +159,7 @@ F.savePiece = (form) => {
   const prices = [num('p0'), num('p1') || num('p0'), num('p2') || num('p1') || num('p0')];
   const old = id ? part(id) : null;
   run(async () => {
-    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva }, prices);
+    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
     if (!id && num('initQty')) await DOLI.move(pid, 'Stock initial', num('initQty'), WAREHOUSES[0]);
     const fresh = (f.photos || []).filter((ph) => !old || old.photos.indexOf(ph) === -1);
     for (let i = 0; i < fresh.length; i++) await DOLI.uploadPhoto(part(pid), fresh[i], i);

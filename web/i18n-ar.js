@@ -176,6 +176,9 @@ window.AR = {
   'Prix inférieur au prix d’achat : vente à perte': 'السعر أقل من سعر الشراء: بيع بخسارة', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'السعر أقل من سعر الشراء (# دج): بيع بخسارة',
   'Vente à perte :': 'بيع بخسارة:',
 
+  'Dernier achat': 'آخر شراء', 'Alerte caisse sous': 'تنبيه الصندوق تحت', '— Aucun —': '— لا شيء —', 'Le plus élevé du coût moyen et du dernier achat': 'الأعلى بين متوسط التكلفة وآخر شراء',
+  'réception': 'استلام', 'saisie': 'إدخال يدوي',
+
   // ---- corbeille
   'Corbeille': 'سلة المحذوفات', 'Supprimer': 'حذف', 'Restaurer': 'استرجاع', 'Supprimer définitivement': 'حذف نهائي', 'Supprimer la pièce ?': 'حذف القطعة؟', 'Supprimer définitivement ?': 'حذف نهائي؟',
   'Mettre à la corbeille': 'نقل إلى سلة المحذوفات', 'Supprimée le': 'حذفت في', 'La corbeille est vide.': 'سلة المحذوفات فارغة.', 'Il reste # pièce(s) en stock.': 'بقي # قطعة في المخزون.',

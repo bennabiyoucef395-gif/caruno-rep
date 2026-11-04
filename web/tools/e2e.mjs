@@ -40,6 +40,10 @@ try {
   const st = await api('products/4/stock', g0);
   const have = Number(st?.stock_warehouses?.['1']?.real || 0);
   await api('products/3', g0, { method: 'PUT', body: JSON.stringify({ cost_price: 100 }) });
+  // Fournisseur d'essai et dernier prix d'achat 1 000 DA sur TEST-STK-001 (coût moyen 100) : l'alerte retient 1 000.
+  const sups0 = await api('thirdparties?mode=4&limit=50&sqlfilters=' + encodeURIComponent("(t.nom:=:'Fournisseur essai e2e')"), g0);
+  const supId = Array.isArray(sups0) && sups0[0] ? Number(sups0[0].id) : Number(await api('thirdparties', g0, { method: 'POST', body: JSON.stringify({ name: 'Fournisseur essai e2e', fournisseur: 1, client: 0, code_fournisseur: -1, country_id: 13 }) }));
+  await api('products/3/purchase_prices', g0, { method: 'POST', body: JSON.stringify({ qty: 1, buyprice: 1000, price_base_type: 'HT', fourn_id: supId, availability: 0, ref_fourn: 'E2E-STK-001', tva_tx: 0 }) });
   const st1 = await api('products/3/stock', g0);
   if (Number(st1?.stock_warehouses?.['1']?.real || 0) < 3) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 3, warehouse_id: 1, qty: 3, movementlabel: 'Réassort essai e2e web' }) });
   if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
@@ -95,6 +99,8 @@ try {
   await g.locator('#f-p0').fill('6900');
   await g.locator('#f-p2').fill('5700');
   await g.locator('#f-initQty').fill('3');
+  await g.locator('#f-sid').selectOption(String(supId));
+  await g.locator('#f-sprice').fill('4000');
   await g.locator('form[data-submit="savePiece"] button[type=submit]').click();
   await g.waitForFunction(() => /#\/pieces\/\d+$/.test(location.hash), null, { timeout: 30000 }).catch(() => {});
   await g.waitForTimeout(1500);
@@ -108,6 +114,13 @@ try {
   await g.locator('#pf-q').fill('');
   await g.waitForTimeout(500);
   check('liste des pièces : nouvelle pièce en tête', (await g.locator('table.t tbody tr').first().innerText()).includes(newRef));
+
+  const pp = await api('products/' + prod.id + '/purchase_prices', g0);
+  check('nouvelle pièce : prix d’achat fournisseur enregistré (4 000 DA)', Array.isArray(pp) && pp.some((x) => Math.round(Number(x.fourn_unitprice)) === 4000 && Number(x.fourn_id) === supId), JSON.stringify(Array.isArray(pp) ? pp.map((x) => [x.fourn_id, x.fourn_unitprice]) : pp).slice(0, 120));
+  await g.evaluate(() => { location.hash = '#/pieces/3'; }); await g.waitForTimeout(1500);
+  const card3 = (await body(g)).replace(/[  ]/g, ' ');
+  check('fiche : coût moyen, dernier achat 1 000 DA et seuil d’alerte', /Dernier achat\s*1 000 DA/.test(card3) && /Alerte caisse sous\s*1 000 DA/.test(card3), card3.slice(card3.indexOf('Coût moyen'), card3.indexOf('Coût moyen') + 160));
+  await g.screenshot({ path: resolve(shots, '04c-fiche-prix-achat.png') });
 
   // 5. Transfert Magasin → Réserve depuis la fiche (modale de la maquette).
   await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, prod.id);
@@ -233,9 +246,9 @@ try {
   // Prix tapé sous le prix d'achat : alertes sur la ligne, dans le champ et au paiement.
   await v.locator('#pos-q').focus();
   await v.keyboard.type('TEST-STK-001'); await v.waitForTimeout(1500); await v.keyboard.press('Enter'); await v.waitForTimeout(300);
-  await v.keyboard.type('50'); await v.waitForTimeout(300);
+  await v.keyboard.type('950'); await v.waitForTimeout(300);
   check('prix sous le prix d’achat : alerte sur la ligne', /Prix inférieur au prix d’achat : vente à perte/.test(await v.locator('.cost-warn').first().innerText().catch(() => '')));
-  check('prix sous le prix d’achat : champ en rouge, coût masqué au vendeur', (await v.locator('.price-in.under-cost').count()) === 1 && !/100s?DA/.test(await v.locator('.cost-warn').first().innerText()));
+  check('prix sous le prix d’achat : champ en rouge, coût masqué au vendeur', (await v.locator('.price-in.under-cost').count()) === 1 && !/1\s?000\s?DA/.test((await v.locator('.cost-warn').first().innerText()).replace(/[  ]/g, ' ')));
   await v.screenshot({ path: resolve(shots, '05c-caisse-vente-a-perte.png') });
   await v.keyboard.press('Enter'); await v.keyboard.press('Enter'); await v.keyboard.press('Enter'); await v.waitForTimeout(300);
   check('paiement : alerte vente à perte avant de valider', /Vente à perte/.test(await v.locator('.alert.a-bad').first().innerText().catch(() => '')));

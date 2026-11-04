@@ -755,7 +755,7 @@ function lineEdit(o, x, i) {
       '<button class="icon-btn" type="button" data-action="lineDel" data-arg="' + i + '" aria-label="Retirer la ligne">' + ic('x', 18) + '</button>' +
     '</div>' +
     '<div class="pchips" role="group" aria-label="Prix rapides">' + chips.map((op) => '<button class="pc" type="button" data-action="setPrice" data-arg="' + i + ':' + op[1] + '" aria-pressed="' + (op[1] === cur) + '"><span>' + esc(op[0]) + '</span><b class="num">' + fmt(op[1]) + '</b></button>').join('') +
-      (seeCost() ? '<span class="pc info" title="Coût moyen d’achat (PMP)"><span>Prix d’achat</span><b class="num">' + fmt(x.p.cost) + xHT() + '</b></span>' : '') + '</div>' +
+      (seeCost() ? '<span class="pc info" title="Le plus élevé du coût moyen et du dernier achat"><span>Prix d’achat</span><b class="num">' + fmt(costRef(x.p)) + xHT() + '</b></span>' : '') + '</div>' +
     '<div class="ol-foot"><span>' + (cur !== cat ? '<b style="color:' + (cur < cat ? 'var(--accent-ink)' : 'var(--info)') + '">' + pctTxt(x.unit, x.ref) + '</b> par rapport au prix ' + refName : 'Prix ' + refName) + (x.below ? ' · <b style="color:var(--bad)">sous le minimum (' + fmt(tt(x.p.floor)) + ')</b>' : '') + (ls.any ? '' : ' · jamais vendue') + '</span>' +
       (cur !== cat ? '<button class="linkbtn" type="button" data-action="modalPriceOk" data-arg="' + i + '">' + (x.l.reason ? 'Motif : ' + esc(x.l.reason) : 'Ajouter un motif') + '</button>' : '') + '</div>' +
   '</div>';
@@ -899,7 +899,7 @@ function viewPiece(id) {
         '<section class="card card-pad"><h2>Prix de vente</h2><table class="t"><thead><tr><th>Niveau</th>' + (VAT() ? '<th class="right">HT</th><th class="right">TTC</th>' : '<th class="right">Prix</th>') + '</tr></thead><tbody>' +
           LEVELS.map((l, i) => '<tr><td>' + (i + 1) + ' · ' + l + '</td>' + (VAT() ? '<td class="right num">' + fmt(p.prices[i]) + '</td>' : '') + '<td class="right num"><b>' + fmt(ttc(p.prices[i], p.tva)) + '</b></td></tr>').join('') + '</tbody></table>' +
           '<span class="muted" style="font-size:13px">Prix plancher ' + fmt(p.floor) + xHT() + (VAT() ? ' · TVA ' + p.tva + ' %' : '') + '</span>' +
-          (seeCost() ? '<div class="alert a-ok" style="flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;width:100%"><span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div><div style="display:flex;justify-content:space-between;width:100%"><span>Marges</span><span>' + p.prices.map((x) => (p.cost && x ? Math.round((x - p.cost) / x * 100) + ' %' : '—')).join(' · ') + '</span></div></div>' : '<span class="muted" style="font-size:13px">Coût et marge masqués pour votre rôle.</span>') +
+          (seeCost() ? '<div class="alert a-ok" style="flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;width:100%"><span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>' + lastBuyRows(p) + '<div style="display:flex;justify-content:space-between;width:100%"><span>Marges</span><span>' + p.prices.map((x) => (p.cost && x ? Math.round((x - p.cost) / x * 100) + ' %' : '—')).join(' · ') + '</span></div></div>' : '<span class="muted" style="font-size:13px">Coût et marge masqués pour votre rôle.</span>') +
         '</section>' +
       '</div>' +
       '<section class="card" style="overflow:hidden"><div class="card-head"><h2>Équivalences</h2><span class="muted" style="font-size:14px">même OEM <span class="mono" style="color:var(--ink)">' + esc(p.oem) + '</span></span></div><div class="table-wrap"><table class="t" style="min-width:620px"><thead><tr><th>Marque</th><th>Référence</th><th>Stock</th><th class="right">Public' + xHT() + '</th><th></th></tr></thead><tbody>' +
@@ -926,8 +926,8 @@ function viewPieceForm(id) {
   const f = setForm('piece:' + (id || 'new'), p ? {
     name: p.name, brand: p.brand, ref: p.ref, oem: p.oem, ean: p.ean, fam: p.fam, type: p.type, locM: p.loc['Magasin'], locR: p.loc['Réserve'],
     p0: p.prices[0], p1: p.prices[1], p2: p.prices[2], floor: p.floor, tva: p.tva, seuil: p.seuil, souhaite: p.souhaite,
-    sid: p.sups[0] ? p.sups[0].sid : 's1', sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.sups[0] ? p.sups[0].price : '', photos: (p.photos || []).slice(), initQty: ''
-  } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', locM: '', locR: '', p0: '', p1: '', p2: '', floor: '', tva: VAT() ? 19 : 0, seuil: 4, souhaite: 8, sid: 's1', sref: '', sprice: '', photos: [], initQty: '' });
+    sid: p.lastBuy && p.lastBuy.sid ? p.lastBuy.sid : (p.sups[0] ? p.sups[0].sid : ''), sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.lastBuy ? p.lastBuy.price : (p.sups[0] ? p.sups[0].price : ''), photos: (p.photos || []).slice(), initQty: ''
+  } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', locM: '', locR: '', p0: '', p1: '', p2: '', floor: '', tva: VAT() ? 19 : 0, seuil: 4, souhaite: 8, sid: '', sref: '', sprice: '', photos: [], initQty: '' });
   const inp = (name, label, opts) => { opts = opts || {}; return '<div class="field"' + (opts.span ? ' style="grid-column:1/-1"' : '') + '><label for="f-' + name + '">' + label + (opts.req ? ' *' : '') + '</label>' +
     (opts.wrap ? '<div style="display:flex;gap:8px">' : '') + '<input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="f-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.num ? ' inputmode="numeric"' : '') + (opts.req ? ' required' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' style="flex:1">' + (opts.wrap || '') + (opts.wrap ? '</div>' : '') +
     (opts.hint ? '<span class="hint">' + opts.hint + '</span>' : '') + '</div>'; };
@@ -954,7 +954,7 @@ function viewPieceForm(id) {
       (p ? '' : inp('initQty', 'Stock initial en Magasin', { num: true, hint: 'Crée un mouvement « stock initial ». Sinon, passer par une réception.' })) +
     '</div></div>' +
     (seeCost() || role() === 'magasinier' ? '<div class="form-section"><h2>Fournisseur principal</h2><div class="form-grid">' +
-      '<div class="field"><label for="f-sid">Fournisseur</label><select id="f-sid" name="sid">' + S.db.suppliers.map((s) => '<option value="' + s.id + '"' + (s.id === fv('sid') ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="f-sid">Fournisseur</label><select id="f-sid" name="sid"><option value="">— Aucun —</option>' + S.db.suppliers.map((s) => '<option value="' + s.id + '"' + (s.id === fv('sid') ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select></div>' +
       inp('sref', 'Référence fournisseur', { mono: true }) + inp('sprice', 'Prix d’achat' + xHT(), { num: true }) + '</div></div>' : '') +
     '<div class="actions" style="justify-content:flex-end"><a class="btn" href="' + (p ? '#/pieces/' + p.id : '#/pieces') + '">Annuler</a><button class="btn btn-primary" type="submit">' + (p ? 'Enregistrer' : 'Créer la pièce') + '</button></div>' +
     '</form>';
@@ -2401,7 +2401,7 @@ A.posValidate = () => {
   if (!pp.ok) { toast(pp.msg); return; }
   if (S.ui.busy) return false;
   // Chaque prix modifié à la main part dans la note privée de la facture.
-  const log = T.lines.filter((x) => x.l.price != null || x.l.disc || underCost(x)).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (underCost(x) ? ', sous le prix d’achat (' + fmt(x.p.cost) + ')' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
+  const log = T.lines.filter((x) => x.l.price != null || x.l.disc || underCost(x)).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (underCost(x) ? ', sous le prix d’achat (' + fmt(costRef(x.p)) + ')' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
   if (!o.uid) o.uid = Math.random().toString(36).slice(2, 8).toUpperCase();
   const j = { sale: o.ref, ext: o.ref + '-' + o.uid, invoice: '', device: DEVICE, time: nowStr(), step: 'validation', client: o.client, ttc: T.ttc,
     lines: T.lines.map((x) => ({ pid: x.p.id, qty: x.l.qty, price: x.unit })), pay: pp.pay, credit: pp.credit, notePrivate: log.length ? log : undefined, note: o.note, change: pp.change };
@@ -2458,7 +2458,7 @@ F.savePiece = (form) => {
   const prices = [num('p0'), num('p1') || num('p0'), num('p2') || num('p1') || num('p0')];
   const old = id ? part(id) : null;
   run(async () => {
-    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva }, prices);
+    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
     if (!id && num('initQty')) await DOLI.move(pid, 'Stock initial', num('initQty'), WAREHOUSES[0]);
     const fresh = (f.photos || []).filter((ph) => !old || old.photos.indexOf(ph) === -1);
     for (let i = 0; i < fresh.length; i++) await DOLI.uploadPhoto(part(pid), fresh[i], i);
@@ -2728,7 +2728,7 @@ const IMP_FIELDS = [
   ['brand', 'Marque', false, /marque|brand|fabricant/i], ['oem', 'Référence OEM', false, /oem|origine/i], ['ean', 'Code-barres', false, /ean|barre|barcode|gtin/i],
   ['fam', 'Famille', false, /famille|cat[ée]gorie/i], ['p0', 'Prix public', false, /public|vente|^prix$|pvp|price|tarif/i], ['p1', 'Prix garage', false, /garage/i],
   ['p2', 'Prix gros', false, /gros|revendeur/i], ['qty', 'Stock initial', false, /stock|qt[ée]|quantit/i], ['loc', 'Emplacement', false, /emplacement|casier|location|rayon/i],
-  ['seuil', 'Seuil d’alerte', false, /seuil|alerte/i],
+  ['seuil', 'Seuil d’alerte', false, /seuil|alerte/i], ['sprice', 'Prix d’achat', false, /achat|co[uû]t|purchase|cost/i],
 ];
 function loadScript(src) {
   return new Promise((ok, ko) => {
@@ -2783,7 +2783,7 @@ function impGuess(m) {
 }
 function impItems(m) {
   const data = m.header ? m.rows.slice(1) : m.rows, get = (r, k) => (m.map[k] === undefined ? '' : String(r[m.map[k]] || '').trim());
-  return data.map((r) => ({ ref: get(r, 'ref'), name: get(r, 'name'), brand: get(r, 'brand'), oem: get(r, 'oem'), ean: get(r, 'ean'), fam: get(r, 'fam'), p0: impNum(get(r, 'p0')), p1: impNum(get(r, 'p1')), p2: impNum(get(r, 'p2')), qty: impNum(get(r, 'qty')), loc: get(r, 'loc'), seuil: impNum(get(r, 'seuil')) }))
+  return data.map((r) => ({ ref: get(r, 'ref'), name: get(r, 'name'), brand: get(r, 'brand'), oem: get(r, 'oem'), ean: get(r, 'ean'), fam: get(r, 'fam'), p0: impNum(get(r, 'p0')), p1: impNum(get(r, 'p1')), p2: impNum(get(r, 'p2')), qty: impNum(get(r, 'qty')), loc: get(r, 'loc'), seuil: impNum(get(r, 'seuil')), sprice: impNum(get(r, 'sprice')) }))
     .filter((it) => it.ref && it.name);
 }
 A.modalImport = () => { S.ui.modal = { kind: 'import', step: 'file', rows: [], header: true, map: {}, existing: 'update', name: '' }; };
@@ -2820,6 +2820,7 @@ A.impRun = () => {
           if (it.fam && DOLI.famCat[it.fam]) f.fam = it.fam;
           if (it.loc) f.locM = it.loc;
           if (it.seuil) f.seuil = it.seuil;
+          if (it.sprice) f.sprice = it.sprice;
           const prices = it.p0 ? [it.p0, it.p1 || it.p0, it.p2 || it.p1 || it.p0] : old ? old.prices : [0, 0, 0];
           const pid = await DOLI.savePart(old ? old.id : null, f, prices);
           if (!old && it.qty > 0) await DOLI.move(pid, 'Stock initial (import ' + m.name + ')', it.qty, WAREHOUSES[0]);
@@ -2958,10 +2959,19 @@ renderModal = function () { return S.ui.modal && (S.ui.modal.kind === 'trash' ||
 /* =================================================================== CAISSE : VENTE SOUS LE PRIX D'ACHAT */
 // Prix de vente de la ligne sous le coût d'achat (PMP connu). Le vendeur est averti sans voir le coût ;
 // les rôles qui voient les coûts ont le montant.
-function underCost(x) { return x.p.cost > 0 && x.unit < x.p.cost; }
+// Prix d'achat retenu : le plus élevé du coût moyen (PMP) et du dernier achat (protège quand le fournisseur augmente).
+function costRef(p) { return Math.max(p.cost || 0, (p.lastBuy && p.lastBuy.price) || 0); }
+function underCost(x) { const c = costRef(x.p); return c > 0 && x.unit < c; }
 function costWarn(x) {
   if (!underCost(x)) return '';
-  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(x.p.cost) + ')' : '') + ' : vente à perte</span></div>';
+  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(costRef(x.p)) + ')' : '') + ' : vente à perte</span></div>';
+}
+// Fiche pièce (rôles qui voient les coûts) : dernier achat et seuil de l'alerte de la caisse.
+function lastBuyRows(p) {
+  const row = (a, b) => '<div style="display:flex;justify-content:space-between;width:100%;gap:10px"><span>' + a + '</span><b>' + b + '</b></div>';
+  const lb = p.lastBuy;
+  return row('Dernier achat', lb ? fmt(lb.price) : '—') + (lb ? '<span class="muted" style="font-size:12px;align-self:flex-end">' + esc(lb.from) + ' · ' + dateFr(DOLI.day(lb.date)) + '</span>' : '') +
+    (costRef(p) ? row('Alerte caisse sous', fmt(costRef(p))) : '');
 }
 function costAlert(T) {
   const lines = T.lines.filter(underCost);

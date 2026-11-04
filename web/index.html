@@ -293,6 +293,8 @@ kbd{display:inline-block;min-width:20px;padding:1px 6px;margin-right:3px;border:
 .pos-grid.pos-listwrap{display:block}
 .pos-list tr.hi td{background:#FFF4EC}
 .pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+.price-in.under-cost{border-color:var(--bad);box-shadow:0 0 0 3px #FDECEC;color:var(--bad)}
+.cost-warn{display:flex;gap:8px;align-items:center;margin:0 14px 8px;padding:7px 10px;border-radius:8px;background:#FDECEC;color:#991B1B;font-size:13px;font-weight:600}
 </style>
 </head>
 <body>
@@ -718,7 +720,7 @@ function posOrderPanel(o, T) {
     const last = sel ? '' : '<div class="ol-alert info last">' + ic('ventes', 15) + '<span style="flex:1;min-width:0">' + (!ls.any ? 'Jamais vendue' :
       (ls.mine ? 'À ce client : <b class="num">' + fmt(tt(ls.mine.unit)) + '</b> le ' + dateFr(ls.mine.date) : '') +
       (!ls.mine || ls.any.ref !== ls.mine.ref ? (ls.mine ? ' · ' : '') + 'Dernière vente : <b class="num">' + fmt(tt(ls.any.unit)) + '</b> le ' + dateFr(ls.any.date) + ' (' + esc(client(ls.any.client).name) + ')' : '')) + '</span></div>';
-    return '<div class="olw"><button type="button" class="ol" data-action="posSel" data-arg="' + i + '" aria-pressed="' + sel + '"><span style="flex:1;min-width:0"><b style="display:block;font-size:14px">' + esc(x.p.name) + '</b><span class="muted mono" style="font-size:12px">' + esc(x.p.brand + ' ' + x.p.ref) + '</span><span style="display:block;font-size:13px;margin-top:2px"><b class="num">' + x.l.qty + '</b> × ' + fmt(tt(x.unit)) + '</span>' + chg + '</span><b class="num" style="font-size:15px">' + fmt(tt(x.unit) * x.l.qty) + '</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';
+    return '<div class="olw"><button type="button" class="ol" data-action="posSel" data-arg="' + i + '" aria-pressed="' + sel + '"><span style="flex:1;min-width:0"><b style="display:block;font-size:14px">' + esc(x.p.name) + '</b><span class="muted mono" style="font-size:12px">' + esc(x.p.brand + ' ' + x.p.ref) + '</span><span style="display:block;font-size:13px;margin-top:2px"><b class="num">' + x.l.qty + '</b> × ' + fmt(tt(x.unit)) + '</span>' + chg + '</span><b class="num" style="font-size:15px">' + fmt(tt(x.unit) * x.l.qty) + '</b></button>' + costWarn(x) + (sel ? lineEdit(o, x, i) : '') + last + '</div>';
   }).join('')
     : '<div class="empty" style="padding:40px 20px">' + ic('caisse', 40, '#8A8F9C') + '<p style="margin:10px 0 0">Panier vide.<br>Touchez une pièce ou scannez un code-barres.</p></div>';
   return '<aside class="pos-order' + (u.cart ? ' open' : '') + '" aria-label="Commande ' + o.ref + '">' +
@@ -749,7 +751,7 @@ function lineEdit(o, x, i) {
   return '<div class="ol-edit">' +
     '<div class="ol-row">' +
       '<div class="field"><span class="lbl">Quantité</span><div class="qty"><button type="button" data-action="lineQty" data-arg="' + i + ':-1" aria-label="Diminuer"' + (x.l.qty <= 1 ? ' disabled' : '') + '>−</button><input class="qty-in num" id="ln-qty-' + i + '" inputmode="numeric" aria-label="Quantité" value="' + esc(editVal('qty:' + i, x.l.qty)) + '" data-input="lineQty" data-change="lineDone" data-select="1" data-arg="' + i + '"><button type="button" data-action="lineQty" data-arg="' + i + ':1" aria-label="Augmenter"' + (x.l.qty >= lineMax(o, i) ? ' disabled' : '') + '>+</button></div></div>' +
-      '<div class="field" style="flex:1;min-width:0"><label for="ln-price-' + i + '">Prix de vente</label><input class="input num price-in" id="ln-price-' + i + '" inputmode="numeric" value="' + esc(editVal('price:' + i, cur)) + '" data-input="linePrice" data-change="lineDone" data-select="1" data-arg="' + i + '"></div>' +
+      '<div class="field" style="flex:1;min-width:0"><label for="ln-price-' + i + '">Prix de vente</label><input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '" inputmode="numeric" value="' + esc(editVal('price:' + i, cur)) + '" data-input="linePrice" data-change="lineDone" data-select="1" data-arg="' + i + '"></div>' +
       '<button class="icon-btn" type="button" data-action="lineDel" data-arg="' + i + '" aria-label="Retirer la ligne">' + ic('x', 18) + '</button>' +
     '</div>' +
     '<div class="pchips" role="group" aria-label="Prix rapides">' + chips.map((op) => '<button class="pc" type="button" data-action="setPrice" data-arg="' + i + ':' + op[1] + '" aria-pressed="' + (op[1] === cur) + '"><span>' + esc(op[0]) + '</span><b class="num">' + fmt(op[1]) + '</b></button>').join('') +
@@ -780,7 +782,7 @@ function posPayment() {
         '<button class="ord-client" type="button" data-action="posScreen" data-arg="customers" style="background:#fff">' + ic('clients', 20) + '<span style="flex:1;text-align:left"><b style="display:block">' + esc(c.name) + '</b><span class="muted" style="font-size:12px">' + (c.plafond ? 'Encours ' + fmt(encours(c.id)) + ' / ' + fmt(c.plafond) : c.fixed ? 'Vente anonyme' : 'Paiement comptant') + '</span></span><span aria-hidden="true">›</span></button>' +
         (o.note ? '<div class="muted" style="font-size:13px">Note : ' + esc(o.note) + '</div>' : '') +
         (!pp.ok && !/^Reste/.test(pp.msg) ? '<div class="alert a-bad">' + ic('warn', 18) + esc(pp.msg) + '</div>' : '') +
-        (pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') +
+        (pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') + costAlert(T) +
         '<button class="btn btn-primary btn-lg" type="button" data-action="posValidate" style="min-height:72px;font-size:20px"' + (pp.ok ? '' : ' disabled') + '>Valider</button>' +
         '<span class="muted" style="font-size:13px">La validation crée la facture dans Dolibarr, sort le stock (' + STOCK_MODES[stockMode()] + ') et enregistre les paiements.</span>' +
       '</section></div></div>';
@@ -2399,7 +2401,7 @@ A.posValidate = () => {
   if (!pp.ok) { toast(pp.msg); return; }
   if (S.ui.busy) return false;
   // Chaque prix modifié à la main part dans la note privée de la facture.
-  const log = T.lines.filter((x) => x.l.price != null || x.l.disc).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
+  const log = T.lines.filter((x) => x.l.price != null || x.l.disc || underCost(x)).map((x) => x.p.brand + ' ' + x.p.ref + ' : ' + fmt(x.ref) + ' → ' + fmt(x.unit) + ' (' + pctTxt(x.unit, x.ref) + ')' + (x.below ? ', sous le prix minimum' : '') + (underCost(x) ? ', sous le prix d’achat (' + fmt(x.p.cost) + ')' : '') + (x.l.reason ? ', motif : ' + x.l.reason : '') + ' — ' + S.user.name);
   if (!o.uid) o.uid = Math.random().toString(36).slice(2, 8).toUpperCase();
   const j = { sale: o.ref, ext: o.ref + '-' + o.uid, invoice: '', device: DEVICE, time: nowStr(), step: 'validation', client: o.client, ttc: T.ttc,
     lines: T.lines.map((x) => ({ pid: x.p.id, qty: x.l.qty, price: x.unit })), pay: pp.pay, credit: pp.credit, notePrivate: log.length ? log : undefined, note: o.note, change: pp.change };
@@ -2906,6 +2908,20 @@ render = function () {
   const hi = document.querySelector('.pos-list tr.hi');
   if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
 };
+/* =================================================================== CAISSE : VENTE SOUS LE PRIX D'ACHAT */
+// Prix de vente de la ligne sous le coût d'achat (PMP connu). Le vendeur est averti sans voir le coût ;
+// les rôles qui voient les coûts ont le montant.
+function underCost(x) { return x.p.cost > 0 && x.unit < x.p.cost; }
+function costWarn(x) {
+  if (!underCost(x)) return '';
+  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(x.p.cost) + ')' : '') + ' : vente à perte</span></div>';
+}
+function costAlert(T) {
+  const lines = T.lines.filter(underCost);
+  if (!lines.length) return '';
+  return '<div class="alert a-bad" role="alert">' + ic('warn', 18) + '<div><b>Vente à perte :</b> ' + lines.map((x) => esc(x.p.brand ? x.p.brand + ' ' + x.p.ref : x.p.ref)).join(', ') + ' sous le prix d’achat. Vérifiez les prix avant de valider.</div></div>';
+}
+
 /* =================================================================== IMPRESSION : bon d'achat par défaut */
 // Choix du format (bon d'achat, facture A4, ticket 80 mm) pour une facture.
 function printFormats(cur, action) {

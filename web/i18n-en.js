@@ -173,6 +173,8 @@ window.EN = {
 
   // ---- printing
   'Bon d’achat': 'Purchase slip', 'BON D’ACHAT': 'PURCHASE SLIP', 'Client :': 'Customer:',
+  'Prix inférieur au prix d’achat : vente à perte': 'Price below purchase price: selling at a loss', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'Price below purchase price (# DA): selling at a loss',
+  'Vente à perte :': 'Selling at a loss:',
 };
 // Composed texts: dates, months, titles with a reference.
 (function () {
@@ -190,6 +192,7 @@ window.EN = {
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'Close the till · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'Print ' + T[t] + ' ' + r],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'Import ' + f],
+    [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' below purchase price. Check the prices before confirming.'],
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': not connected to Dolibarr yet. Do it in Dolibarr for now.'],
   ];
 })();

@@ -239,6 +239,20 @@ render = function () {
   const hi = document.querySelector('.pos-list tr.hi');
   if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
 };
+/* =================================================================== CAISSE : VENTE SOUS LE PRIX D'ACHAT */
+// Prix de vente de la ligne sous le coût d'achat (PMP connu). Le vendeur est averti sans voir le coût ;
+// les rôles qui voient les coûts ont le montant.
+function underCost(x) { return x.p.cost > 0 && x.unit < x.p.cost; }
+function costWarn(x) {
+  if (!underCost(x)) return '';
+  return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(x.p.cost) + ')' : '') + ' : vente à perte</span></div>';
+}
+function costAlert(T) {
+  const lines = T.lines.filter(underCost);
+  if (!lines.length) return '';
+  return '<div class="alert a-bad" role="alert">' + ic('warn', 18) + '<div><b>Vente à perte :</b> ' + lines.map((x) => esc(x.p.brand ? x.p.brand + ' ' + x.p.ref : x.p.ref)).join(', ') + ' sous le prix d’achat. Vérifiez les prix avant de valider.</div></div>';
+}
+
 /* =================================================================== IMPRESSION : bon d'achat par défaut */
 // Choix du format (bon d'achat, facture A4, ticket 80 mm) pour une facture.
 function printFormats(cur, action) {

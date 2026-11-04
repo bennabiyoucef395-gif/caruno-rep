@@ -154,6 +154,12 @@ between('  const tiles = res.length ? res.map((p, idx) => {', '  return posOrder
 rep(`'<div class="pos-grid">' + tiles + '</div>'`, `'<div class="pos-grid pos-listwrap">' + tiles + '</div>'`);
 rep('</style>', '.pos-grid.pos-listwrap{display:block}\n.pos-list tr.hi td{background:#FFF4EC}\n.pos-list tr.hi td:first-child{box-shadow:inset 4px 0 0 var(--accent)}\n</style>');
 
+// ---------- caisse : alerte quand le prix tapé passe sous le prix d'achat (vente à perte) ----------
+rep(`'</b></button>' + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`, `'</b></button>' + costWarn(x) + (sel ? lineEdit(o, x, i) : '') + last + '</div>';`);
+rep(`<input class="input num price-in" id="ln-price-' + i + '"`, `<input class="input num price-in' + (underCost(x) ? ' under-cost' : '') + '" id="ln-price-' + i + '"`);
+rep(`(pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') +`, `(pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') + costAlert(T) +`);
+rep('</style>', '.price-in.under-cost{border-color:var(--bad);box-shadow:0 0 0 3px #FDECEC;color:var(--bad)}\n.cost-warn{display:flex;gap:8px;align-items:center;margin:0 14px 8px;padding:7px 10px;border-radius:8px;background:#FDECEC;color:#991B1B;font-size:13px;font-weight:600}\n</style>');
+
 // ---------- impression : bon d'achat par défaut, facture A4 ou ticket 80 mm au choix ----------
 rep(`printDoc(d, 'ticket') +
       '<div class="actions" style="justify-content:center"><button class="btn btn-outline" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer le ticket</button><button class="btn btn-outline" type="button" data-action="modalPrint" data-arg="' + d.ref + ':a4">Facture A4</button>`,

@@ -173,6 +173,8 @@ window.AR = {
 
   // ---- impression
   'Bon d’achat': 'وصل شراء', 'BON D’ACHAT': 'وصل شراء', 'Client :': 'الزبون:',
+  'Prix inférieur au prix d’achat : vente à perte': 'السعر أقل من سعر الشراء: بيع بخسارة', 'Prix inférieur au prix d’achat (# DA) : vente à perte': 'السعر أقل من سعر الشراء (# دج): بيع بخسارة',
+  'Vente à perte :': 'بيع بخسارة:',
 };
 // Textes composés : dates, mois, titres avec une référence.
 (function () {
@@ -189,6 +191,7 @@ window.AR = {
     [/^Fermer la caisse · (\S+)$/, (s, r) => 'إغلاق الصندوق · ' + r],
     [/^Imprimer (facture|devis|commande|livraison|avoir) (\S+)$/, (s, t, r) => 'طباعة ' + ({ facture: 'فاتورة', devis: 'عرض سعر', commande: 'طلبية', livraison: 'تسليم', avoir: 'إشعار دائن' })[t] + ' ' + r],
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'استيراد ' + f],
+    [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' تحت سعر الشراء. تحقق من الأسعار قبل التأكيد.'],
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم في Dolibarr حالياً.'],
   ];
 })();

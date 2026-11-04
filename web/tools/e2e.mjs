@@ -39,6 +39,9 @@ try {
   const g0 = (await api('login', '', { method: 'POST', body: JSON.stringify({ login: 'dev.gerant', password: secrets.TEST_PW_DEV_GERANT }) })).success.token;
   const st = await api('products/4/stock', g0);
   const have = Number(st?.stock_warehouses?.['1']?.real || 0);
+  await api('products/3', g0, { method: 'PUT', body: JSON.stringify({ cost_price: 100 }) });
+  const st1 = await api('products/3/stock', g0);
+  if (Number(st1?.stock_warehouses?.['1']?.real || 0) < 3) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 3, warehouse_id: 1, qty: 3, movementlabel: 'Réassort essai e2e web' }) });
   if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
 
   // 1. Connexion : mauvais mot de passe, puis gérant → tableau de bord.
@@ -200,6 +203,18 @@ try {
   if (await v.locator('#pos-open').isVisible().catch(() => false)) { await v.locator('#pos-open').fill('10000'); await v.locator('form[data-submit="posOpen"] button[type=submit]').click(); }
   await v.locator('#pos-q').waitFor();
   await v.screenshot({ path: resolve(shots, '05-caisse.png') });
+  // Prix tapé sous le prix d'achat : alertes sur la ligne, dans le champ et au paiement.
+  await v.locator('#pos-q').focus();
+  await v.keyboard.type('TEST-STK-001'); await v.waitForTimeout(1500); await v.keyboard.press('Enter'); await v.waitForTimeout(300);
+  await v.keyboard.type('50'); await v.waitForTimeout(300);
+  check('prix sous le prix d’achat : alerte sur la ligne', /Prix inférieur au prix d’achat : vente à perte/.test(await v.locator('.cost-warn').first().innerText().catch(() => '')));
+  check('prix sous le prix d’achat : champ en rouge, coût masqué au vendeur', (await v.locator('.price-in.under-cost').count()) === 1 && !/100s?DA/.test(await v.locator('.cost-warn').first().innerText()));
+  await v.screenshot({ path: resolve(shots, '05c-caisse-vente-a-perte.png') });
+  await v.keyboard.press('Enter'); await v.keyboard.press('Enter'); await v.keyboard.press('Enter'); await v.waitForTimeout(300);
+  check('paiement : alerte vente à perte avant de valider', /Vente à perte/.test(await v.locator('.alert.a-bad').first().innerText().catch(() => '')));
+  await v.screenshot({ path: resolve(shots, '05d-paiement-vente-a-perte.png') });
+  await v.keyboard.press('Escape'); await v.waitForTimeout(200);
+  await v.locator('[data-action="posSel"]').first().click(); await v.locator('[data-action="lineDel"]').first().click(); await v.waitForTimeout(200);
   await v.locator('#pos-q').focus();
   await v.keyboard.type('TEST-STK-002');
   await v.waitForTimeout(1500);

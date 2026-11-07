@@ -9,8 +9,8 @@ import { serve } from './serve.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { chromium } = createRequire(resolve(here, '../../app/package.json'))('playwright-core');
-const DOLI = process.env.DOLI_URL || 'http://localhost:8080';
-const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+const DOLI = process.env.DOLI_URL || 'http://localhost:8081';   // Dolibarr de TEST
+const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/test/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 const shots = resolve(here, '../.e2e-shots');
 mkdirSync(shots, { recursive: true });
 if (!existsSync(resolve(here, '../data/parts/index.json'))) { console.log('Données véhicules absentes : lancer scripts/parts/export.sh avec PARTS_JSON_DIR=web/data/parts'); process.exit(1); }
@@ -26,6 +26,7 @@ try {
   const p = await (await browser.newContext({ viewport: { width: 1400, height: 900 } })).newPage();
   p.on('pageerror', (e) => errors.push(e.message));
   await p.goto('http://localhost:' + PORT + '/');
+  if (!(await p.locator('#lg-url').isVisible())) await p.locator('[data-action="loginUrlEdit"]').click();
   await p.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
   await p.locator('#lg-user').fill('dev.vendeur');
   await p.locator('#pw').fill(secrets.TEST_PW_DEV_VENDEUR);
@@ -52,7 +53,7 @@ try {
   await p.screenshot({ path: resolve(shots, '08a-vehicule-golf7-inconnu.png') });
   await pick('veh-engine', '1.4 TSI (essence)');
   t = await rows();
-  check('Golf 7 1.4 TSI, filtre à huile : filtres compatibles, lus dans Dolibarr', /Compatible/.test(t) && !/Chargement|Absente/.test(t), t.slice(0, 200));
+  check('Golf 7 1.4 TSI, filtre à huile : filtres compatibles, lus dans Dolibarr', /Compatible/.test(t) && !/Chargement|Pas encore dans les pièces/.test(t), t.slice(0, 200));
   await p.screenshot({ path: resolve(shots, '08b-vehicule-golf7-14tsi.png') });
   await pick('veh-engine', '2.0 TDI (diesel)');
   t = await rows();

@@ -61,6 +61,7 @@ try {
   const g = await (await browser.newContext({ viewport: { width: 1400, height: 1000 } })).newPage();
   g.on('pageerror', (e) => errors.push(e.message));
   await g.goto('http://localhost:' + PORT + '/');
+  if (!(await g.locator('#lg-url').isVisible())) await g.locator('[data-action="loginUrlEdit"]').click();
   await g.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
   await g.locator('#lg-user').fill('dev.gerant');
   await g.locator('#pw').fill(secrets.TEST_PW_DEV_GERANT);

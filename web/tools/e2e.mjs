@@ -1,5 +1,6 @@
-// Parcours dans le navigateur (Edge, playwright-core) de l'application web contre un Dolibarr de DÉVELOPPEMENT.
-// Crée des données de test (vente, pièce CARUNO-WEB-…, mouvements). Usage : node web/tools/e2e.mjs
+// Parcours dans le navigateur (Edge, playwright-core) de l'application web contre le Dolibarr de TEST (port 8081,
+// jamais celui du magasin). Crée des données de test (vente, pièce CARUNO-WEB-…, mouvements). Usage : node web/tools/e2e.mjs
+// Autre Dolibarr : DOLI_URL=… CARUNO_TEST_USERS=…/test-users.env node web/tools/e2e.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve, dirname } from 'node:path';
@@ -8,8 +9,8 @@ import { serve } from './serve.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { chromium } = createRequire(resolve(here, '../../app/package.json'))('playwright-core');
-const DOLI = process.env.DOLI_URL || 'http://localhost:8080';
-const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+const DOLI = process.env.DOLI_URL || 'http://localhost:8081';   // Dolibarr de TEST
+const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/test/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 const shots = resolve(here, '../.e2e-shots');
 mkdirSync(shots, { recursive: true });
 
@@ -27,6 +28,7 @@ async function signIn(ctx, login, pw) {
   const p = await ctx.newPage();
   p.on('pageerror', (e) => errors.push(login + ': ' + e.message));
   await p.goto(BASE);
+  if (!(await p.locator('#lg-url').isVisible())) await p.locator('[data-action="loginUrlEdit"]').click();
   await p.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
   await p.locator('#lg-user').fill(login);
   await p.locator('#pw').fill(pw);
@@ -37,19 +39,59 @@ async function signIn(ctx, login, pw) {
 
 try {
   const g0 = (await api('login', '', { method: 'POST', body: JSON.stringify({ login: 'dev.gerant', password: secrets.TEST_PW_DEV_GERANT }) })).success.token;
-  const st = await api('products/4/stock', g0);
+  // Pièces d'essai TEST-STK-001 / 002 et client comptoir : retrouvés par référence / marqueur, créés si absents,
+  // remis en vente s'ils sont à la corbeille. Aucun numéro fixe : le test tourne sur n'importe quel Dolibarr de test.
+  const fixturePart = async (ref, label) => {
+    const found = await api('products?sqlfilters=' + encodeURIComponent("(t.ref:=:'" + ref + "')"), g0);
+    if (Array.isArray(found) && found[0]) {
+      if (Number(found[0].status) !== 1 || Number(found[0].status_buy) !== 1) await api('products/' + found[0].id, g0, { method: 'PUT', body: JSON.stringify({ status: 1, status_buy: 1 }) });
+      return Number(found[0].id);
+    }
+    return Number(await api('products', g0, { method: 'POST', body: JSON.stringify({ ref, label, type: 0, status: 1, status_buy: 1, price: 0 }) }));
+  };
+  const P1 = await fixturePart('TEST-STK-001', 'Plaquettes de frein avant (TEST stock)');
+  const P2 = await fixturePart('TEST-STK-002', 'Filtre a huile (TEST stock)');
+  const counter = await api('thirdparties?limit=1&sqlfilters=' + encodeURIComponent("(t.ref_ext:=:'caruno:comptoir')"), g0);
+  if (!Array.isArray(counter) || !counter[0]) throw new Error('Client comptoir introuvable : lancer caruno-erp provisioning/16-counter-client.sh sur ce Dolibarr');
+  const CID = String(counter[0].id);
+  // Fiche client (5b2) sur un Dolibarr de test neuf : au moins une facture du jour et une plus ancienne (filtre « du … au … »),
+  // et aucune facture d'essai impayée (le versement de 3 000 DA doit couvrir exactement les 2 factures créées plus loin).
+  // Seules les factures d'essai (note « e2e ») sont soldées : jamais une vraie facture du magasin.
+  const cinv = await api('invoices?limit=100&thirdparty_ids=' + CID + '&sqlfilters=' + encodeURIComponent('(t.fk_statut:>:0)'), g0);
+  const list = Array.isArray(cinv) ? cinv : [], day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  const mkInv = async (amount, date) => {
+    const iid = Number(await api('invoices', g0, { method: 'POST', body: JSON.stringify({ socid: Number(CID), type: 0, date, note_private: 'Essai fiche client e2e', lines: [{ desc: 'Essai fiche client e2e', qty: 1, subprice: amount, tva_tx: 0, product_type: 1 }] }) }));
+    await api('invoices/' + iid + '/validate', g0, { method: 'POST', body: JSON.stringify({ idwarehouse: 0, notrigger: 0 }) });
+  };
+  if (!list.some((x) => Number(x.date) * 1000 < day0.getTime())) await mkInv(500, Math.floor(Date.now() / 1000) - 3 * 86400);
+  if (!list.some((x) => Number(x.date) * 1000 >= day0.getTime())) await mkInv(600, Math.floor(Date.now() / 1000));
+  // Soldées par un vrai règlement en espèces (le relevé du client et l'encours Dolibarr restent d'accord) ; une facture
+  // d'essai classée payée sans règlement (anciens essais) est d'abord rouverte.
+  const liq = ((await api('setup/dictionary/payment_types?limit=50', g0)) || []).find((t) => t.code === 'LIQ');
+  const cash = ((await api('bankaccounts?limit=50', g0)) || []).find((b) => b.ref === 'CAISSE');
+  const mine = await api('invoices?limit=200&thirdparty_ids=' + CID + '&sqlfilters=' + encodeURIComponent('(t.fk_statut:>:0)'), g0);
+  for (const x of Array.isArray(mine) ? mine : []) {
+    if (!/e2e/i.test(String(x.note_private || '')) || Number(x.type) !== 0) continue;
+    const pays = await api('invoices/' + x.id + '/payments', g0);
+    const paid = Number(x.paye) === 1 || Number(x.statut) === 2;
+    const got = (Array.isArray(pays) ? pays : []).reduce((t, p) => t + Number(p.amount || 0), 0);
+    if (paid && got >= Math.round(Number(x.total_ttc)) - 0.5) continue;   // vraiment payée par ses règlements
+    if (paid) await api('invoices/' + x.id + '/settounpaid', g0, { method: 'POST', body: '{}' });
+    if (liq && cash) await api('invoices/' + x.id + '/payments', g0, { method: 'POST', body: JSON.stringify({ datepaye: Math.floor(Date.now() / 1000), paymentid: Number(liq.id), closepaidinvoices: 'yes', accountid: Number(cash.id), comment: 'Essai e2e soldé' }) });
+  }
+  const st = await api('products/' + P2 + '/stock', g0);
   const have = Number(st?.stock_warehouses?.['1']?.real || 0);
-  await api('products/3', g0, { method: 'PUT', body: JSON.stringify({ cost_price: 100 }) });
+  await api('products/' + P1, g0, { method: 'PUT', body: JSON.stringify({ cost_price: 100 }) });
   // Fournisseur d'essai et dernier prix d'achat 1 000 DA sur TEST-STK-001 (coût moyen 100) : l'alerte retient 1 000.
   const sups0 = await api('thirdparties?mode=4&limit=50&sqlfilters=' + encodeURIComponent("(t.nom:=:'Fournisseur essai e2e')"), g0);
   const supId = Array.isArray(sups0) && sups0[0] ? Number(sups0[0].id) : Number(await api('thirdparties', g0, { method: 'POST', body: JSON.stringify({ name: 'Fournisseur essai e2e', fournisseur: 1, client: 0, code_fournisseur: -1, country_id: 13 }) }));
-  await api('products/3/purchase_prices', g0, { method: 'POST', body: JSON.stringify({ qty: 1, buyprice: 1000, price_base_type: 'HT', fourn_id: supId, availability: 0, ref_fourn: 'E2E-STK-001', tva_tx: 0 }) });
+  await api('products/' + P1 + '/purchase_prices', g0, { method: 'POST', body: JSON.stringify({ qty: 1, buyprice: 1000, price_base_type: 'HT', fourn_id: supId, availability: 0, ref_fourn: 'E2E-STK-001', tva_tx: 0 }) });
   // Pièce neuve pour le parcours d'achat (chargée à la connexion, la plus récente).
   const buyRef = 'BUY-' + Date.now();
   const buyId = Number(await api('products', g0, { method: 'POST', body: JSON.stringify({ ref: buyRef, label: 'Essai achats coût moyen', type: 0, status: 1, status_buy: 1, price: 1500 }) }));
-  const st1 = await api('products/3/stock', g0);
-  if (Number(st1?.stock_warehouses?.['1']?.real || 0) < 3) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 3, warehouse_id: 1, qty: 3, movementlabel: 'Réassort essai e2e web' }) });
-  if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: 4, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
+  const st1 = await api('products/' + P1 + '/stock', g0);
+  if (Number(st1?.stock_warehouses?.['1']?.real || 0) < 3) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: P1, warehouse_id: 1, qty: 3, movementlabel: 'Réassort essai e2e web' }) });
+  if (have < 5) await api('stockmovements', g0, { method: 'POST', body: JSON.stringify({ product_id: P2, warehouse_id: 1, qty: 5 - have, movementlabel: 'Réassort essai e2e web' }) });
 
   // 1. Connexion : mauvais mot de passe, puis gérant → tableau de bord.
   const ctxG = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'fr-FR' });
@@ -120,7 +162,7 @@ try {
 
   const pp = await api('products/' + prod.id + '/purchase_prices', g0);
   check('nouvelle pièce : prix d’achat fournisseur enregistré (4 000 DA)', Array.isArray(pp) && pp.some((x) => Math.round(Number(x.fourn_unitprice)) === 4000 && Number(x.fourn_id) === supId), JSON.stringify(Array.isArray(pp) ? pp.map((x) => [x.fourn_id, x.fourn_unitprice]) : pp).slice(0, 120));
-  await g.evaluate(() => { location.hash = '#/pieces/3'; }); await g.waitForTimeout(1500);
+  await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, P1); await g.waitForTimeout(1500);
   const card3 = (await body(g)).replace(/[  ]/g, ' ');
   check('fiche : coût moyen, dernier achat 1 000 DA et seuil d’alerte', /Dernier achat\s*1 000 DA/.test(card3) && /Alerte caisse sous\s*1 000 DA/.test(card3), card3.slice(card3.indexOf('Coût moyen'), card3.indexOf('Coût moyen') + 160));
   await g.screenshot({ path: resolve(shots, '04c-fiche-prix-achat.png') });
@@ -220,7 +262,7 @@ try {
   await g.locator('#cat-q').fill(''); await g.waitForTimeout(500);
 
   // 5b2. Fiche client : toutes ses factures, période du … au …, sélection, impression (bons d'achat, relevé).
-  await g.evaluate(() => { location.hash = '#/clients/5'; });
+  await g.evaluate((id) => { location.hash = '#/clients/' + id; }, CID);
   await g.waitForFunction(() => document.querySelectorAll('#client-docs tbody input[data-change="cdPick"]').length > 1, null, { timeout: 30000 }).catch(() => {});
   const allRows = await g.locator('#client-docs tbody input[data-change="cdPick"]').count();
   check('fiche client : toutes les factures du client', allRows > 1, String(allRows));
@@ -247,11 +289,11 @@ try {
   // 5b3. Opérations du client : deux factures à crédit, un versement qui les couvre (un seul règlement), solde et relevé.
   const invRefs = [];
   for (const amount of [1000, 2000]) {
-    const iid = Number(await api('invoices', g0, { method: 'POST', body: JSON.stringify({ socid: 5, type: 0, note_private: 'Essai versement e2e', lines: [{ desc: 'Essai versement e2e', qty: 1, subprice: amount, tva_tx: 0, product_type: 1 }] }) }));
+    const iid = Number(await api('invoices', g0, { method: 'POST', body: JSON.stringify({ socid: Number(CID), type: 0, note_private: 'Essai versement e2e', lines: [{ desc: 'Essai versement e2e', qty: 1, subprice: amount, tva_tx: 0, product_type: 1 }] }) }));
     await api('invoices/' + iid + '/validate', g0, { method: 'POST', body: JSON.stringify({ idwarehouse: 0, notrigger: 0 }) });
     invRefs.push((await api('invoices/' + iid, g0)).ref);
   }
-  await g.evaluate(async () => { await DOLI.loadClientInvoices('5'); render(); });
+  await g.evaluate(async (id) => { await DOLI.loadClientInvoices(id); render(); }, CID);
   await g.locator('[data-action="modalSettle"]').click();
   await g.locator('#m-samt').fill('3000'); await g.waitForTimeout(300);
   await g.locator('#m-smode').selectOption('especes');
@@ -264,7 +306,7 @@ try {
   check('opérations : le versement de 3 000 DA est un seul règlement qui couvre les deux factures', !!oneVers && /3\s?000 DA/.test(oneVers), vers.slice(0, 2).join(' | '));
   const opsKinds = await g.$$eval('#cd-ops tbody tr[data-kind]', (trs) => [...new Set(trs.map((t) => t.dataset.kind))]);
   check('opérations : factures et versements dans la même liste', opsKinds.includes('facture') && opsKinds.includes('versement'), opsKinds.join(','));
-  const balShown = await g.locator('#cd-balance').innerText(), encTxt = await g.evaluate(() => fmt(encours('5')));
+  const balShown = await g.locator('#cd-balance').innerText(), encTxt = await g.evaluate((id) => fmt(encours(id)), CID);
   check('opérations : le solde final égale l’encours du client', balShown.trim() === encTxt.trim(), balShown + ' / ' + encTxt);
   await g.screenshot({ path: resolve(shots, '06e-client-operations.png') });
   await g.locator('[data-action="cdKind"][data-arg="versement"]').click(); await g.waitForTimeout(300);
@@ -286,9 +328,9 @@ try {
   await g.locator('#sh-name').fill('City Makoudi 2');
   await g.locator('#sh-address').fill('Rue des pièces, Alger');
   await g.locator('form[data-submit="saveShop"] button[type=submit]').click();
-  await g.getByText('Magasin enregistré dans Dolibarr.').waitFor({ timeout: 15000 }).catch(() => {});
+  await g.getByText('Magasin enregistré.').waitFor({ timeout: 15000 }).catch(() => {});
   check('profil : enseigne affichée dans le menu', (await g.locator('.side .brand').innerText()).includes('City Makoudi 2'));
-  const prof = await api('documents/download?modulepart=societe&original_file=' + encodeURIComponent('5/caruno-profil.json'), g0);
+  const prof = await api('documents/download?modulepart=societe&original_file=' + encodeURIComponent(CID + '/caruno-profil.json'), g0);
   const profJson = prof && prof.content ? JSON.parse(Buffer.from(prof.content, 'base64').toString('utf8')) : {};
   check('profil : enregistré dans Dolibarr (nom, adresse)', profJson.name === 'City Makoudi 2' && profJson.address === 'Rue des pièces, Alger', JSON.stringify(profJson).slice(0, 120));
   await g.screenshot({ path: resolve(shots, '05a-profil.png') });

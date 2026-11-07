@@ -10,9 +10,9 @@ import { serve } from './serve.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { chromium } = createRequire(resolve(here, '../../app/package.json'))('playwright-core');
-const DOLI = process.env.DOLI_URL || 'http://localhost:8080';
+const DOLI = process.env.DOLI_URL || 'http://localhost:8081';   // Dolibarr de TEST
 const NOPRICE = process.env.E2E_NOPRICE_REF || 'TEST-STK-001';     // pièce de test en stock, sans prix
-const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/test/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 const shots = resolve(here, '../.e2e-shots');
 mkdirSync(shots, { recursive: true });
 
@@ -25,11 +25,13 @@ const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const errors = [];
 const originals = [];   // { id, en, price? } remis en fin de test
 let token, profileBackup = null;   // profil du magasin d'avant le test (base64), remis tel quel
+let CID = '5';                     // client comptoir (porte le profil) : retrouvé par son marqueur caruno:comptoir
 
 async function signIn(login, pw, viewport = { width: 1400, height: 1000 }) {
   const p = await (await browser.newContext({ viewport })).newPage();
   p.on('pageerror', (e) => errors.push(login + ': ' + e.message));
   await p.goto('http://localhost:' + PORT + '/');
+  if (!(await p.locator('#lg-url').isVisible())) await p.locator('[data-action="loginUrlEdit"]').click();
   await p.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
   await p.locator('#lg-user').fill(login);
   await p.locator('#pw').fill(pw);
@@ -47,6 +49,8 @@ const search = async (p, q) => { await p.locator('#web-q').fill(q); await p.wait
 
 try {
   token = (await call('login', '', { method: 'POST', body: JSON.stringify({ login: 'dev.gerant', password: secrets.TEST_PW_DEV_GERANT }) })).success.token;
+  const counter = await call('thirdparties?limit=1&sqlfilters=' + encodeURIComponent("(t.ref_ext:=:'caruno:comptoir')"), token);
+  if (Array.isArray(counter) && counter[0]) CID = String(counter[0].id);
   const read = async (id) => { const r = await call('products/' + id, token); return { en: String((r.array_options || {}).options_en_ligne || ''), price: Number((r.multiprices || {})[1] || r.price || 0) }; };
   const one = async (filter) => (await call('products?' + new URLSearchParams({ sqlfilters: filter, properties: 'id,ref', limit: 1, sortfield: 't.ref' }), token))[0];
   const total = async (filter) => Number((await call('products?' + new URLSearchParams({ sqlfilters: filter, properties: 'id', pagination_data: 'true', limit: 1 }), token)).pagination.total);
@@ -136,7 +140,7 @@ try {
   check('marque TIBAO jamais affichée', !/TIBAO/i.test(await g.locator('body').innerText()));
 
   // 4. WhatsApp du magasin en ligne : un clic sur la carte pour modifier ; le profil garde ses autres champs.
-  const profileNow = async () => { const d = await call('documents/download?' + new URLSearchParams({ modulepart: 'societe', original_file: '5/caruno-profil.json' }), token); return d && d.content ? JSON.parse(Buffer.from(d.content, 'base64').toString('utf8')) : {}; };
+  const profileNow = async () => { const d = await call('documents/download?' + new URLSearchParams({ modulepart: 'societe', original_file: CID + '/caruno-profil.json' }), token); return d && d.content ? JSON.parse(Buffer.from(d.content, 'base64').toString('utf8')) : {}; };
   const p0 = await profileNow();
   profileBackup = Buffer.from(JSON.stringify(p0), 'utf8').toString('base64');
   await openPage(g);
@@ -167,7 +171,7 @@ try {
     if (o.price !== undefined) Object.assign(body, { price: String(o.price), price_base_type: 'HT', multiprices: { 1: String(o.price) }, multiprices_base_type: { 1: 'HT' } });
     await call('products/' + o.id, token, { method: 'PUT', body: JSON.stringify(body) }).catch(() => {});
   }
-  if (profileBackup) await call('documents/upload', token, { method: 'POST', body: JSON.stringify({ filename: 'caruno-profil.json', modulepart: 'societe', ref: '5', subdir: '', filecontent: profileBackup, fileencoding: 'base64', overwriteifexists: 1 }) }).catch(() => {});
+  if (profileBackup) await call('documents/upload', token, { method: 'POST', body: JSON.stringify({ filename: 'caruno-profil.json', modulepart: 'societe', ref: CID, subdir: '', filecontent: profileBackup, fileencoding: 'base64', overwriteifexists: 1 }) }).catch(() => {});
   console.log('Erreurs JS dans la page : ' + (errors.length ? errors.join(' | ') : 'aucune'));
   console.log('\n' + ok + ' OK, ' + ko + ' échec(s) — captures : ' + shots);
   await browser.close(); server.close();

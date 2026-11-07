@@ -8,8 +8,8 @@ import { serve } from './serve.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { chromium } = createRequire(resolve(here, '../../app/package.json'))('playwright-core');
-const DOLI = process.env.DOLI_URL || 'http://localhost:8080';
-const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/hanout-vw/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+const DOLI = process.env.DOLI_URL || 'http://localhost:8081';   // Dolibarr de TEST
+const secrets = Object.fromEntries(readFileSync(process.env.CARUNO_TEST_USERS || 'C:/Users/TRETEC/caruno-data/instances/test/test-users.env', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 const shots = resolve(here, '../.e2e-shots');
 mkdirSync(shots, { recursive: true });
 
@@ -24,6 +24,7 @@ async function signIn(login, pw, viewport) {
   const p = await (await browser.newContext({ viewport })).newPage();
   p.on('pageerror', (e) => errors.push(login + ': ' + e.message));
   await p.goto('http://localhost:' + PORT + '/');
+  if (!(await p.locator('#lg-url').isVisible())) await p.locator('[data-action="loginUrlEdit"]').click();
   await p.locator('#lg-url').fill(DOLI.replace(/^https?:\/\//, ''));
   await p.locator('#lg-user').fill(login);
   await p.locator('#pw').fill(pw);

@@ -38,21 +38,34 @@ const DOLI = {
         break;
       } catch (e) {
         if (read && attempt < 2) { await new Promise((ok) => setTimeout(ok, 600 * (attempt + 1))); continue; }
-        throw this.err('Dolibarr injoignable à l’adresse ' + this.apiRoot(this.url).replace(/\/api\/index\.php$/, '') + ' : vérifiez l’adresse (port compris) et le réseau.', 0);
+        throw this.err('Serveur du magasin injoignable à l’adresse ' + this.apiRoot(this.url).replace(/\/api\/index\.php$/, '') + ' : vérifiez l’adresse (port compris) et le réseau.', 0);
       }
     }
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-    if (typeof data === 'string' && /^\s*</.test(data)) throw this.err('Cette adresse ne répond pas comme une API Dolibarr.', -1);
+    if (typeof data === 'string' && /^\s*</.test(data)) throw this.err('Cette adresse n’est pas celle du serveur du magasin.', -1);
     if (!res.ok) {
       if (res.status === 404 && (o.method || 'GET') === 'GET' && !/\/\d+$/.test(path)) return [];
       if (res.status === 401 && path !== 'login') { this.expired = true; }
-      throw this.err((data && data.error && (data.error.message || data.error)) || ('Erreur Dolibarr ' + res.status), res.status);
+      throw this.err((data && data.error && (data.error.message || data.error)) || ('Erreur du serveur ' + res.status), res.status);
     }
+    if (/^products/.test(path)) this.noteNames(data);
     return data;
   },
   err(msg, status) { const e = new Error(String(msg)); e.status = status; return e; },
+  // Noms des pièces : le libellé est en français ; le nom arabe (nom_ar) et le nom d'origine du fournisseur
+  // (nom_fournisseur, anglais) sont mémorisés pour l'affichage en arabe / en anglais et la recherche (window.PART_NAMES).
+  noteNames(data) {
+    const list = Array.isArray(data) ? data : data && Array.isArray(data.data) ? data.data : data && data.array_options ? [data] : [];
+    const N = window.PART_NAMES || (window.PART_NAMES = {});
+    list.forEach((r) => {
+      const ao = (r && r.array_options) || {};
+      // Les champs existent sur ce Dolibarr (clés présentes même vides) : la recherche peut les utiliser.
+      if ('options_nom_ar' in ao) this.hasNameFields = true;
+      if (r && r.label && (ao.options_nom_ar || ao.options_nom_fournisseur)) N[this.txt(r.label)] = { ar: ao.options_nom_ar || '', en: ao.options_nom_fournisseur || '' };
+    });
+  },
   async all(path, query, max) {
     const out = [], limit = 100;
     for (let page = 0; out.length < (max || 500); page++) {
@@ -132,6 +145,8 @@ const DOLI = {
       id, name: this.txt(r.name || r.nom), cat: this.CAT[lvl], phone: r.phone || '', town: r.town || '', email: r.email || '', address: r.address || '',
       rc: r.idprof1 || '', nif: r.idprof2 || '', ai: r.idprof3 || '', nis: r.idprof4 || '', terms: this.terms[r.cond_reglement_id] || 'Comptant',
       remise: this.num(r.remise_percent), plafond: this.num(r.outstanding_limit), fixed: id === this.counterId || undefined,
+      // Client clos dans Dolibarr : gardé pour ses anciens documents, absent des listes de choix (Clients, caisse, devis).
+      closed: (r.status !== undefined && this.num(r.status) === 0) || undefined,
     };
   },
   mapSupplier(r) { return { id: String(r.id), name: this.txt(r.name || r.nom), town: r.town || '', phone: r.phone || '', email: r.email || '' }; },
@@ -187,13 +202,24 @@ const DOLI = {
         this.safeList(this.api('categories', { query: { type: 'product', limit: 100 } })),
       ]);
       WAREHOUSES.splice(0, WAREHOUSES.length, ...whs.map((w) => this.txt(w.label || w.ref)));
-      if (!WAREHOUSES.length) throw this.err('Aucun entrepôt lu dans Dolibarr : vérifiez les droits du compte (stock) puis réessayez.', -2);
+      if (!WAREHOUSES.length) throw this.err('Aucun entrepôt lu sur le serveur : vérifiez les droits du compte (stock) puis réessayez.', -2);
       whs.forEach((w) => { const n = this.txt(w.label || w.ref); this.whId[n] = this.num(w.id); this.whName[w.id] = n; });
       pt.forEach((t) => { this.payType[t.code] = this.num(t.id); });
       const TL = { RECEP: 'Comptant', '30D': '30 jours', '30DENDMONTH': '30 jours fin de mois', '45D': '45 jours', '60D': '60 jours' };
       terms.forEach((t) => { this.terms[t.id] = TL[t.code] || this.txt(t.label); this.termId = this.termId || {}; this.termId[TL[t.code] || this.txt(t.label)] = this.num(t.id); });
       cats.forEach((c) => { this.famCat[this.txt(c.label)] = this.num(c.id); });
       FAMILIES.splice(0, FAMILIES.length, ...Object.keys(this.famCat));
+      // Client comptoir (porte le profil du magasin) et comptes Caisse / Banque : repérés par un code stable, le même sur
+      // chaque magasin (client marqué « caruno:comptoir » par provisioning/16-counter-client.sh, comptes CAISSE et BANQUE
+      // du profil). À défaut, les numéros historiques (client 5, comptes 1 et 2).
+      const [counter, accounts] = await Promise.all([
+        this.safeList(this.api('thirdparties', { query: { limit: 1, sqlfilters: "(t.ref_ext:=:'caruno:comptoir')" } })),
+        this.safeList(this.api('bankaccounts', { query: { limit: 50 } })),
+      ]);
+      if (counter[0]) this.counterId = String(counter[0].id);
+      const acc = (ref) => this.num((accounts.find((a) => a.ref === ref) || {}).id);
+      if (acc('CAISSE')) this.cashAccount = acc('CAISSE');
+      if (acc('BANQUE')) this.bankAccount = acc('BANQUE');
 
       const can = (p) => this.can(p);
       const [users, recent, inStock, clients, suppliers, invoices, propals, orders, ships, pos, moves, banks, company] = await Promise.all([
@@ -289,7 +315,7 @@ const DOLI = {
     try { await this.api('products/' + id, { method: 'DELETE' }); }
     catch (e) {
       if (e.status === 403) throw this.err('Seul le gérant peut supprimer définitivement une pièce.', 403);
-      throw this.err('Suppression refusée par Dolibarr : la pièce figure sur des documents (factures, commandes…). Elle reste dans la corbeille. (' + e.message + ')', e.status);
+      throw this.err('Suppression refusée : la pièce figure sur des documents (factures, commandes…). Elle reste dans la corbeille. (' + e.message + ')', e.status);
     }
     S.db.trash = (S.db.trash || []).filter((p) => p.id !== Number(id));
     S.db.parts = S.db.parts.filter((p) => p.id !== Number(id));

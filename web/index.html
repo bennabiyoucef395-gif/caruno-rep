@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CARUNO — Maquette magasin</title>
+<title>CARUNO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -561,21 +561,29 @@ function tabs(list, current, action) {
 /* =================================================================== LOGIN */
 function viewLogin() {
   const L = S.ui.login || (S.ui.login = { url: (() => { try { return localStorage.getItem('caruno-url') || 'http://localhost:8080'; } catch (e) { return 'http://localhost:8080'; } })(), login: '', err: '', busy: false });
+  // Adresse du serveur : demandée au premier démarrage du poste ; ensuite mémorisée et repliée (« Changer » pour la modifier).
+  let known = false, shop = {};
+  try { known = !!localStorage.getItem('caruno-url'); shop = JSON.parse(localStorage.getItem('caruno-shop')) || {}; } catch (e) {}
+  document.title = shop.name || 'CARUNO';
+  const host = String(L.url).replace(/^https?:\/\//i, '').replace(/\/+$/, '');
   return '<div class="login"><div class="box">' +
     loginMark('Gestion du magasin de pièces') +
     '<form data-submit="login" style="display:flex;flex-direction:column;gap:16px">' +
-      '<div class="field"><label for="lg-url">Adresse du Dolibarr du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"></div>' +
+      (known && !L.editUrl
+        ? '<input type="hidden" id="lg-url" name="url" value="' + esc(L.url) + '">'
+        : '<div class="field"><label for="lg-url">Adresse du serveur du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"><span class="hint" style="color:#C9CBD2">Demandée une seule fois sur ce poste.</span></div>') +
       '<div class="field"><label for="lg-user">Identifiant</label><input class="input" id="lg-user" name="login" value="' + esc(L.login) + '" autocomplete="username" autocapitalize="none" required></div>' +
       '<div class="field"><label for="pw">Mot de passe</label><input class="input" id="pw" name="password" type="password" autocomplete="current-password" required></div>' +
       (L.err ? '<div class="alert a-bad" role="alert">' + esc(L.err) + '</div>' : '') +
       '<button class="btn btn-primary btn-lg" type="submit"' + (L.busy ? ' disabled' : '') + '>' + (L.busy ? 'Connexion…' : 'Se connecter') + '</button>' +
     '</form>' +
-    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">Identifiant et mot de passe Dolibarr du magasin. Les menus et les prix visibles dépendent de vos droits.</p>' +
+    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">Votre identifiant et votre mot de passe du magasin. Les menus et les prix visibles dépendent de vos droits.</p>' +
+    (known && !L.editUrl ? '<p style="margin:0;color:#8A8F9C;font-size:13px">Serveur du magasin : <span class="mono">' + esc(host) + '</span> · <button type="button" class="linkbtn" data-action="loginUrlEdit" style="background:none;border:0;padding:0;color:#C9CBD2;text-decoration:underline;cursor:pointer;font:inherit">Changer</button></p>' : '') +
     '</div></div>';
 }
 function viewLoading() {
   const err = S.ui.loadErr;
-  return '<div class="login"><div class="box">' + loginMark(err ? 'Chargement impossible' : 'Chargement des données du magasin depuis Dolibarr…') +
+  return '<div class="login"><div class="box">' + loginMark(err ? 'Chargement impossible' : 'Chargement des données du magasin…') +
     (err ? '<div class="alert a-bad" role="alert">' + esc(err) + '</div><button class="btn btn-primary btn-lg" type="button" data-action="reload">Réessayer</button><button class="btn" type="button" data-action="logout">Se déconnecter</button>' : '') + '</div></div>';
 }
 
@@ -788,7 +796,7 @@ function posPayment() {
         (!pp.ok && !/^Reste/.test(pp.msg) ? '<div class="alert a-bad">' + ic('warn', 18) + esc(pp.msg) + '</div>' : '') +
         (pp.warn ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + esc(pp.warn) + '</div>' : '') + costAlert(T) +
         '<button class="btn btn-primary btn-lg" type="button" data-action="posValidate" style="min-height:72px;font-size:20px"' + (pp.ok ? '' : ' disabled') + '>Valider</button>' +
-        '<span class="muted" style="font-size:13px">La validation crée la facture dans Dolibarr, sort le stock (' + STOCK_MODES[stockMode()] + ') et enregistre les paiements.</span>' +
+        '<span class="muted" style="font-size:13px">La validation crée la facture, sort le stock (' + STOCK_MODES[stockMode()] + ') et enregistre les paiements.</span>' +
       '</section></div></div>';
 }
 function posReceipt() {
@@ -798,7 +806,7 @@ function posReceipt() {
     const known = cutJ.step === 'validation' ? ['1. Facture ' + cutJ.invoice + ' créée', '2. Validation : pas de réponse du serveur', '3. Encaissement : pas commencé'] : ['1. Facture ' + cutJ.invoice + ' créée', '2. Facture validée, stock sorti', '3. Encaissement : pas de réponse du serveur'];
     inner = '<div style="display:flex;gap:12px;align-items:center"><span class="avatar" style="width:52px;height:52px;background:var(--bad-bg)">' + ic('warn', 28, '#991B1B') + '</span><div><div style="font-weight:700;font-size:22px">Connexion perdue</div><div class="muted">Vente ' + cutJ.sale + ' · ' + fmt(cutJ.ttc) + '</div></div></div>' +
       '<ol class="steps" style="list-style:none;padding-left:0">' + known.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ol>' +
-      '<div class="alert a-info">' + ic('info', 20) + '<div>La vente est gardée dans le journal du poste. À la reprise, CARUNO relit la facture dans Dolibarr avant chaque étape : rien n’est fait deux fois.</div></div>' +
+      '<div class="alert a-info">' + ic('info', 20) + '<div>La vente est gardée dans le journal du poste. À la reprise, CARUNO relit la facture enregistrée avant chaque étape : rien n’est fait deux fois.</div></div>' +
       '<button class="btn btn-primary btn-lg" type="button" data-action="resumeSale" data-arg="' + cutJ.sale + '">Reprendre maintenant</button>' +
       '<button class="btn" type="button" data-action="posNext">Nouvelle commande, reprendre plus tard</button>';
   } else {
@@ -811,13 +819,13 @@ function posReceipt() {
       '<div class="actions" style="justify-content:center"><button class="btn btn-primary" type="button" data-action="printNow">' + ic('print', 18) + 'Imprimer</button><button class="btn btn-outline" type="button" data-action="toast" data-arg="Ticket envoyé par WhatsApp (à venir)">WhatsApp</button></div>' +
       '<button class="btn btn-primary btn-lg" type="button" data-action="posNext" style="min-height:64px;font-size:19px">Nouvelle commande</button>' +
       '<div class="kbd-hint" style="border:0;background:none;padding:0;justify-content:center"><span><kbd>Entrée</kbd> nouvelle commande</span></div>' +
-      (d.steps && d.steps.length ? '<details><summary class="muted" style="cursor:pointer;font-size:14px">Étapes côté Dolibarr</summary><ol class="steps" style="list-style:none;padding-left:0;margin-top:8px">' + d.steps.map((s) => '<li' + (s.skip ? ' class="skip"' : '') + '>' + esc(s.t) + '</li>').join('') + '</ol></details>' : '');
+      (d.steps && d.steps.length ? '<details><summary class="muted" style="cursor:pointer;font-size:14px">Étapes enregistrées</summary><ol class="steps" style="list-style:none;padding-left:0;margin-top:8px">' + d.steps.map((s) => '<li' + (s.skip ? ' class="skip"' : '') + '>' + esc(s.t) + '</li>').join('') + '</ol></details>' : '');
   }
   return '<div class="pos-scroll"><div style="max-width:560px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:16px">' + inner + '</div></div>';
 }
 function posCustomers() {
   const u = posUi(), o = curOrder(), q = norm(u.custQ);
-  const list = S.db.clients.filter((c) => !q || norm(c.name + c.town + c.phone).indexOf(q) !== -1);
+  const list = S.db.clients.filter((c) => !c.closed && (!q || norm(c.name + c.town + c.phone).indexOf(q) !== -1));
   return '<div class="pos-scroll"><div class="pay-head"><button class="btn" type="button" data-action="posScreen" data-arg="' + (u.back || 'products') + '">' + ic('back', 18) + 'Retour</button><h1 style="font-size:22px">Client · ' + o.ref + '</h1><button class="btn btn-primary" type="button" data-action="modalPosClient" style="margin-left:auto">' + ic('plus', 18) + 'Nouveau client</button></div>' +
     '<div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:12px"><label class="search" for="pos-cq">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher un client</span><input id="pos-cq" type="search" autocomplete="off" placeholder="Nom, ville, téléphone…" value="' + esc(u.custQ) + '" data-input="posCustQ"></label>' +
     '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:760px"><thead><tr><th>Client</th><th>Catégorie</th><th>Téléphone</th><th class="right">Encours / plafond</th><th class="right">Avoir</th><th></th></tr></thead><tbody>' +
@@ -889,7 +897,7 @@ function viewPiece(id) {
     (can(EDIT_PARTS) ? '<a class="btn btn-outline" href="#/pieces/' + p.id + '/modifier">Modifier</a><button class="btn" type="button" data-action="modalTrash" data-arg="' + p.id + '">' + ic('trash', 18) + 'Supprimer</button>' : ''), ['#/pieces', 'Pièces' + (p.fam ? ' · ' + p.fam : '')]) +
     '<div class="row">' +
     '<section class="card card-pad" aria-label="Photos" style="flex:1 1 340px;max-width:100%">' +
-      '<div class="big-photo">' + (photos[0] ? '<img alt="Photo principale de la pièce" src="' + photos[0].url + '">' : ic('camera', 44, '#8A8F9C') + '<span>Aucune photo</span>') + '</div>' +
+      '<div class="big-photo">' + (photos[0] ? '<img alt="Photo principale de la pièce" src="' + photos[0].url + '">' : artBig(p.name, p.fam)) + '</div>' +
       '<div class="photos">' + photoTiles(photos, 'piecePhoto:' + p.id) + photoAdd('photoPiece', String(p.id)) + '</div>' +
       '<span class="muted" style="font-size:13px">Sur téléphone, « Ajouter » ouvre l’appareil photo. Chaque photo est réduite avant l’envoi.</span>' +
     '</section>' +
@@ -986,11 +994,13 @@ async function doli(path, opts) {
   if (c.token) headers.DOLAPIKEY = c.token;
   let res;
   try { res = await fetch(c.url.replace(/\/+$/, '') + '/api/index.php/' + path, { method: o.method || 'GET', headers, body: o.body ? JSON.stringify(o.body) : undefined }); }
-  catch (e) { throw new Error('Dolibarr injoignable à ' + c.url + '.'); }
-  if ((res.status === 401 || res.status === 403) && path !== 'login') { c.token = ''; catSaveConn(); throw new Error('Session Dolibarr expirée : reconnectez-vous.'); }
+  catch (e) { throw new Error('Serveur du magasin injoignable à ' + c.url + '.'); }
+  if ((res.status === 401 || res.status === 403) && path !== 'login') { c.token = ''; catSaveConn(); throw new Error('Session expirée : reconnectez-vous.'); }
   if (res.status === 404) return null;  // liste vide ou pièce absente
-  if (!res.ok) throw new Error(res.status === 403 && path === 'login' ? 'Identifiant ou mot de passe refusé.' : 'Erreur Dolibarr ' + res.status + '.');
-  return res.json();
+  if (!res.ok) throw new Error(res.status === 403 && path === 'login' ? 'Identifiant ou mot de passe refusé.' : 'Erreur du serveur ' + res.status + '.');
+  const data = await res.json();
+  if (/^products/.test(path)) DOLI.noteNames(data);
+  return data;
 }
 async function catLogin(url, login, password) {
   const c = catUi();
@@ -1001,7 +1011,7 @@ async function catLogin(url, login, password) {
     if (!c.token) throw new Error('Identifiant ou mot de passe refusé.');
     catSaveConn();
     c.loading = false;
-    toast('Connecté à Dolibarr : ' + login + '.');
+    toast('Connecté : ' + login + '.');
     await catSearch(0);
   } catch (e) { c.loading = false; c.err = e.message; render(); }
 }
@@ -1009,7 +1019,7 @@ async function catLogin(url, login, password) {
 const sqlSafe = (s) => String(s).replace(/['"()\\%_]/g, ' ').trim();
 async function catSearch(page) {
   const c = catUi(), seq = ++c.seq, q = sqlSafe(c.q), oem = q.toUpperCase().replace(/[\s.\-]/g, ''), words = q.replace(/\s+/g, '%');
-  const filter = q ? "(ef.oem_ref:like:'%" + oem + "%') or (t.ref:like:'%" + oem + "%') or (t.label:like:'%" + words + "%') or (t.description:like:'%" + words + "%')" + searchExtra(q) : '';
+  const filter = q ? "(ef.oem_ref:like:'%" + oem + "%') or (t.ref:like:'%" + oem + "%') or (t.ref:like:'%" + q + "%') or (t.label:like:'%" + words + "%') or (t.description:like:'%" + words + "%')" + searchExtra(q) : '';
   const params = new URLSearchParams({ limit: CAT_PAGE, page, sortfield: 't.label', sortorder: 'ASC', pagination_data: 'true', includestockdata: '1', properties: 'id,ref,label,description,stock_reel,array_options' });
   if (filter) params.set('sqlfilters', filter);
   c.searched = true; c.loading = true; c.err = ''; render();
@@ -1062,15 +1072,15 @@ function catInfo(desc) {
 }
 function catConnect() {
   const c = catUi();
-  return head('Catalogue', 'Pièces réelles de la base Dolibarr, en lecture seule.') +
+  return head('Catalogue', 'Toutes les pièces du catalogue, en lecture seule.') +
     '<form class="card card-pad" data-submit="catLogin" style="max-width:520px;display:flex;flex-direction:column;gap:14px">' +
-      '<h2>Connexion à Dolibarr</h2>' +
-      '<div class="field"><label for="cat-url">Adresse de Dolibarr</label><input class="input" id="cat-url" name="url" value="' + esc(c.url) + '" autocomplete="url"></div>' +
+      '<h2>Connexion au serveur du magasin</h2>' +
+      '<div class="field"><label for="cat-url">Adresse du serveur du magasin</label><input class="input" id="cat-url" name="url" value="' + esc(c.url) + '" autocomplete="url"></div>' +
       '<div class="field"><label for="cat-login">Identifiant</label><input class="input" id="cat-login" name="login" value="' + esc(c.login || S.user.login) + '" autocomplete="username"></div>' +
       '<div class="field"><label for="cat-pw">Mot de passe</label><input class="input" id="cat-pw" name="password" type="password" autocomplete="current-password"></div>' +
       (c.err ? '<div class="alert a-bad" role="alert">' + esc(c.err) + '</div>' : '') +
       '<button class="btn btn-primary" type="submit"' + (c.loading ? ' disabled' : '') + '>' + (c.loading ? 'Connexion…' : 'Se connecter') + '</button>' +
-      '<span class="muted" style="font-size:13px">Compte Dolibarr du magasin (POST /login). Le jeton reste dans cet onglet ; aucune donnée n’est modifiée.</span>' +
+      '<span class="muted" style="font-size:13px">Votre compte du magasin. Aucune donnée n’est modifiée.</span>' +
     '</form>';
 }
 function viewCatalogue() {
@@ -1082,7 +1092,7 @@ function viewCatalogue() {
     '<button class="btn" type="button" data-action="catPage" data-arg="' + (c.page - 1) + '"' + (c.page <= 0 ? ' disabled' : '') + '>Précédent</button>' +
     '<span class="muted" style="align-self:center">Page ' + (c.page + 1) + ' / ' + pages + '</span>' +
     '<button class="btn" type="button" data-action="catPage" data-arg="' + (c.page + 1) + '"' + (c.page + 1 >= pages ? ' disabled' : '') + '>Suivant</button></div>' : '';
-  return head('Catalogue', '<span class="badge b-ok">Dolibarr</span> ' + c.total.toLocaleString('fr-FR') + ' pièce(s)' + (c.q ? ' pour « ' + esc(c.q) + ' »' : '') + ' · connecté : <span class="mono">' + esc(c.login) + '</span>',
+  return head('Catalogue', '' + c.total.toLocaleString('fr-FR') + ' pièce(s)' + (c.q ? ' pour « ' + esc(c.q) + ' »' : '') + ' · connecté : <span class="mono">' + esc(c.login) + '</span>',
     '') +
     '<div class="toolbar"><label class="search" for="cat-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="cat-q" type="search" autocomplete="off" placeholder="OEM (avec ou sans espaces), référence, désignation, modèle, marque du véhicule…" value="' + esc(c.q) + '" data-input="catQ"></label>' +
     (c.loading ? '<span class="muted">Recherche…</span>' : '') + '</div>' +
@@ -1091,7 +1101,7 @@ function viewCatalogue() {
     (c.items.length ? c.items.map((p) => {
       const info = catInfo(p.description), ef = p.array_options || {};
       const t = c.thumbs[p.ref];
-      return '<tr class="click" data-action="go" data-arg="#/catalogue/' + p.id + '"><td><div class="cellpart"><span class="thumb">' + (t ? '<img alt="" src="' + t + '">' : ic('pieces', 22, '#8A8F9C')) + '</span>' +
+      return '<tr class="click" data-action="go" data-arg="#/catalogue/' + p.id + '"><td><div class="cellpart"><span class="thumb">' + artThumb(t, p.label) + '</span>' +
         '<div><a class="rowlink" href="#/catalogue/' + p.id + '">' + esc(p.label) + '</a><div class="t2">' + esc(ef.options_brand || '') + '</div></div></div></td>' +
         '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">' + esc(info['OEM'] || ef.options_oem_ref || '') + '</div></td>' +
         '<td class="mono" style="font-size:13px;max-width:220px;overflow-wrap:anywhere">' + esc(info['Modèles'] || '') + '</td><td style="font-size:13px">' + esc(info['Véhicules'] || '') + '</td>' +
@@ -1114,10 +1124,10 @@ function viewCatPiece(id) {
   const oemText = info['OEM'] || ef.options_oem_ref || '';
   const webPhotos = oemText ? '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?tbm=isch&q=' + encodeURIComponent('"' + oemText + '"') + '">' + ic('search', 18) + 'Photos sur le web (OEM)</a>' : '';
   return head(esc(p.label),
-    '<span class="badge b-grey" style="background:var(--ink);color:#fff">' + esc(ef.options_brand || '') + '</span> <span class="mono">Réf. ' + esc(p.ref) + '</span> · <span class="mono">OEM ' + esc(oemText) + '</span> · <span class="badge b-ok">Dolibarr</span>',
+    '<span class="badge b-grey" style="background:var(--ink);color:#fff">' + esc(ef.options_brand || '') + '</span> <span class="mono">Réf. ' + esc(p.ref) + '</span> · <span class="mono">OEM ' + esc(oemText) + '</span>',
     webPhotos, back) +
     '<div class="grid-auto">' +
-      '<section class="card card-pad" aria-label="Photo"><div class="big-photo" style="background:#fff">' + (x.photo ? '<img alt="Photo de la pièce ' + esc(p.ref) + '" src="' + x.photo + '" style="width:auto;height:auto;max-width:100%;max-height:100%">' : ic('camera', 44, '#8A8F9C') + '<span>Aucune photo</span>') + '</div></section>' +
+      '<section class="card card-pad" aria-label="Photo"><div class="big-photo" style="background:#fff">' + (x.photo ? '<img alt="Photo de la pièce ' + esc(p.ref) + '" src="' + x.photo + '" style="width:auto;height:auto;max-width:100%;max-height:100%">' : artBig(p.label)) + '</div></section>' +
       '<section class="card card-pad"><h2>Compatibilité (catalogue fournisseur)</h2>' +
         '<div class="field"><span class="lbl">Modèles</span><span class="mono" style="overflow-wrap:anywhere">' + esc(info['Modèles'] || '—') + '</span></div>' +
         '<div class="field"><span class="lbl">Marques de véhicule</span><span>' + esc(info['Véhicules'] || '—') + '</span></div>' +
@@ -1128,7 +1138,7 @@ function viewCatPiece(id) {
         '<span class="muted" style="font-size:13px">Tous entrepôts confondus.' + (ef.options_emplacement ? ' Emplacement ' + esc(ef.options_emplacement) + '.' : '') + '</span></section>' +
       '<section class="card card-pad"><h2>Prix de vente</h2>' +
         (levels.some((v) => v > 0) ? '<table class="t"><tbody>' + LEVELS.map((l, i) => '<tr><td>' + (i + 1) + ' · ' + l + '</td><td class="right num">' + fmt(levels[i]) + xHT() + '</td></tr>').join('') + '</tbody></table>'
-          : '<div class="alert a-warn">Prix non renseignés dans Dolibarr.</div>') + '</section>' +
+          : '<div class="alert a-warn">Prix non renseignés.</div>') + '</section>' +
     '</div>' +
     '<section class="card" style="overflow:hidden;margin-top:18px"><div class="card-head"><h2>Équivalences</h2><span class="muted" style="font-size:14px">même OEM <span class="mono" style="color:var(--ink)">' + esc(ef.options_oem_ref || '') + '</span></span></div><div class="table-wrap"><table class="t" style="min-width:560px"><tbody>' +
       (x.eq.length ? x.eq.map((e) => '<tr><td class="mono">' + esc(e.ref) + '</td><td>' + esc(e.label) + '</td><td class="right num">' + (Number(e.stock_reel) || 0) + '</td><td class="right"><a href="#/catalogue/' + e.id + '">Voir</a></td></tr>').join('')
@@ -1180,7 +1190,7 @@ function viewStock() {
 /* =================================================================== CLIENTS */
 function viewClients() {
   const f = S.ui.cf || (S.ui.cf = { q: '', cat: '' });
-  const list = S.db.clients.filter((c) => (!f.cat || c.cat === f.cat) && (!f.q || norm(c.name + c.town + c.phone).indexOf(norm(f.q)) !== -1));
+  const list = S.db.clients.filter((c) => !c.closed && (!f.cat || c.cat === f.cat) && (!f.q || norm(c.name + c.town + c.phone).indexOf(norm(f.q)) !== -1));
   return head('Clients', S.db.clients.length + ' clients · encours total ' + fmt(S.db.clients.reduce((t, c) => t + encours(c.id), 0)), '<a class="btn btn-primary" href="#/clients/nouveau">' + ic('plus', 18) + 'Nouveau client</a>') +
     '<div class="toolbar"><label class="search" for="cf-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="cf-q" type="search" placeholder="Nom, ville, téléphone…" value="' + esc(f.q) + '" data-input="cfQ"></label>' +
     '<div class="chips" role="group" aria-label="Catégorie">' + [['', 'Tous'], ['Particulier', 'Particuliers'], ['Garage', 'Garages'], ['Revendeur', 'Revendeurs']].map((c) => '<button class="chip" type="button" data-action="cfCat" data-arg="' + c[0] + '" aria-pressed="' + (f.cat === c[0]) + '">' + c[1] + '</button>').join('') + '</div></div>' +
@@ -1303,7 +1313,7 @@ function viewDocEditor(type, query) {
   const cc = type === 'commande' ? creditCheck(e.client, T.ttc) : { msg: '' };
   return head(type === 'devis' ? 'Nouveau devis' : 'Nouvelle commande', 'Prix au niveau du client', '', ['#/ventes', 'Ventes']) +
     '<div class="row"><section class="card card-pad" style="flex:999 1 560px;min-width:0">' +
-      '<div class="form-grid"><div class="field"><label for="ed-client">Client</label><select id="ed-client" data-change="edClient">' + S.db.clients.filter((x) => !x.fixed).map((x) => '<option value="' + x.id + '"' + (x.id === e.client ? ' selected' : '') + '>' + esc(x.name) + ' — ' + x.cat + '</option>').join('') + '</select><span class="hint">' + c.cat + ' → prix ' + LEVELS[L] + (c.remise ? ', remise client ' + c.remise + ' %' : '') + '</span></div>' +
+      '<div class="form-grid"><div class="field"><label for="ed-client">Client</label><select id="ed-client" data-change="edClient">' + S.db.clients.filter((x) => !x.fixed && !x.closed).map((x) => '<option value="' + x.id + '"' + (x.id === e.client ? ' selected' : '') + '>' + esc(x.name) + ' — ' + x.cat + '</option>').join('') + '</select><span class="hint">' + c.cat + ' → prix ' + LEVELS[L] + (c.remise ? ', remise client ' + c.remise + ' %' : '') + '</span></div>' +
       '<div class="field"><label for="ed-remise">Remise globale %</label><input class="input num" id="ed-remise" inputmode="numeric" value="' + e.remise + '" data-input="edRemise"></div></div>' +
       '<div style="position:relative"><label class="search" for="ed-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Ajouter une pièce</span><input id="ed-q" type="search" placeholder="Ajouter une pièce : référence, OEM, marque…" value="' + esc(e.q) + '" data-input="edQ" autocomplete="off"></label>' +
         (res.length ? '<div class="card" style="position:absolute;left:0;right:0;top:52px;z-index:5;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12)">' + res.map((p) => '<button type="button" data-action="edAdd" data-arg="' + p.id + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;padding:10px 14px;border:0;border-bottom:1px solid var(--line2);background:#fff;cursor:pointer;text-align:left;min-height:48px"><span><b>' + esc(p.name) + '</b> <span class="mono muted">' + esc(p.brand + ' ' + p.ref) + '</span></span><span class="num">' + fmt(p.prices[L]) + ' · stock ' + total(p) + '</span></button>').join('') + '</div>' : '') + '</div>' +
@@ -1351,7 +1361,7 @@ function viewPO(ref) {
         (open ? '<label class="sr" for="po-' + i + '">Reçu</label><input class="input num" style="width:80px" id="po-' + i + '" inputmode="numeric" value="' + l.rec + '" data-input="poRec" data-arg="' + o.ref + ':' + i + '">' : '<span class="num">' + l.rec + '</span>') +
         '</td><td><span class="badge ' + st[1] + '">' + st[0] + '</span></td>' + (seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '</tr>'; }).join('') +
     '</tbody></table></div></div>' +
-    (open ? '<div class="grid-auto"><section class="card card-pad"><h2>Bon de livraison</h2>' + (o.bl ? '<div style="display:flex;gap:12px;align-items:center"><span class="thumb" style="width:72px;height:72px"><img alt="Bon de livraison" src="' + o.bl.url + '"></span><span class="muted" style="font-size:14px">Photo jointe à la commande (' + o.bl.kb + ' Ko)</span></div>' : '<span class="muted" style="font-size:14px">Photographiez le BL du fournisseur, il sera joint à la commande dans Dolibarr.</span>') +
+    (open ? '<div class="grid-auto"><section class="card card-pad"><h2>Bon de livraison</h2>' + (o.bl ? '<div style="display:flex;gap:12px;align-items:center"><span class="thumb" style="width:72px;height:72px"><img alt="Bon de livraison" src="' + o.bl.url + '"></span><span class="muted" style="font-size:14px">Photo jointe à la commande (' + o.bl.kb + ' Ko)</span></div>' : '<span class="muted" style="font-size:14px">Photographiez le BL du fournisseur, il sera joint à la commande.</span>') +
       '<label class="btn btn-outline" style="position:relative">' + ic('camera', 18) + (o.bl ? 'Reprendre la photo' : 'Photographier le BL') + '<input type="file" accept="image/*" capture="environment" data-change="photoBL" data-arg="' + o.ref + '" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="Photo du bon de livraison"></label></section>' +
       '<section class="card card-pad"><h2>Valider</h2><span class="muted" style="font-size:14px">' + pending + ' pièce(s) entreront en Magasin. Le coût moyen (PMP) sera recalculé. Ce qui manque reste en attente sur la commande.</span><button class="btn btn-primary btn-lg" type="button" data-action="poValidate" data-arg="' + o.ref + '"' + (pending ? '' : ' disabled') + '>Valider la réception (' + pending + ')</button></section></div>' : '');
 }
@@ -1483,8 +1493,8 @@ function viewReglements() {
 
 /* =================================================================== UTILISATEURS & PROFIL */
 function viewUsers() {
-  return head('Utilisateurs', 'Comptes Dolibarr du magasin et leur rôle', '<a class="btn btn-primary" href="#/utilisateurs/nouveau">' + ic('plus', 18) + 'Nouvel utilisateur</a>') +
-    '<div class="alert a-info">' + ic('info', 20) + 'À trancher : aujourd’hui le groupe Gérant ne peut que lire les utilisateurs dans Dolibarr. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».</div>' +
+  return head('Utilisateurs', 'Comptes du magasin et leur rôle', '<a class="btn btn-primary" href="#/utilisateurs/nouveau">' + ic('plus', 18) + 'Nouvel utilisateur</a>') +
+    '<div class="alert a-info">' + ic('info', 20) + 'À trancher : aujourd’hui le rôle Gérant ne peut que lire les utilisateurs. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».</div>' +
     '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:720px"><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle (groupe)</th><th>E-mail</th><th>État</th><th></th></tr></thead><tbody>' +
     S.db.users.map((u) => '<tr><td><b>' + esc(u.name) + '</b></td><td class="mono">' + u.login + '</td><td>' + ROLES[u.role] + '</td><td>' + esc(u.email) + '</td><td>' + (u.active ? '<span class="badge b-ok">Actif</span>' : '<span class="badge b-grey">Désactivé</span>') + '</td><td class="right">' + (u.login === S.user.login ? '<span class="muted" style="font-size:13px">Vous</span>' : '<button class="btn" type="button" data-action="userToggle" data-arg="' + u.login + '">' + (u.active ? 'Désactiver' : 'Réactiver') + '</button>') + '</td></tr>').join('') +
     '</tbody></table></div></div>';
@@ -1496,7 +1506,7 @@ function viewUserForm() {
     '<div class="field"><label for="u-name">Nom affiché *</label><input class="input" id="u-name" name="name" required value="' + esc(fv('name')) + '"></div>' +
     '<div class="field"><label for="u-login">Identifiant *</label><input class="input mono" id="u-login" name="login" required value="' + esc(fv('login')) + '" placeholder="prenom.nom"></div>' +
     '<div class="field"><label for="u-email">E-mail</label><input class="input" id="u-email" name="email" value="' + esc(fv('email')) + '"></div>' +
-    '<div class="field"><label for="u-role">Rôle</label><select id="u-role" name="role">' + Object.keys(ROLES).map((r) => '<option value="' + r + '"' + (r === fv('role') ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select><span class="hint">Un seul groupe Dolibarr par utilisateur</span></div>' +
+    '<div class="field"><label for="u-role">Rôle</label><select id="u-role" name="role">' + Object.keys(ROLES).map((r) => '<option value="' + r + '"' + (r === fv('role') ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select><span class="hint">Un seul rôle par utilisateur</span></div>' +
     '</div><span class="muted" style="font-size:14px">Un mot de passe provisoire est généré et affiché une seule fois.</span><div class="actions" style="justify-content:flex-end"><a class="btn" href="#/utilisateurs">Annuler</a><button class="btn btn-primary" type="submit">Créer l’utilisateur</button></div></form>';
 }
 function viewProfil() {
@@ -1504,7 +1514,7 @@ function viewProfil() {
   return head('Mon profil', esc(u.name) + ' · ' + ROLES[u.role] + ' · <span class="mono">' + u.login + '</span>', '<button class="btn btn-dark" type="button" data-action="logout">' + ic('logout', 18) + 'Se déconnecter</button>') +
     '<div class="grid-auto">' +
       '<form class="card card-pad" data-submit="changePw"><h2>Changer mon mot de passe</h2><div class="field"><label for="pw-old">Mot de passe actuel</label><input class="input" type="password" id="pw-old" autocomplete="current-password" required></div><div class="field"><label for="pw-new">Nouveau mot de passe</label><input class="input" type="password" id="pw-new" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères minimum</span></div><button class="btn btn-primary" type="submit">Enregistrer</button></form>' +
-      '<section class="card card-pad"><h2>Paramètres du magasin</h2><dl class="kv"><dt>Magasin</dt><dd>' + esc(S.db.shop.name) + '</dd><dt>Identifiants</dt><dd class="mono" style="font-size:12px">RC ' + esc(S.db.shop.rc) + ' · NIF ' + esc(S.db.shop.nif) + '</dd><dt>Sortie de stock</dt><dd>' + STOCK_MODES[stockMode()] + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>' + (VAT() ? '19 % (9 % et 0 % disponibles)' : 'non assujetti : prix sans TVA') + '</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.join(', ') + '</dd><dt>Dolibarr</dt><dd>24.0.2</dd></dl><span class="muted" style="font-size:13px">Lus dans Dolibarr (fiche de la société) et le profil du magasin.</span></section>' +
+      '<section class="card card-pad"><h2>Paramètres du magasin</h2><dl class="kv"><dt>Magasin</dt><dd>' + esc(S.db.shop.name) + '</dd><dt>Identifiants</dt><dd class="mono" style="font-size:12px">RC ' + esc(S.db.shop.rc) + ' · NIF ' + esc(S.db.shop.nif) + '</dd><dt>Sortie de stock</dt><dd>' + STOCK_MODES[stockMode()] + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>' + (VAT() ? '19 % (9 % et 0 % disponibles)' : 'non assujetti : prix sans TVA') + '</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.join(', ') + '</dd><dt>Version du serveur</dt><dd>24.0.2</dd></dl><span class="muted" style="font-size:13px">Lus sur le serveur (fiche de la société) et dans le profil du magasin.</span></section>' +
       '<section class="card card-pad"><h2>Session</h2><span class="muted" style="font-size:14px">Se déconnecter ferme la session sur ce poste.</span><button class="btn" type="button" data-action="logout">Se déconnecter</button></section>' +
     '</div>';
 }
@@ -1536,7 +1546,7 @@ function renderModal() {
     return modal('Déposer des espèces en banque', '<div class="field"><label for="m-dep">Montant déposé</label><input class="input num" id="m-dep" name="amount" inputmode="numeric" value="' + Math.max(0, avail) + '"></div><span class="muted" style="font-size:14px">Disponible hors fond de caisse : ' + fmt(avail) + '. Le fond de caisse de 10 000 DA reste au magasin.</span>', cancel + '<button class="btn btn-primary" type="submit">Déposer</button>', 'mCashDeposit'); }
   if (m.kind === 'resume') {
     return modal('Vente interrompue', S.db.journal.map((j) => '<div class="alert a-warn">' + ic('warn', 20, '#9A3412') + '<div style="flex:1">Vente <b>' + j.sale + '</b> de ' + j.time.slice(11) + ' interrompue à l’étape « ' + STEP_LABEL[j.step] + ' » (' + fmt(j.ttc) + '). Reprendre ?</div><button class="btn btn-dark" type="button" data-action="resumeSale" data-arg="' + j.sale + '">Reprendre</button></div>').join('') +
-      '<span class="muted" style="font-size:14px">Le journal de ce poste (' + DEVICE + ') garde les ventes non terminées. À la reprise, chaque étape relit Dolibarr avant d’écrire.</span>', '<button class="btn" type="button" data-action="closeModal">Plus tard</button>'); }
+      '<span class="muted" style="font-size:14px">Le journal de ce poste (' + DEVICE + ') garde les ventes non terminées. À la reprise, chaque étape relit le serveur avant d’écrire.</span>', '<button class="btn" type="button" data-action="closeModal">Plus tard</button>'); }
   if (m.kind === 'findInvoice') { const q = norm(m.q || '');
     const list = S.db.docs.filter((d) => d.type === 'facture' && d.lines && d.status !== 'brouillon' && d.lines.some((l) => l.qty > (l.returned || 0)) && (!q || norm(d.ref + client(d.client).name + (d.saleRef || '')).indexOf(q) !== -1)).sort((a, b) => a.ref < b.ref ? 1 : -1).slice(0, 8);
     return modal('Retour client', '<label class="search" for="fi-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Facture</span><input id="fi-q" type="search" autocomplete="off" placeholder="N° de facture, de ticket ou client…" value="' + esc(m.q || '') + '" data-input="findQ"></label>' +
@@ -1615,14 +1625,14 @@ function printDoc(d, format) {
   const sums = T.vat.filter((v) => v.tva).map((v) => row('TVA ' + v.rate + ' %', fmt(v.tva))).join('');
   const pays = (d.payments || []).map((p) => row(esc(MODES[p.mode] || p.mode), fmt(p.amount))).join('');
   if (format === 'ticket') {
-    return '<div class="print-area ticket"><div style="text-align:center"><b>' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div>' +
+    return '<div class="print-area ticket"><div style="text-align:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:40px;width:auto;display:block;margin:0 auto 4px">' : '') + '<b>' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div>' +
       '<div>' + TITLE[d.type] + ' ' + d.ref + '<br>' + dateFr(d.date) + (d.saleRef ? ' · ' + d.saleRef : '') + (c.fixed ? '' : '<br>Client : ' + esc(c.name)) + '</div>' +
       '<div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:6px 0;display:flex;flex-direction:column;gap:4px">' + lines.map((l) => { const p = part(l.pid); return '<div>' + esc(p.brand + ' ' + p.ref) + row(l.qty + ' × ' + fmt(l.price), fmt(l.price * l.qty)) + '</div>'; }).join('') + '</div>' +
       (VAT() ? row('Total HT', fmt(T.ht)) + sums : '') + row('TOTAL' + xTTC(), fmt(T.ttc), ';font-weight:700;font-size:14px') + pays +
       '<div style="text-align:center;margin-top:6px">Merci de votre visite</div></div>';
   }
   return '<div class="print-area">' +
-    '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><b style="font-size:16px">' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div>' +
+    '<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:flex-start">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:60px;width:auto;max-width:110px;object-fit:contain">' : '') + '<div><b style="font-size:16px">' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div></div>' +
     '<div style="text-align:right"><b style="font-size:18px">' + TITLE[d.type] + '</b><br><span class="mono">' + d.ref + '</span><br>Date : ' + dateFr(d.date) + (d.due ? '<br>Échéance : ' + dateFr(d.due) : '') + (from.length ? '<br>Réf. : ' + from.join(', ') : '') + '</div></div>' +
     '<div style="border:1px solid #CCC;border-radius:6px;padding:8px 10px;align-self:flex-end;min-width:min(260px,100%)"><b>' + esc(c.name) + '</b>' + (c.address ? '<br>' + esc(c.address) : '') + (c.town ? '<br>' + esc(c.town) : '') + (ids(c) ? '<div class="ids">' + ids(c) + '</div>' : '') + '</div>' +
     '<table><thead><tr><th>Désignation</th><th>Référence</th><th class="r">Qté</th>' + (prices ? '<th class="r">PU' + xHT() + '</th>' + (VAT() ? '<th class="r">TVA</th>' : '') + '<th class="r">Total' + xHT() + '</th>' : '') + '</tr></thead><tbody>' +
@@ -1640,7 +1650,7 @@ function route() {
   return { parts: path.split('/').filter(Boolean), query };
 }
 function render() {
-  const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null;
+  const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null, selEnd = sel !== null ? a.selectionEnd : null;
   const app = document.getElementById('app');
   if (!S.user) { app.innerHTML = viewLogin(); return; }
   if (!S.ready) { app.innerHTML = viewLoading(); return; }
@@ -1668,8 +1678,8 @@ function render() {
   // La caisse s'affiche en plein écran, sans le menu du back-office.
   const fullScreen = sec === 'caisse' && navItem.roles.indexOf(role()) !== -1;
   app.innerHTML = (fullScreen ? html : shell(sec, html)) + renderModal() + (S.ui.toast ? '<div class="toast" role="status">' + esc(S.ui.toast) + '</div>' : '');
-  document.title = 'CARUNO — ' + (navItem ? navItem.label : sec.charAt(0).toUpperCase() + sec.slice(1));
-  if (focusId) { const el = document.getElementById(focusId); if (el) { render.restoring = true; el.focus(); render.restoring = false; if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, sel); } catch (e) {} } } }
+  document.title = (S.db.shop.name || 'CARUNO') + ' — ' + (navItem ? navItem.label : sec.charAt(0).toUpperCase() + sec.slice(1));
+  if (focusId) { const el = document.getElementById(focusId); if (el) { render.restoring = true; el.focus(); render.restoring = false; if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, selEnd); } catch (e) {} } } }
   // Caisse au clavier (PC) : champ demandé par une action, sinon la recherche garde le curseur.
   const wanted = S.ui.focus && document.getElementById(S.ui.focus);
   S.ui.focus = null;
@@ -1701,7 +1711,7 @@ const A = {
   logout: () => { S.user = null; saveUser(); S.ui = { caisse: null, modal: null, toast: '', drawer: false, form: {}, formKey: '' }; location.hash = ''; toast('Déconnecté : jeton annulé sur tous vos appareils.'); },
 
   // catalogue Dolibarr (lecture seule)
-  catLogout: () => { const c = catUi(); c.token = ''; c.items = []; c.total = 0; c.piece = null; catSaveConn(); toast('Déconnecté de Dolibarr sur ce poste.'); },
+  catLogout: () => { const c = catUi(); c.token = ''; c.items = []; c.total = 0; c.piece = null; catSaveConn(); toast('Déconnecté sur ce poste.'); },
   catPage: (el) => { catSearch(Number(el.dataset.arg)); return false; },
 
   // caisse (point de vente)
@@ -1982,7 +1992,7 @@ function resume(sale) {
   const steps = [];
   let d = S.db.docs.find((x) => x.type === 'facture' && x.saleRef === j.sale);
   if (d) steps.push({ t: '1. Facture ' + d.ref + ' retrouvée par sa référence externe ' + j.sale + ' : réutilisée, pas de doublon', skip: true });
-  else { d = draftSale(j); steps.push({ t: '1. Aucune facture ' + j.sale + ' dans Dolibarr : facture ' + d.ref + ' créée' }); }
+  else { d = draftSale(j); steps.push({ t: '1. Aucune facture ' + j.sale + ' : facture ' + d.ref + ' créée' }); }
   if (d.status === 'brouillon') { if (!validateSale(d, steps)) return null; }
   else steps.push({ t: '2. Facture déjà validée : pas de seconde validation, le stock n’est sorti qu’une fois', skip: true });
   paySale(d, j, steps, true);
@@ -2302,6 +2312,97 @@ document.addEventListener('submit', (ev) => {
   F[form.dataset.submit](form, new FormData(form));
   render();
 });
+/* =================================================================== PHOTOS DANS LES LISTES, DESSIN PAR FAMILLE SANS PHOTO */
+// 1. Pièces et caisse : la petite photo Dolibarr (<ref>/thumbs/<ref>_small.jpg) de chaque pièce affichée est chargée,
+//    6 à la fois, dans le même cache que le catalogue (une seule fois par session).
+// 2. Pièce sans photo : un dessin de sa famille (disque, filtre, piston…) au lieu de la boîte vide.
+//    Famille = famille Dolibarr de la pièce, sinon déduite de son nom (anglais du fournisseur, français ou arabe).
+
+// ---------- famille d'une pièce ----------
+const ART_RULES = [   // ordre : du plus précis au plus général (« water pump » avant « pump », « oil filter » avant « oil »)
+  ['froid', /water pump|pompe [àa] eau|radiat|thermostat|cool|refroid|durite|hose|expansion|condens|compress|fan\b|ventilat|مضخة الماء|المبرد|ترموستات/i],
+  ['filtre', /filt|مصفاة|فلتر/i],
+  ['frein', /brake|frein|disc\b|disque|pad|plaquette|caliper|[ée]trier|m[âa]choire|\babs\b|فرامل|الفرامل/i],
+  ['embrayage', /clutch|embrayage|c\.?v\.? ?joint|homocin|drive ?shaft|transmission|gear|bo[îi]te|flywheel|volant|propeller|cardan|قابض|ناقل/i],
+  ['suspension', /shock|absorb|amortiss|spring|ressort|strut|arm\b|bras|bush|silentbloc|ball joint|rotule|tie rod|biellette|stabili|steering|direction|hub|moyeu|bearing|roulement|ممتص|نابض/i],
+  ['elec', /alternat|starter|d[ée]marreur|sensor|capteur|switch|interrupteur|relay|relais|coil|bobine|battery|batterie|ignition|allumage|wiring|faisceau|مستشعر|بطارية/i],
+  ['carrosserie', /bumper|pare-chocs|mirror|r[ée]troviseur|grill|calandre|fender|aile|bonnet|capot|door|porte|lamp|light|phare|feu|wiper|essuie|handle|poign[ée]e|lock|serrure|emblem|logo|trim|moulure|glass|vitre|مصباح|مرآة|صدام/i],
+  ['moteur', /piston|gasket|joint|engine|moteur|timing|belt|courroie|distribution|spark|bougie|plug|inject|turbo|cam|valve|soupape|pump|pompe|mount|support|oil|huile|محرك/i],
+];
+const ART_FAM = { 'Freinage': 'frein', 'Filtration': 'filtre', 'Moteur': 'moteur', 'Électricité et électronique': 'elec', 'Suspension et direction': 'suspension',
+  'Refroidissement et climatisation': 'froid', 'Embrayage et transmission': 'embrayage', 'Carrosserie et accessoires': 'carrosserie' };
+function artKey(name, fam) {
+  if (fam && ART_FAM[fam]) return ART_FAM[fam];
+  const r = ART_RULES.find((x) => x[1].test(String(name || '')));
+  return r ? r[0] : 'autre';
+}
+// ---------- dessins (24×24, trait du style des icônes de l'application) ----------
+const ART = {
+  frein: '<circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="2.6"/><circle cx="11" cy="8" r=".6"/><circle cx="15.8" cy="11.5" r=".6"/><circle cx="14" cy="17.1" r=".6"/><circle cx="8" cy="17.1" r=".6"/><circle cx="6.2" cy="11.5" r=".6"/><path d="M15.5 3.2l4.6 3-1.4 2.2-4.6-3z"/>',
+  filtre: '<rect x="6" y="5" width="12" height="16" rx="2.2"/><path d="M9 5V3h6v2M6 9h12M6 17h12M9.5 9v8M12 9v8M14.5 9v8"/>',
+  moteur: '<rect x="6.5" y="3" width="11" height="9" rx="1.6"/><path d="M6.5 6h11M6.5 8.2h11M10 12l-1.3 7.5M14 12l1.3 7.5M7.5 19.5h9"/><circle cx="12" cy="12" r=".9"/>',
+  elec: '<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M6.5 7.5V5.5h3v2M14.5 7.5V5.5h3v2M6.5 13.5h3M8 12v3M14.5 13.5h3"/>',
+  suspension: '<path d="M12 2v3.5"/><rect x="9.6" y="5.5" width="4.8" height="6" rx="1"/><path d="M7.5 12.5l9 1.6-9 1.6 9 1.6-9 1.6 9 1.6M12 20.5V22"/>',
+  froid: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M7 6v13M10.5 6v13M14 6v13M17.5 6v13"/><circle cx="18" cy="3.6" r="1.4"/>',
+  embrayage: '<circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+  carrosserie: '<path d="M3 15.5v-3.2l2.6-4.6h8.6l3.6 4.6h2.2a1 1 0 0 1 1 1v2.2"/><path d="M3 12.3h18"/><circle cx="7.2" cy="16.4" r="2"/><circle cx="16.8" cy="16.4" r="2"/><path d="M9.2 16.4h5.6"/>',
+  autre: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+};
+// Dessin de la famille, dans un carré clair (taille px) ; label = nom de la famille pour les lecteurs d'écran.
+function artSvg(key, px) {
+  return '<svg class="art-svg" viewBox="0 0 24 24" width="' + px + '" height="' + px + '" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ART[key] || ART.autre) + '</svg>';
+}
+
+// ---------- petites photos des listes (pièces, caisse) ----------
+const ART_PENDING = new Set();
+let artTimer = null;
+function artWantThumb(ref) {
+  const c = catUi();
+  if (!ref || ref in c.thumbs || ART_PENDING.has(ref)) return;
+  ART_PENDING.add(ref);
+  clearTimeout(artTimer);
+  artTimer = setTimeout(artLoadThumbs, 60);
+}
+async function artLoadThumbs() {
+  const c = catUi(), todo = [...ART_PENDING].filter((r) => !(r in c.thumbs));
+  for (let i = 0; i < todo.length; i += 6) {
+    await Promise.all(todo.slice(i, i + 6).map(async (ref) => {
+      try {
+        const d = await DOLI.api('documents/download', { query: { modulepart: 'product', original_file: ref + '/thumbs/' + ref + '_small.jpg' } });
+        c.thumbs[ref] = d && d.content ? 'data:' + d['content-type'] + ';base64,' + d.content : '';
+      } catch (e) { c.thumbs[ref] = ''; }
+      ART_PENDING.delete(ref);
+    }));
+    render();
+  }
+}
+
+// Vignette d'une pièce : sa photo (chargée à l'ouverture de la fiche), sinon la petite photo Dolibarr, sinon le dessin.
+thumb = function (p, size) {
+  const s = size || 44, c = catUi();
+  const url = (p.photos && p.photos[0] && p.photos[0].url) || c.thumbs[p.ref];
+  if (!url && p.ref && !(p.ref in c.thumbs)) artWantThumb(p.ref);
+  return '<span class="thumb" style="width:' + s + 'px;height:' + s + 'px">' + (url ? '<img alt="" src="' + url + '">' : '<span class="art">' + artSvg(artKey(p.name, p.fam), Math.round(s * 0.62)) + '</span>') + '</span>';
+};
+// Vignette à partir d'une ligne produit brute de l'API (catalogue, véhicule) : photo t ou dessin d'après le libellé.
+function artThumb(t, label, px) {
+  return t ? '<img alt="" src="' + t + '">' : '<span class="art">' + artSvg(artKey(label), px || 28) + '</span>';
+}
+// Grande photo absente (fiche pièce) : grand dessin + « Pas encore de photo ».
+function artBig(name, fam) {
+  return '<span class="art art-big">' + artSvg(artKey(name, fam), 120) + '</span><span>Pas encore de photo</span>';
+}
+
+(function () {
+  const css = document.createElement('style');
+  css.textContent = `
+.art{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#9A9FAB;background:linear-gradient(145deg,#F7F7F4,#ECECE7)}
+.art-big{width:auto;height:auto;padding:22px;border-radius:18px;color:#8A8F9C}
+.thumb .art{border-radius:inherit}
+`;
+  document.head.appendChild(css);
+})();
+
 /* =================================================================== DOLIBARR : actions écrites dans Dolibarr
    Remplace les actions de la maquette qui modifiaient les données de test. Chaque écriture passe par l'API,
    puis les données concernées sont relues dans Dolibarr. */
@@ -2313,7 +2414,7 @@ async function run(fn, wait) {
   render();
   try { await fn(); }
   catch (e) {
-    if (DOLI.expired) { A.logout(); toast('Session Dolibarr expirée : reconnectez-vous.'); }
+    if (DOLI.expired) { A.logout(); toast('Session expirée : reconnectez-vous.'); }
     else toast(e && e.message ? e.message : String(e));
   } finally {
     // Le message d'attente disparaît dès la fin (un message de résultat a pu le remplacer).
@@ -2341,11 +2442,13 @@ async function boot() {
   render();
 }
 A.reload = () => { boot(); return false; };
+// Écran de connexion : affiche le champ « Adresse du serveur » replié après la première connexion.
+A.loginUrlEdit = () => { S.ui.login.editUrl = true; focusNext('lg-url'); };
 F.login = (form, fd) => {
   const L = S.ui.login, url = String(fd.get('url') || '').trim(), login = String(fd.get('login') || '').trim(), pw = String(fd.get('password') || '');
   L.url = url; L.login = login; L.err = '';
   const host = url.replace(/^https?:\/\//i, '').split(/[/?#]/)[0];
-  if (!host || /\s/.test(url) || !(/[.:]/.test(host) || /^localhost$/i.test(host))) { L.err = 'Ce n’est pas une adresse web : mettez l’adresse du Dolibarr (ex. http://localhost:8080).'; return; }
+  if (!host || /\s/.test(url) || !(/[.:]/.test(host) || /^localhost$/i.test(host))) { L.err = 'Ce n’est pas une adresse web : mettez l’adresse du serveur du magasin (ex. http://localhost:8080).'; L.editUrl = true; return; }
   L.busy = true;
   (async () => {
     try {
@@ -2423,7 +2526,7 @@ A.posValidate = () => {
       S.db.posOrders.splice(idx, 0, o); u.cur = idx; u.screen = 'payment'; save();
       throw e;
     }
-  }, 'Enregistrement de la vente dans Dolibarr…');
+  }, 'Enregistrement de la vente…');
 };
 A.resumeSale = (el) => {
   const j = S.db.journal.find((x) => x.sale === el.dataset.arg);
@@ -2443,7 +2546,7 @@ A.posClose = () => {
     const now = Math.floor(Date.now() / 1000);
     await DOLI.api('agendaevents', { method: 'POST', body: { userownerid: DOLI.me.id, type_code: 'AC_OTH', label: 'Clôture de caisse ' + s.ref + ' (' + DEVICE + ')', note_private: note, datep: now, datef: now, percentage: -1, fulldayevent: 0 } });
     posCloseBase();
-  }, 'Enregistrement du rapport de caisse dans Dolibarr…');
+  }, 'Enregistrement du rapport de caisse…');
 };
 F.mPosClient = (form, fd) => {
   const name = String(fd.get('name') || '').trim();
@@ -2452,7 +2555,7 @@ F.mPosClient = (form, fd) => {
     const c = await DOLI.saveClient(null, { name, phone: String(fd.get('phone') || ''), cat: fd.get('cat') || 'Particulier' });
     const u = posUi(), o = curOrder(); o.client = c.id; o.pay = []; S.ui.modal = null; u.screen = u.back || 'products'; save();
     toast('Client ' + name + ' créé et choisi.');
-  }, 'Création du client dans Dolibarr…');
+  }, 'Création du client…');
 };
 
 // ----- pièces
@@ -2471,9 +2574,9 @@ F.savePiece = (form) => {
     part(pid).extra = false; DOLI.lazy['extra:' + pid] = '';
     if (!id) DOLI.total++;
     S.ui.formKey = '';
-    toast(id ? 'Pièce enregistrée dans Dolibarr.' : 'Pièce ' + f.brand + ' ' + f.ref + ' créée dans Dolibarr.');
+    toast(id ? 'Pièce enregistrée.' : 'Pièce ' + f.brand + ' ' + f.ref + ' créée.');
     go('#/pieces/' + pid);
-  }, 'Enregistrement de la pièce dans Dolibarr…');
+  }, 'Enregistrement de la pièce…');
 };
 C.photoPiece = (v, el) => {
   const p = part(el.dataset.arg), files = Array.from(el.files || []);
@@ -2481,7 +2584,7 @@ C.photoPiece = (v, el) => {
     let n = 0;
     for (const f of files) { const ph = await compress(f); if (ph) await DOLI.uploadPhoto(p, ph, n++); }
     await DOLI.loadPartExtra(p.id);
-    toast(n + ' photo(s) envoyée(s) dans Dolibarr.');
+    toast(n + ' photo(s) envoyée(s).');
   }, 'Envoi des photos…');
   return false;
 };
@@ -2534,13 +2637,13 @@ F.saveClient = (form) => {
   if (!f.name) { toast('Le nom est obligatoire.'); return; }
   run(async () => {
     const c = await DOLI.saveClient(id || null, Object.assign({}, f, { plafond: Number(String(f.plafond || '').replace(/\D/g, '')) || 0 }));
-    S.ui.formKey = ''; toast(id ? 'Client enregistré dans Dolibarr.' : 'Client ' + c.name + ' créé dans Dolibarr.'); go('#/clients/' + c.id);
+    S.ui.formKey = ''; toast(id ? 'Client enregistré.' : 'Client ' + c.name + ' créé.'); go('#/clients/' + c.id);
   }, 'Enregistrement du client…');
 };
 F.mSupplier = (form, fd) => {
   const f = { name: String(fd.get('name') || '').trim(), town: fd.get('town'), phone: fd.get('phone'), email: fd.get('email') };
   if (!f.name) return;
-  run(async () => { await DOLI.saveSupplier(f); S.ui.modal = null; toast('Fournisseur créé dans Dolibarr.'); }, 'Création du fournisseur…');
+  run(async () => { await DOLI.saveSupplier(f); S.ui.modal = null; toast('Fournisseur créé.'); }, 'Création du fournisseur…');
 };
 
 // ----- règlements
@@ -2563,12 +2666,12 @@ F.mSettle = (form, fd) => {
 A.edSave = (el) => {
   const [type, mode] = el.dataset.arg.split(':'), e = S.ui.editor;
   const lines = e.lines.map((l) => ({ pid: l.pid, qty: l.qty, price: Math.round(l.price * (1 - e.remise / 100)) }));
-  run(async () => { const d = await DOLI.createDoc(type, e.client, lines, e.note, mode !== 'brouillon'); S.ui.editorKey = ''; toast(TYPE_LABEL[type] + ' ' + d.ref + ' enregistré dans Dolibarr.'); go('#/ventes/' + d.ref); }, 'Enregistrement…');
+  run(async () => { const d = await DOLI.createDoc(type, e.client, lines, e.note, mode !== 'brouillon'); S.ui.editorKey = ''; toast(TYPE_LABEL[type] + ' ' + d.ref + ' enregistré.'); go('#/ventes/' + d.ref); }, 'Enregistrement…');
 };
 A.docStatus = (el) => {
   const [ref, st] = el.dataset.arg.split(':'), d = doc(ref), path = d.type === 'devis' ? 'proposals' : 'orders';
   const after = async () => { const n = await DOLI.refreshDoc(d.type, d.id); toast(n.ref + ' : ' + STATUS[n.type][n.status][0].toLowerCase() + '.'); go('#/ventes/' + n.ref); };
-  if ((d.type === 'devis' && st === 'envoye') || (d.type === 'commande' && st === 'validee')) return run(async () => { await DOLI.api(path + '/' + d.id + '/validate', { method: 'POST', body: { notrigger: 0 } }); await after(); }, 'Validation dans Dolibarr…');
+  if ((d.type === 'devis' && st === 'envoye') || (d.type === 'commande' && st === 'validee')) return run(async () => { await DOLI.api(path + '/' + d.id + '/validate', { method: 'POST', body: { notrigger: 0 } }); await after(); }, 'Validation…');
   if (d.type === 'devis' && st === 'refuse') return run(async () => { await DOLI.api('proposals/' + d.id + '/close', { method: 'POST', body: { status: 3, notrigger: 0 } }); await after(); }, 'Enregistrement…');
   // « Prête » n'existe pas dans Dolibarr : repère gardé sur ce poste.
   d.status = st; toast(ref + ' : ' + STATUS[d.type][st][0].toLowerCase() + ' (repère sur ce poste).');
@@ -2605,7 +2708,7 @@ A.poCreate = () => {
   run(async () => {
     const id = DOLI.num(await DOLI.api('supplierorders', { method: 'POST', body: { socid: Number(e.supplier), lines: e.lines.map((l) => ({ fk_product: l.pid, qty: l.qty, subprice: l.price, tva_tx: (part(l.pid) || {}).tva || 0, product_type: 0 })) } }));
     const o = DOLI.mapPO(await DOLI.api('supplierorders/' + id));
-    S.db.pos.unshift(o); S.ui.poEd = null; toast('Commande ' + o.ref + ' créée en brouillon dans Dolibarr.'); go('#/achats/' + o.ref);
+    S.db.pos.unshift(o); S.ui.poEd = null; toast('Commande ' + o.ref + ' créée en brouillon.'); go('#/achats/' + o.ref);
   }, 'Création de la commande fournisseur…');
 };
 A.poSend = (el) => {
@@ -2629,7 +2732,7 @@ A.poValidate = (el) => {
     await DOLI.loadBuyPrices().catch(() => null);
     o.status = o.lines.every((l) => l.rec >= l.qty) ? 'recue' : 'reception';
     toast(lines.reduce((t, l) => t + l.rec, 0) + ' pièce(s) entrées en ' + WAREHOUSES[0] + '.');
-  }, 'Réception dans Dolibarr…');
+  }, 'Réception…');
 };
 // Ligne de commande fournisseur : prix proposé = dernier prix d'achat, sinon coût moyen ; modifiable.
 A.poAdd = (el) => {
@@ -2659,7 +2762,7 @@ F.changePw = (form) => {
     const t = DOLI.token;
     try { await DOLI.login(DOLI.url, S.user.login, old); } catch (e) { DOLI.token = t; throw new Error('Mot de passe actuel incorrect.'); }
     await DOLI.api('users/' + DOLI.me.id, { method: 'PUT', body: { pass: nw } });
-    form.reset(); toast('Mot de passe modifié dans Dolibarr.');
+    form.reset(); toast('Mot de passe modifié.');
   }, 'Changement du mot de passe…');
 };
 
@@ -2669,7 +2772,10 @@ function shopMark(compact) {
   const s = S.db.shop, name = s.name || 'CARUNO', big = !compact && name.length <= 12;
   return '<span class="shopmark" style="display:inline-flex;align-items:center;gap:8px;min-width:0">' +
     (s.logo ? '<img src="' + esc(s.logo) + '" alt="" style="height:' + (compact ? 28 : 34) + 'px;width:auto;max-width:' + (compact ? 60 : 70) + 'px;object-fit:contain;border-radius:6px;background:#fff;padding:2px">' : '') +
-    '<b style="font-size:' + (compact ? 16 : big ? 21 : 16) + 'px;letter-spacing:' + (big ? '.09em' : '.02em') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:' + (compact ? 220 : 150) + 'px">' + esc(name) + '</b></span>';
+    // Avec un logo, le nom passe sur deux lignes au lieu d'être coupé (« City Makou… »).
+    (s.logo && !compact
+      ? '<b style="font-size:15px;line-height:1.15;letter-spacing:.02em;color:#fff;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;max-width:120px">' + esc(name) + '</b></span>'
+      : '<b style="font-size:' + (compact ? 16 : big ? 21 : 16) + 'px;letter-spacing:' + (big ? '.09em' : '.02em') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:' + (compact ? 220 : 150) + 'px">' + esc(name) + '</b></span>');
 }
 // Écran de connexion : enseigne mémorisée sur ce poste à la dernière connexion.
 function loginMark(sub) {
@@ -2701,7 +2807,7 @@ viewProfil = function () {
       '<section class="card card-pad" style="gap:14px"><h2>Langue et poste</h2>' +
         '<div class="field"><span class="lbl">Langue de l’application</span><div class="chips" role="radiogroup" aria-label="Langue">' + [['fr', 'Français'], ['ar', 'العربية'], ['en', 'English']].map((l) => '<button class="chip" type="button" role="radio" data-action="setLang" data-arg="' + l[0] + '" aria-pressed="' + (LANG() === l[0]) + '" aria-checked="' + (LANG() === l[0]) + '">' + l[1] + '</button>').join('') + '</div></div>' +
         '<form data-submit="saveDevice" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="dv-name">Nom de ce poste</label><input class="input" id="dv-name" name="device" value="' + esc(DEVICE) + '"></div><button class="btn" type="submit">Enregistrer le poste</button></form>' +
-        '<dl class="kv"><dt>Dolibarr</dt><dd class="mono" style="font-size:13px">' + esc(DOLI.url) + '</dd><dt>Sortie de stock</dt><dd>' + STOCK_MODES[stockMode()] + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>' + (VAT() ? '19 %' : 'non assujetti : prix sans TVA') + '</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.map(esc).join(', ') + '</dd></dl></section>' +
+        '<dl class="kv"><dt>Serveur</dt><dd class="mono" style="font-size:13px">' + esc(DOLI.url) + '</dd><dt>Sortie de stock</dt><dd>' + STOCK_MODES[stockMode()] + '</dd><dt>Niveaux de prix</dt><dd>' + LEVELS.join(', ') + '</dd><dt>TVA</dt><dd>' + (VAT() ? '19 %' : 'non assujetti : prix sans TVA') + '</dd><dt>Entrepôts</dt><dd>' + WAREHOUSES.map(esc).join(', ') + '</dd></dl></section>' +
       '<form class="card card-pad" data-submit="changePw"><h2>Changer mon mot de passe</h2><div class="field"><label for="pw-old">Mot de passe actuel</label><input class="input" type="password" id="pw-old" autocomplete="current-password" required></div><div class="field"><label for="pw-new">Nouveau mot de passe</label><input class="input" type="password" id="pw-new" autocomplete="new-password" minlength="8" required><span class="hint">8 caractères minimum</span></div><button class="btn btn-primary" type="submit">Enregistrer</button></form>' +
     '</div>';
 };
@@ -2740,7 +2846,7 @@ F.saveShop = () => {
     p.whatsapp = waNorm(f.whatsapp);
     if (p.whatsapp && !waOk(p.whatsapp)) { toast('Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.'); return; }
   }
-  run(async () => { await profilePatch(p); S.ui.formKey = ''; toast('Magasin enregistré dans Dolibarr.'); }, 'Enregistrement du magasin…');
+  run(async () => { await profilePatch(p); S.ui.formKey = ''; toast('Magasin enregistré.'); }, 'Enregistrement du magasin…');
 };
 F.saveDevice = (form, fd) => {
   const n = String(fd.get('device') || '').trim();
@@ -2893,7 +2999,7 @@ function importModal(m) {
         Array.from({ length: ncol }, (x, i) => '<option value="' + i + '"' + (m.map[k] === i ? ' selected' : '') + '>' + esc(colName(i).slice(0, 40)) + '</option>').join('') + '</select></div>').join('') + '</div>' +
       '<div class="table-wrap"><table class="t" style="min-width:560px"><thead><tr>' + shown.map(([, label]) => '<th>' + label + '</th>').join('') + '</tr></thead><tbody>' +
         sample.map((r) => '<tr>' + shown.map(([k]) => '<td>' + esc(r[m.map[k]] || '') + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>' +
-      '<div class="field"><span class="lbl">Pièce déjà dans Dolibarr (même référence)</span><div class="chips" role="radiogroup" aria-label="Pièces existantes">' + [['update', 'Mettre à jour'], ['skip', 'Ignorer']].map((o) => '<button class="chip" type="button" role="radio" data-action="impExisting" data-arg="' + o[0] + '" aria-pressed="' + (m.existing === o[0]) + '" aria-checked="' + (m.existing === o[0]) + '">' + o[1] + '</button>').join('') + '</div></div>' +
+      '<div class="field"><span class="lbl">Pièce déjà enregistrée (même référence)</span><div class="chips" role="radiogroup" aria-label="Pièces existantes">' + [['update', 'Mettre à jour'], ['skip', 'Ignorer']].map((o) => '<button class="chip" type="button" role="radio" data-action="impExisting" data-arg="' + o[0] + '" aria-pressed="' + (m.existing === o[0]) + '" aria-checked="' + (m.existing === o[0]) + '">' + o[1] + '</button>').join('') + '</div></div>' +
       '<span class="muted" style="font-size:14px">' + items.length + ' pièce(s) avec une référence et une désignation sur ' + (m.header ? m.rows.length - 1 : m.rows.length) + ' ligne(s). Familles reconnues : ' + esc(FAMILIES.join(', ')) + '.</span>',
       close + '<button class="btn btn-primary" type="button" id="imp-run" data-action="impRun"' + (items.length ? '' : ' disabled') + '>Importer ' + items.length + ' pièce(s)</button>', null, true);
   }
@@ -2958,6 +3064,9 @@ catInfo = function (desc) {
 // les pièces dont le nom anglais ou le code modèle correspond.
 function searchExtra(q) {
   const out = [];
+  // Noms arabe et d'origine (anglais) enregistrés sur chaque pièce : « ممتص » ou « shock absorber » trouvent la pièce française.
+  const words = DOLI.safe(String(q || '').trim()).replace(/\s+/g, '%');
+  if (words.length >= 2 && DOLI.hasNameFields) out.push("(ef.nom_ar:like:'%" + words + "%')", "(ef.nom_fournisseur:like:'%" + words + "%')");
   if (window.PARTS_I18N && LANG() !== 'en') {
     const n = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const nq = n(q).trim(), H = PARTS_I18N.heads, i = LANG() === 'ar' ? 2 : 0;
@@ -2971,19 +3080,25 @@ function searchExtra(q) {
 // Recherche locale : nom traduit et modèles de voitures de la pièce, en plus de ses champs.
 function partAlt(p) {
   const t = window.PARTS_I18N ? [PARTS_I18N.translate(p.name, 'fr'), PARTS_I18N.translate(p.name, 'ar')].filter(Boolean).join(' ') : '';
-  return t + (p.models ? ' ' + p.models + (window.CAR_MODELS ? ' ' + CAR_MODELS.text(p.models, 'fr') : '') : '');
+  const k = (window.PART_NAMES || {})[p.name];
+  return t + (k ? ' ' + k.ar + ' ' + k.en : '') + (p.models ? ' ' + p.models + (window.CAR_MODELS ? ' ' + CAR_MODELS.text(p.models, 'fr') : '') : '');
 }
-// Noms des pièces (anglais du fournisseur) affichés en français ou en arabe ; en anglais, le nom d'origine.
+// Noms des pièces : libellé français (provisioning/30-product-names.sh) ; en arabe le nom arabe de la pièce, en anglais son
+// nom d'origine (window.PART_NAMES, rempli par DOLI). Pièces encore en anglais : traduites par PARTS_I18N comme avant.
 function translateParts(root) {
-  if (!root || !window.PARTS_I18N || LANG() === 'en') return;
+  const lang = LANG(), N = window.PART_NAMES || {};
+  if (!root || (lang === 'fr' && !window.PARTS_I18N)) return;
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
   while (w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach((n) => {
     const p = n.parentNode;
     if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(p.nodeName)) return;
     const core = n.nodeValue.trim();
-    if (core.length < 3 || !/[A-Za-z]/.test(core) || /[à-ÿ؀-ۿ]/i.test(core)) return;
-    const t = PARTS_I18N.translate(core, LANG());
+    if (core.length < 3) return;
+    const known = N[core];
+    if (known) { const t = lang === 'ar' ? known.ar : lang === 'en' ? known.en : ''; if (t) n.nodeValue = n.nodeValue.replace(core, t); return; }
+    if (!window.PARTS_I18N || lang === 'en' || !/[A-Za-z]/.test(core) || /[à-ÿ؀-ۿ]/i.test(core)) return;
+    const t = PARTS_I18N.translate(core, lang);
     if (t && t !== core) n.nodeValue = n.nodeValue.replace(core, t);
   });
 }
@@ -3177,7 +3292,7 @@ function viewTrash() {
   DOLI.need('trash', () => DOLI.loadTrash());
   const list = S.db.trash || [], loading = DOLI.lazy.trash !== 'done', purge = DOLI.can('produit.supprimer');
   return head('Corbeille', list.length + ' pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées', '', ['#/pieces', 'Pièces']) +
-    '<div class="alert a-info">' + ic('info', 20) + '<div>Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.' + (purge ? ' « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.' : '') + '</div></div>' +
+    '<div class="alert a-info">' + ic('info', 20) + '<div>Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.' + (purge ? ' « Supprimer définitivement » l’efface, seulement si elle ne figure sur aucun document.' : '') + '</div></div>' +
     '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:820px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th class="right">Stock</th><th>Supprimée le</th><th></th></tr></thead><tbody>' +
     (list.length ? list.map((p) => '<tr><td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
       '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td><td class="right num">' + total(p) + '</td>' +
@@ -3201,7 +3316,7 @@ A.restorePart = (el) => {
 };
 A.purgePart = () => {
   const id = S.ui.modal.pid, p = part(id);
-  run(async () => { S.ui.modal = null; await DOLI.purge(id); toast('Pièce ' + (p ? p.ref : '') + ' supprimée définitivement de Dolibarr.'); }, 'Suppression…');
+  run(async () => { S.ui.modal = null; await DOLI.purge(id); toast('Pièce ' + (p ? p.ref : '') + ' supprimée définitivement.'); }, 'Suppression…');
 };
 function trashModal(m) {
   const p = part(m.pid), cancel = '<button class="btn" type="button" data-action="closeModal">Annuler</button>';
@@ -3210,7 +3325,7 @@ function trashModal(m) {
   if (m.kind === 'trash') return modal('Supprimer la pièce ?', who + (total(p) ? '<div class="alert a-warn">' + ic('warn', 18, '#9A3412') + 'Il reste ' + total(p) + ' pièce(s) en stock.</div>' : '') +
     '<span class="muted" style="font-size:14px">La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.</span>',
     cancel + '<button class="btn btn-primary" type="button" id="trash-ok" data-action="trashPart">' + ic('trash', 18) + 'Mettre à la corbeille</button>');
-  return modal('Supprimer définitivement ?', who + '<div class="alert a-bad">' + ic('warn', 18) + 'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.</div>',
+  return modal('Supprimer définitivement ?', who + '<div class="alert a-bad">' + ic('warn', 18) + 'La pièce sera effacée définitivement. Cette action ne peut pas être annulée.</div>',
     cancel + '<button class="btn btn-dark" type="button" id="purge-ok" data-action="purgePart">Supprimer définitivement</button>');
 }
 const renderModalTrash = renderModal;
@@ -3410,15 +3525,15 @@ function viewVehicle(v) {
   const rows = shown.map((p) => {
     const d = v.rows[p.ref], cat = vehCat(v, p.category_id), t = c.thumbs[p.ref], ef = (d && d.array_options) || {};
     const link = d ? '#/catalogue/' + d.id : '';
-    return '<tr' + (d ? ' class="click" data-action="go" data-arg="' + link + '"' : '') + '><td><div class="cellpart"><span class="thumb">' + (t ? '<img alt="" src="' + t + '">' : ic('pieces', 22, '#8A8F9C')) + '</span>' +
+    return '<tr' + (d ? ' class="click" data-action="go" data-arg="' + link + '"' : '') + '><td><div class="cellpart"><span class="thumb">' + artThumb(t, d ? d.label : p.name) + '</span>' +
       '<div>' + (d ? '<a class="rowlink" href="' + link + '">' + esc(d.label) + '</a>' : '<b>' + esc(p.name) + '</b>') +
-      '<div class="t2">' + (d === false ? 'Absente de Dolibarr' : d ? esc(ef.options_brand || '') : 'Chargement…') + '</div></div></div></td>' +
+      '<div class="t2">' + (d === false ? 'Pas encore dans les pièces' : d ? esc(ef.options_brand || '') : 'Chargement…') + '</div></div></div></td>' +
       '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">' + esc(p.oem || '') + '</div></td>' +
       '<td style="font-size:13px">' + esc(cat.name) + '<div class="t2">' + esc(cat.group) + '</div></td>' +
       '<td>' + vehBadge(p, key) + '</td>' +
       '<td class="right num">' + (d ? (Number(d.stock_reel) || 0) : '—') + '</td></tr>';
   }).join('');
-  return head('Catalogue', '<span class="badge b-ok">Dolibarr</span> ' + list.length.toLocaleString('fr-FR') + ' pièce(s) pour ' + esc(vehMaker(m.maker) + ' ' + vehModelLabel(m)) + ' · ' + esc(engine ? engine.label : '')) +
+  return head('Catalogue', '' + list.length.toLocaleString('fr-FR') + ' pièce(s) pour ' + esc(vehMaker(m.maker) + ' ' + vehModelLabel(m)) + ' · ' + esc(engine ? engine.label : '')) +
     vehBar(v) +
     '<div class="toolbar"><label class="search" for="veh-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher dans les pièces du véhicule</span><input id="veh-q" type="search" autocomplete="off" placeholder="Désignation, référence, OEM, famille…" value="' + esc(v.q) + '" data-input="vehQ"></label></div>' +
     (c.err ? '<div class="alert a-bad" role="alert" style="margin-bottom:14px">' + esc(c.err) + '</div>' : '') +
@@ -3787,7 +3902,7 @@ async function webSearch(page) {
   }
 }
 const webPut = (id, on) => DOLI.api('products/' + encodeURIComponent(id), { method: 'PUT', body: { array_options: { options_en_ligne: on ? '1' : '0' } } });
-const webErr = (e) => (e.status === 403 ? 'Dolibarr refuse la modification : droit « créer/modifier les produits » nécessaire.' : 'Non enregistré : ' + e.message);
+const webErr = (e) => (e.status === 403 ? 'Modification refusée : droit « créer/modifier les produits » nécessaire.' : 'Non enregistré : ' + e.message);
 // Nom affiché comme ailleurs (nom anglais du fournisseur traduit en français / arabe).
 const webName = (p) => (window.PARTS_I18N && LANG() !== 'en' && PARTS_I18N.translate(p.label, LANG())) || p.label;
 
@@ -3919,7 +4034,7 @@ function webTile(w, p, c) {
       (price > 0 ? '<button class="btn" type="button" data-action="webPriceCancel" data-arg="' + id + '" aria-label="Annuler"' + (busy ? ' disabled' : '') + '>✕</button>' : '') + '</div></form>';
   return '<article class="card web-tile' + (on ? ' on' : '') + (sel ? ' sel' : '') + '">' +
     '<label class="web-chk" title="Sélectionner"><input type="checkbox" data-change="webSel" data-arg="' + id + '"' + (sel ? ' checked' : '') + (w.bulk ? ' disabled' : '') + ' aria-label="Sélectionner ' + esc(p.ref) + '"></label>' +
-    '<a class="web-photo" href="' + link + '" tabindex="-1" aria-hidden="true">' + (t ? '<img alt="" src="' + t + '">' : '<span class="web-nophoto">' + ic('camera', 30, '#A3A7B3') + '<span>Pas de photo</span></span>') + '</a>' +
+    '<a class="web-photo" href="' + link + '" tabindex="-1" aria-hidden="true">' + (t ? '<img alt="" src="' + t + '">' : '<span class="web-nophoto">' + artSvg(artKey(p.label), 64) + '<span>Pas de photo</span></span>') + '</a>' +
     '<div class="web-body"><a class="web-name" href="' + link + '">' + esc(p.label) + '</a>' +
       '<div class="mono muted web-ref">' + esc(p.ref) + (ef.options_oem_ref ? ' · ' + esc(ef.options_oem_ref) : '') + '</div>' +
       priceBlock + '<div class="web-stock">' + esc(webStock(p)) + '</div>' + webReady(p, t) + '</div>' +
@@ -3996,7 +4111,7 @@ async function waSave() {
     await profilePatch({ whatsapp: v });
     w.wa = null; S.ui.formKey = '';                  // le formulaire « Mon profil » se recharge avec le nouveau numéro
     toast(v ? 'WhatsApp enregistré : ' + waShow(v) + '.' : 'Numéro WhatsApp retiré.');
-  } catch (e) { w.wa.busy = false; toast(e.status === 403 ? 'Dolibarr refuse la modification du magasin.' : 'Non enregistré : ' + e.message); }
+  } catch (e) { w.wa.busy = false; toast(e.status === 403 ? 'Modification du magasin refusée.' : 'Non enregistré : ' + e.message); }
   render();
 }
 

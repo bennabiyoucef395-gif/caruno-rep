@@ -10,7 +10,7 @@ window.EN = {
   'Se connecter': 'Sign in', 'Se déconnecter': 'Sign out', 'Identifiant': 'Login', 'Identifiant *': 'Login *', 'Mot de passe': 'Password', 'Connexion…': 'Signing in…',
   'Adresse du Dolibarr du magasin': 'Shop Dolibarr address', 'Gestion du magasin de pièces': 'Auto parts shop management',
   'Identifiant et mot de passe Dolibarr du magasin. Les menus et les prix visibles dépendent de vos droits.': 'Your shop Dolibarr login and password. Menus and visible prices depend on your rights.',
-  'Identifiant ou mot de passe refusé.': 'Login or password refused.', 'Chargement des données du magasin depuis Dolibarr…': 'Loading shop data from Dolibarr…', 'Chargement impossible': 'Loading failed',
+  'Identifiant ou mot de passe refusé.': 'Login or password refused.', 'Chargement des données du magasin depuis Dolibarr…': 'Loading shop data…', 'Chargement impossible': 'Loading failed',
   'Réessayer': 'Retry', 'Chargement…': 'Loading…', 'Déconnecté.': 'Signed out.',
   'Ce n’est pas une adresse web : mettez l’adresse du Dolibarr (ex. http://localhost:8080).': 'This is not a web address: enter the Dolibarr address (e.g. http://localhost:8080).',
 
@@ -61,13 +61,13 @@ window.EN = {
   'Type de pièce CARUNO': 'Part type', 'Type CARUNO :': 'Type:', 'Vocabulaire commun, prépare le futur catalogue': 'Shared vocabulary for the catalogue', 'Remise en dessous : gérant seulement': 'Discount below: manager only',
   'Crée un mouvement « stock initial ». Sinon, passer par une réception.': 'Creates an “initial stock” movement. Otherwise use a receipt.', 'Fournisseur principal': 'Main supplier',
   'Prenez la pièce sur un fond uni : face, dos, boîte, étiquette fabricant.': 'Photograph the part on a plain background: front, back, box, maker label.',
-  'Pièce enregistrée dans Dolibarr.': 'Part saved in Dolibarr.', 'Enregistrement de la pièce dans Dolibarr…': 'Saving the part in Dolibarr…', 'Aucune pièce ne correspond.': 'No matching part.',
+  'Pièce enregistrée.': 'Part saved.', 'Enregistrement de la pièce…': 'Saving the part…', 'Aucune pièce ne correspond.': 'No matching part.',
 
   // ---- import
   'Importer des pièces': 'Import parts', 'Choisir un fichier Excel, CSV ou PDF': 'Choose an Excel, CSV or PDF file', 'Fichier à importer': 'File to import',
   'Excel ou CSV : une ligne par pièce, la première ligne peut porter les titres des colonnes. PDF : tarif ou catalogue avec un tableau ; les colonnes sont détectées, vous choisissez ensuite laquelle est la référence, la désignation, le prix…': 'Excel or CSV: one row per part, the first row may hold the column titles. PDF: price list or catalogue with a table; columns are detected, then you choose which one is the reference, description, price…',
   'La première ligne contient les titres des colonnes': 'The first row holds the column titles', '— ignorer —': '— ignore —', 'Mettre à jour': 'Update', 'Ignorer': 'Skip',
-  'Pièce déjà dans Dolibarr (même référence)': 'Part already in Dolibarr (same reference)', 'Importer # pièce(s)': 'Import # part(s)', 'Prix garage': 'Garage price', 'Prix gros': 'Wholesale price',
+  'Pièce déjà enregistrée (même référence)': 'Part already saved (same reference)', 'Importer # pièce(s)': 'Import # part(s)', 'Prix garage': 'Garage price', 'Prix gros': 'Wholesale price',
   'Import en cours…': 'Importing…', 'Import terminé': 'Import finished', 'Traitées': 'Processed', 'Créées': 'Created', 'Mises à jour': 'Updated', 'Ignorées': 'Skipped', 'Erreurs': 'Errors',
   'Ne fermez pas la page pendant l’import.': 'Do not close the page during the import.', 'Pièces existantes': 'Existing parts',
 
@@ -75,7 +75,7 @@ window.EN = {
   'OEM (avec ou sans espaces), référence, désignation, modèle, marque du véhicule…': 'OEM (with or without spaces), reference, description, model, vehicle brand…', 'Modèles': 'Models', 'Véhicules': 'Vehicles',
   'Compatibilité (catalogue fournisseur)': 'Compatibility', 'Marques de véhicule': 'Vehicle brands', 'OEM normalisé (recherche)': 'Normalised OEM (search)', 'Tous entrepôts confondus.': 'All warehouses.',
   'Codes modèles tels que publiés par le fournisseur, non vérifiés (moteur, années).': 'Model codes as published by the supplier, not checked (engine, years).', 'Photos sur le web (OEM)': 'Photos on the web (OEM)',
-  'Prix non renseignés dans Dolibarr.': 'No prices in Dolibarr.', 'Recherche…': 'Searching…', 'Recherche en cours…': 'Searching…',
+  'Prix non renseignés.': 'No prices yet.', 'Recherche…': 'Searching…', 'Recherche en cours…': 'Searching…',
 
   // ---- stock
   'Alertes (#)': 'Alerts (#)', 'Mouvements': 'Movements', 'Transfert': 'Transfer', 'Inventaire': 'Stock count', '# pièces sous le seuil': '# parts below threshold', 'À commander': 'To order',
@@ -126,15 +126,15 @@ window.EN = {
   '# pièces sous le seuil d’alerte.': '# parts below alert threshold.', 'Voir le stock': 'View stock',
 
   // ---- users, profile
-  'Comptes Dolibarr du magasin et leur rôle': 'Shop Dolibarr accounts and their role', 'Nouvel utilisateur': 'New user', 'Rôle (groupe)': 'Role (group)', 'Désactivé': 'Disabled', 'Nom affiché *': 'Display name *',
-  'Créer l’utilisateur': 'Create user', 'Un seul groupe Dolibarr par utilisateur': 'One Dolibarr group per user', 'Un mot de passe provisoire est généré et affiché une seule fois.': 'A temporary password is generated and shown once.',
-  'À trancher : aujourd’hui le groupe Gérant ne peut que lire les utilisateurs dans Dolibarr. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».': 'Note: creating or disabling an account needs the “user:user:creer” right in Dolibarr.',
+  'Comptes du magasin et leur rôle': 'Shop accounts and their role', 'Nouvel utilisateur': 'New user', 'Rôle (groupe)': 'Role (group)', 'Désactivé': 'Disabled', 'Nom affiché *': 'Display name *',
+  'Créer l’utilisateur': 'Create user', 'Un seul rôle par utilisateur': 'One role per user', 'Un mot de passe provisoire est généré et affiché une seule fois.': 'A temporary password is generated and shown once.',
+  'À trancher : aujourd’hui le rôle Gérant ne peut que lire les utilisateurs. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».': 'Note: creating or disabling an account needs the “user:user:creer” right.',
   'Mon magasin': 'My shop', 'Nom du magasin (enseigne)': 'Shop name (sign)', 'Logo du magasin': 'Shop logo', 'Ajouter le logo': 'Add logo', 'Changer le logo': 'Change logo', 'Retirer le logo': 'Remove logo',
   'Enregistrer le magasin': 'Save shop', 'Le nom, l’adresse et le logo apparaissent dans le menu, sur les tickets et les factures, sur tous les postes du magasin.': 'The name, address and logo appear in the menu, on receipts and invoices, on every device of the shop.',
   'Seul le gérant ou le responsable peut modifier ces informations.': 'Only the manager or supervisor can change these details.', 'Langue et poste': 'Language and device', 'Langue de l’application': 'App language',
   'Nom de ce poste': 'This device’s name', 'Enregistrer le poste': 'Save device', 'Sortie de stock': 'Stock out', 'sortie à la validation de la facture': 'when the invoice is confirmed', 'TVA': 'VAT',
   'non assujetti : prix sans TVA': 'not subject to VAT: prices without VAT', 'Changer mon mot de passe': 'Change my password', 'Mot de passe actuel': 'Current password', 'Nouveau mot de passe': 'New password',
-  '8 caractères minimum': '8 characters minimum', 'Magasin enregistré dans Dolibarr.': 'Shop saved in Dolibarr.', 'Enregistrement du magasin…': 'Saving the shop…', 'Le nom du magasin est obligatoire.': 'The shop name is required.',
+  '8 caractères minimum': '8 characters minimum', 'Magasin enregistré.': 'Shop saved.', 'Enregistrement du magasin…': 'Saving the shop…', 'Le nom du magasin est obligatoire.': 'The shop name is required.',
 
   // ---- scanner
   'Caméra du téléphone ou douchette USB': 'Phone camera or USB scanner', 'Consulter': 'Look up', 'Placez le code-barres dans le cadre': 'Place the barcode in the frame', 'Simuler un scan': 'Scan',
@@ -159,10 +159,10 @@ window.EN = {
   'Reste à payer': 'Left to pay', 'Rendu monnaie': 'Change given', 'Montant réglé': 'Amount paid', 'Total à payer # DA': 'Total to pay # DA', 'Reçu :': 'Received:', 'Exact': 'Exact', 'Espèces reçues': 'Cash received',
   'Paiement en espèces par défaut. Touchez un autre mode pour le remplacer, ou modifiez le montant pour payer en plusieurs fois.': 'Cash payment by default. Tap another method to replace it, or change the amount to pay in several parts.',
   'Tapez le montant reçu puis': 'Type the amount received then', 'pour valider': 'to confirm', 'retour aux pièces': 'back to parts', 'Validation': 'Confirmation', 'Choisissez un mode de paiement.': 'Choose a payment method.',
-  'La validation crée la facture dans Dolibarr, sort le stock (sortie à la validation de la facture) et enregistre les paiements.': 'Confirming creates the invoice in Dolibarr, takes the stock out and records the payments.',
-  'Paiement réussi': 'Payment successful', 'Vente validée': 'Sale confirmed', 'Imprimer le ticket': 'Print receipt', 'Facture A4': 'A4 invoice', 'nouvelle commande': 'new order', 'Étapes côté Dolibarr': 'Steps in Dolibarr',
+  'La validation crée la facture, sort le stock (sortie à la validation de la facture) et enregistre les paiements.': 'Confirming creates the invoice, takes the stock out and records the payments.',
+  'Paiement réussi': 'Payment successful', 'Vente validée': 'Sale confirmed', 'Imprimer le ticket': 'Print receipt', 'Facture A4': 'A4 invoice', 'nouvelle commande': 'new order', 'Étapes enregistrées': 'Recorded steps',
   'Connexion perdue': 'Connection lost', 'Reprendre maintenant': 'Resume now', 'Nouvelle commande, reprendre plus tard': 'New order, resume later', 'Reprendre': 'Resume', 'Plus tard': 'Later', 'Vente interrompue': 'Interrupted sale',
-  'Enregistrement de la vente dans Dolibarr…': 'Saving the sale in Dolibarr…', 'En cours (#)': 'Open (#)', 'Tickets validés': 'Confirmed receipts', 'Créée': 'Created', 'Articles': 'Items', 'Vente': 'Sale',
+  'Enregistrement de la vente…': 'Saving the sale…', 'En cours (#)': 'Open (#)', 'Tickets validés': 'Confirmed receipts', 'Créée': 'Created', 'Articles': 'Items', 'Vente': 'Sale',
   'Réimprimer': 'Reprint', 'N° de ticket, facture ou client…': 'Receipt, invoice or customer…', 'Aucune commande en cours.': 'No open order.', 'Aucun ticket.': 'No receipt.',
   'Chiffre d’affaires': 'Sales', '# (gardées pour la prochaine session)': '# (kept for the next session)', 'Par mode de paiement': 'By payment method', 'Avoirs clients': 'Customer credits', 'Compte client (crédit)': 'Customer account (credit)',
   'Contrôle des espèces': 'Cash check', 'Fond d’ouverture': 'Opening float', '+ Espèces encaissées (nettes des remboursements)': '+ Cash collected (net of refunds)', '+ Entrées': '+ Cash in', '− Sorties': '− Cash out',
@@ -191,10 +191,10 @@ window.EN = {
   'Corbeille': 'Recycle bin', 'Supprimer': 'Delete', 'Restaurer': 'Restore', 'Supprimer définitivement': 'Delete permanently', 'Supprimer la pièce ?': 'Delete the part?', 'Supprimer définitivement ?': 'Delete permanently?',
   'Mettre à la corbeille': 'Move to recycle bin', 'Supprimée le': 'Deleted on', 'La corbeille est vide.': 'The recycle bin is empty.', 'Il reste # pièce(s) en stock.': '# part(s) still in stock.',
   '# pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées': '# deleted part(s) · no longer shown in parts or at the till, and can be restored',
-  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.': 'A deleted part keeps its history (sales, stock movements). “Restore” puts it back in parts and at the till. “Delete permanently” erases it from Dolibarr, only if it is on no document.',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface, seulement si elle ne figure sur aucun document.': 'A deleted part keeps its history (sales, stock movements). “Restore” puts it back in parts and at the till. “Delete permanently” erases it, only if it is on no document.',
   'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.': 'A deleted part keeps its history (sales, stock movements). “Restore” puts it back in parts and at the till.',
   'La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.': 'The part goes to the recycle bin: it is no longer shown in parts or at the till. You can restore it at any time from Parts → Recycle bin.',
-  'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.': 'The part will be erased from Dolibarr. This cannot be undone.',
+  'La pièce sera effacée définitivement. Cette action ne peut pas être annulée.': 'The part will be erased for good. This cannot be undone.',
   'Mise à la corbeille…': 'Moving to recycle bin…', 'Restauration…': 'Restoring…', 'Suppression…': 'Deleting…', 'Seul le gérant peut supprimer définitivement une pièce.': 'Only the manager can delete a part permanently.',
 };
 // Composed texts: dates, months, titles with a reference.
@@ -216,10 +216,10 @@ window.EN = {
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'Import ' + f],
     [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'Part ' + r + ' moved to the recycle bin. It can be restored from Parts → Recycle bin.'],
     [/^Pièce (\S*) restaurée\.$/, (s, r) => 'Part ' + r + ' restored.'],
-    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'Part ' + r + ' permanently deleted from Dolibarr.'],
-    [/^Suppression refusée par Dolibarr : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'Dolibarr refused the deletion: the part is on documents (invoices, orders…). It stays in the recycle bin.' + e],
+    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'Part ' + r + ' permanently deleted.'],
+    [/^Suppression refusée : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'Deletion refused: the part is on documents (invoices, orders…). It stays in the recycle bin.' + e],
     [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' below purchase price. Check the prices before confirming.'],
-    [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': not connected to Dolibarr yet. Do it in Dolibarr for now.'],
+    [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': not connected to Dolibarr yet. Do it for now.'],
   ];
 })();
 // ---- catalogue : véhicule du client (tools/actions-vehicle.js)
@@ -231,7 +231,7 @@ window.EN = {
   Object.assign(window.EN, {
     'Véhicule du client': 'Customer’s vehicle', 'Modèle': 'Model', '— Choisir —': '— Choose —', 'Je ne sais pas': 'I don’t know',
     'Effacer le véhicule': 'Clear vehicle', 'Compatibilité': 'Fitment', 'Compatible': 'Fits', 'À confirmer': 'To confirm',
-    'Absente de Dolibarr': 'Not in Dolibarr', 'Rechercher dans les pièces du véhicule': 'Search the vehicle’s parts',
+    'Pas encore dans les pièces': 'Not in the parts yet', 'Rechercher dans les pièces du véhicule': 'Search the vehicle’s parts',
     'Désignation, référence, OEM, famille…': 'Name, reference, OEM, family…',
     'Choisissez le moteur pour voir les pièces.': 'Choose the engine to see the parts.',
     'Aucune pièce compatible connue pour ce choix.': 'No known fitting part for this choice.',
@@ -268,9 +268,9 @@ Object.assign(window.EN, {
   'Magasin en ligne': 'Online shop', 'En ligne': 'Online', 'Hors ligne': 'Offline', 'Sans prix': 'No price',
   'Toutes les pièces': 'All parts', 'Affichage': 'Show',
   'pièce(s) en ligne sur # en vente': 'part(s) online out of # for sale',
-  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved in Dolibarr and applies to every device.',
+  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré et vaut pour tous les postes.': 'Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved and applies to every device.',
   'OEM (avec ou sans espaces), référence, désignation, modèle…': 'OEM (with or without spaces), reference, name, model…',
-  'Dolibarr refuse la modification : droit « créer/modifier les produits » nécessaire.': 'Dolibarr refused the change: the “create/modify products” right is needed.',
+  'Modification refusée : droit « créer/modifier les produits » nécessaire.': 'Change refused: the “create/modify products” right is needed.',
 });
 window.EN_RULES.unshift(
   [/^En ligne : (.+)\.$/, (s, p) => 'Online: ' + p + '.'], [/^Hors ligne : (.+)\.$/, (s, p) => 'Offline: ' + p + '.'],
@@ -280,7 +280,7 @@ window.EN_RULES.unshift(
 // ---- magasin en ligne : tuiles, pièces en stock
 Object.assign(window.EN, {
   'pièce(s) en ligne sur # en stock (Magasin + Réserve)': 'part(s) online out of # in stock (Shop + Reserve)',
-  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'Parts in stock in the shop or the reserve. Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved in Dolibarr and applies to every device.',
+  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré et vaut pour tous les postes.': 'Parts in stock in the shop or the reserve. Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved and applies to every device.',
   'Aucune pièce en stock ne correspond.': 'No part in stock matches.', 'Magasin # · Réserve #': 'Shop # · Reserve #',
 });
 // ---- magasin en ligne : compteurs en tête
@@ -317,7 +317,7 @@ Object.assign(window.EN, {
   'Les clients du magasin en ligne vous écriront sur ce numéro. Laissez vide pour le retirer.': 'Online shop customers will message you on this number. Leave empty to remove it.',
   'WhatsApp (magasin en ligne)': 'WhatsApp (online shop)', 'Numéro WhatsApp retiré.': 'WhatsApp number removed.',
   'Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.': 'Invalid WhatsApp number: type for example 0555 12 34 56.',
-  'Dolibarr refuse la modification du magasin.': 'Dolibarr refused to change the shop.',
+  'Modification du magasin refusée.': 'Change to the shop refused.',
 });
 window.EN_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'WhatsApp saved: ' + n + '.']);
 // ---- magasin en ligne : modifier le prix
@@ -327,3 +327,6 @@ window.EN_RULES.unshift(
   [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'Price changed: ' + r + ' · ' + a + ' → ' + b + (on ? ' (online)' : '') + '.'],
 );
 Object.assign(window.EN, { 'Voir la vitrine': 'View the shop window', 'Ce que voient les clients (mise à jour à chaque export)': 'What customers see (updated at each export)' });
+
+// ---- textes sans le nom du moteur (tools/wording.mjs), connexion
+Object.assign(window.EN, { "Adresse du serveur du magasin": "Shop server address", "Demandée une seule fois sur ce poste.": "Asked only once on this device.", "Votre identifiant et votre mot de passe du magasin. Les menus et les prix visibles dépendent de vos droits.": "Your shop username and password. Menus and visible prices depend on your rights.", "Chargement des données du magasin…": "Loading shop data…", "Serveur du magasin :": "Shop server:", "Changer": "Change", "Ce n’est pas une adresse web : mettez l’adresse du serveur du magasin (ex. http://localhost:8080).": "This is not a web address: enter the shop server address (e.g. http://localhost:8080).", "Toutes les pièces du catalogue, en lecture seule.": "All catalogue parts, read only.", "Version du serveur": "Server version", "Serveur": "Server" });

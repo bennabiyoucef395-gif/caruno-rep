@@ -136,7 +136,7 @@ function viewVehicle(v) {
   const rows = shown.map((p) => {
     const d = v.rows[p.ref], cat = vehCat(v, p.category_id), t = c.thumbs[p.ref], ef = (d && d.array_options) || {};
     const link = d ? '#/catalogue/' + d.id : '';
-    return '<tr' + (d ? ' class="click" data-action="go" data-arg="' + link + '"' : '') + '><td><div class="cellpart"><span class="thumb">' + (t ? '<img alt="" src="' + t + '">' : ic('pieces', 22, '#8A8F9C')) + '</span>' +
+    return '<tr' + (d ? ' class="click" data-action="go" data-arg="' + link + '"' : '') + '><td><div class="cellpart"><span class="thumb">' + artThumb(t, d ? d.label : p.name) + '</span>' +
       '<div>' + (d ? '<a class="rowlink" href="' + link + '">' + esc(d.label) + '</a>' : '<b>' + esc(p.name) + '</b>') +
       '<div class="t2">' + (d === false ? 'Absente de Dolibarr' : d ? esc(ef.options_brand || '') : 'Chargement…') + '</div></div></div></td>' +
       '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">' + esc(p.oem || '') + '</div></td>' +

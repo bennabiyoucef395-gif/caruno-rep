@@ -3,6 +3,7 @@
 // Usage : node web/tools/patch-from-mockup.mjs <maquette.html> <sortie.html>
 // Chaque remplacement doit trouver son texte exactement une fois, sinon le script s'arrête.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { applyWording } from './wording.mjs';
 
 const [src, out] = process.argv.slice(2);
 let s = readFileSync(src, 'utf8').replace(/\r\n/g, '\n');
@@ -59,21 +60,29 @@ rep('flex:1">HANOUT VW</span>', "flex:1\">' + esc(S.db.shop.name) + '</span>");
 between('function viewLogin() {', '/* =================================================================== CAISSE',
   `function viewLogin() {
   const L = S.ui.login || (S.ui.login = { url: (() => { try { return localStorage.getItem('caruno-url') || 'http://localhost:8080'; } catch (e) { return 'http://localhost:8080'; } })(), login: '', err: '', busy: false });
+  // Adresse du serveur : demandée au premier démarrage du poste ; ensuite mémorisée et repliée (« Changer » pour la modifier).
+  let known = false, shop = {};
+  try { known = !!localStorage.getItem('caruno-url'); shop = JSON.parse(localStorage.getItem('caruno-shop')) || {}; } catch (e) {}
+  document.title = shop.name || 'CARUNO';
+  const host = String(L.url).replace(/^https?:\\/\\//i, '').replace(/\\/+$/, '');
   return '<div class="login"><div class="box">' +
     loginMark('Gestion du magasin de pièces') +
     '<form data-submit="login" style="display:flex;flex-direction:column;gap:16px">' +
-      '<div class="field"><label for="lg-url">Adresse du Dolibarr du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"></div>' +
+      (known && !L.editUrl
+        ? '<input type="hidden" id="lg-url" name="url" value="' + esc(L.url) + '">'
+        : '<div class="field"><label for="lg-url">Adresse du serveur du magasin</label><input class="input" id="lg-url" name="url" value="' + esc(L.url) + '" autocomplete="url" placeholder="http://localhost:8080"><span class="hint" style="color:#C9CBD2">Demandée une seule fois sur ce poste.</span></div>') +
       '<div class="field"><label for="lg-user">Identifiant</label><input class="input" id="lg-user" name="login" value="' + esc(L.login) + '" autocomplete="username" autocapitalize="none" required></div>' +
       '<div class="field"><label for="pw">Mot de passe</label><input class="input" id="pw" name="password" type="password" autocomplete="current-password" required></div>' +
       (L.err ? '<div class="alert a-bad" role="alert">' + esc(L.err) + '</div>' : '') +
       '<button class="btn btn-primary btn-lg" type="submit"' + (L.busy ? ' disabled' : '') + '>' + (L.busy ? 'Connexion…' : 'Se connecter') + '</button>' +
     '</form>' +
-    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">Identifiant et mot de passe Dolibarr du magasin. Les menus et les prix visibles dépendent de vos droits.</p>' +
+    '<p style="margin:0;color:#C9CBD2;font-size:14px;line-height:1.5">Votre identifiant et votre mot de passe du magasin. Les menus et les prix visibles dépendent de vos droits.</p>' +
+    (known && !L.editUrl ? '<p style="margin:0;color:#8A8F9C;font-size:13px">Serveur du magasin : <span class="mono">' + esc(host) + '</span> · <button type="button" class="linkbtn" data-action="loginUrlEdit" style="background:none;border:0;padding:0;color:#C9CBD2;text-decoration:underline;cursor:pointer;font:inherit">Changer</button></p>' : '') +
     '</div></div>';
 }
 function viewLoading() {
   const err = S.ui.loadErr;
-  return '<div class="login"><div class="box">' + loginMark(err ? 'Chargement impossible' : 'Chargement des données du magasin depuis Dolibarr…') +
+  return '<div class="login"><div class="box">' + loginMark(err ? 'Chargement impossible' : 'Chargement des données du magasin…') +
     (err ? '<div class="alert a-bad" role="alert">' + esc(err) + '</div><button class="btn btn-primary btn-lg" type="button" data-action="reload">Réessayer</button><button class="btn" type="button" data-action="logout">Se déconnecter</button>' : '') + '</div></div>';
 }
 
@@ -172,6 +181,41 @@ rep(`<span>Coût moyen (PMP)</span><b>' + fmt(p.cost) + '</b></div>`, `<span>Co�
 rep(`(seeCost() ? '<td class="right num">' + fmt(l.price) + '</td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel"`,
   `(seeCost() ? '<td class="right"><label class="sr" for="poep-' + i + '">Prix d’achat</label><input class="input num" style="width:110px" id="poep-' + i + '" inputmode="numeric" value="' + esc(l.price || '') + '" data-input="poPrice" data-arg="' + i + '"></td>' : '') + '<td class="right"><button class="icon-btn" type="button" data-action="poDel"`);
 
+// Pièce sans photo : dessin de sa famille (tools/actions-art.js) au lieu de l'icône vide.
+rep(`'<div class="big-photo">' + (photos[0] ? '<img alt="Photo principale de la pièce" src="' + photos[0].url + '">' : ic('camera', 44, '#8A8F9C') + '<span>Aucune photo</span>')`,
+  `'<div class="big-photo">' + (photos[0] ? '<img alt="Photo principale de la pièce" src="' + photos[0].url + '">' : artBig(p.name, p.fam))`);
+rep(`(x.photo ? '<img alt="Photo de la pièce ' + esc(p.ref) + '" src="' + x.photo + '" style="width:auto;height:auto;max-width:100%;max-height:100%">' : ic('camera', 44, '#8A8F9C') + '<span>Aucune photo</span>')`,
+  `(x.photo ? '<img alt="Photo de la pièce ' + esc(p.ref) + '" src="' + x.photo + '" style="width:auto;height:auto;max-width:100%;max-height:100%">' : artBig(p.label))`);
+rep(`(t ? '<img alt="" src="' + t + '">' : ic('pieces', 22, '#8A8F9C'))`, `artThumb(t, p.label)`);
+
+// Catalogue : la référence est aussi cherchée telle quelle (« BUY-1793… », tirets compris), pas seulement sans séparateurs.
+rep("or (t.ref:like:'%\" + oem + \"%') or (t.label:like:'%\" + words + \"%')", "or (t.ref:like:'%\" + oem + \"%') or (t.ref:like:'%\" + q + \"%') or (t.label:like:'%\" + words + \"%')");
+
+// Catalogue : ses appels passent aussi les noms arabe / d'origine des pièces à DOLI (affichage en arabe, en anglais).
+rep("  return res.json();\n}\nasync function catLogin(", "  const data = await res.json();\n  if (/^products/.test(path)) DOLI.noteNames(data);\n  return data;\n}\nasync function catLogin(");
+
+// Documents imprimés (facture A4, ticket) : le logo du magasin à côté de son nom, comme le bon d'achat.
+rep(`<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><b style="font-size:16px">' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div>' +`,
+  `<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:flex-start">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:60px;width:auto;max-width:110px;object-fit:contain">' : '') + '<div><b style="font-size:16px">' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div></div>' +`);
+rep(`'<div class="print-area ticket"><div style="text-align:center"><b>' + esc(shop.name) + '</b>`,
+  `'<div class="print-area ticket"><div style="text-align:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:40px;width:auto;display:block;margin:0 auto 4px">' : '') + '<b>' + esc(shop.name) + '</b>`);
+
+// Rendu : le champ actif garde toute sa sélection (début ET fin), pas seulement le curseur. Sinon un rendu venu
+// d'un chargement (photos de la liste) pendant la saisie réduit « 0 » sélectionné à un curseur devant le 0 :
+// le vendeur tape 950, la caisse lit 9 500.
+rep("const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null;",
+  "const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null, selEnd = sel !== null ? a.selectionEnd : null;");
+rep('if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, sel); } catch (e) {} }', 'if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, selEnd); } catch (e) {} }');
+
+// Titre de l'onglet : le nom du magasin, jamais « Maquette ».
+rep('<title>CARUNO — Maquette magasin</title>', '<title>CARUNO</title>');
+rep("document.title = 'CARUNO — ' + (navItem ? navItem.label : sec.charAt(0).toUpperCase() + sec.slice(1));", "document.title = (S.db.shop.name || 'CARUNO') + ' — ' + (navItem ? navItem.label : sec.charAt(0).toUpperCase() + sec.slice(1));");
+
+// Clients clos dans Dolibarr : gardés pour leurs documents, absents des listes de choix (caisse, Clients, devis / factures).
+rep('const list = S.db.clients.filter((c) => !q || norm(c.name + c.town + c.phone).indexOf(q) !== -1);', 'const list = S.db.clients.filter((c) => !c.closed && (!q || norm(c.name + c.town + c.phone).indexOf(q) !== -1));');
+rep('const list = S.db.clients.filter((c) => (!f.cat || c.cat === f.cat)', 'const list = S.db.clients.filter((c) => !c.closed && (!f.cat || c.cat === f.cat)');
+rep('S.db.clients.filter((x) => !x.fixed).map(', 'S.db.clients.filter((x) => !x.fixed && !x.closed).map(');
+
 // Équivalences : seulement entre pièces qui ont un OEM (deux OEM vides ne sont pas « la même pièce »).
 rep('const eq = S.db.parts.filter((x) => x.oem === p.oem);', 'const eq = S.db.parts.filter((x) => !x.trash && (x.id === p.id || (p.oem && x.oem === p.oem)));');
 rep('eq = S.db.parts.filter((x) => x.oem === p.oem && x.id !== p.id);', 'eq = S.db.parts.filter((x) => p.oem && !x.trash && x.oem === p.oem && x.id !== p.id);');
@@ -205,6 +249,8 @@ rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) {
 rep("  else if (sec === 'profil') html = viewProfil();", "  else if (sec === 'profil') html = viewProfil();\n  else if (sec === 'enligne') html = viewEnLigne();");
 
 // ---------- actions branchées sur Dolibarr, puis démarrage ----------
-rep('\nrender();\n</script>', '\n' + ['./actions.js', './actions-profil-import.js', './actions-vehicle.js', './actions-dashboard.js', './actions-enligne.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
+rep('\nrender();\n</script>', '\n' + ['./actions-art.js', './actions.js', './actions-profil-import.js', './actions-vehicle.js', './actions-dashboard.js', './actions-enligne.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
+// Textes affichés sans le nom du moteur (Dolibarr) : tools/wording.mjs, sur l'application entière.
+s = applyWording(s, true);
 writeFileSync(out, s);
 console.log('OK ' + out);

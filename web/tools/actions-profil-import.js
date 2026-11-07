@@ -273,6 +273,9 @@ catInfo = function (desc) {
 // les pièces dont le nom anglais ou le code modèle correspond.
 function searchExtra(q) {
   const out = [];
+  // Noms arabe et d'origine (anglais) enregistrés sur chaque pièce : « ممتص » ou « shock absorber » trouvent la pièce française.
+  const words = DOLI.safe(String(q || '').trim()).replace(/\s+/g, '%');
+  if (words.length >= 2 && DOLI.hasNameFields) out.push("(ef.nom_ar:like:'%" + words + "%')", "(ef.nom_fournisseur:like:'%" + words + "%')");
   if (window.PARTS_I18N && LANG() !== 'en') {
     const n = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const nq = n(q).trim(), H = PARTS_I18N.heads, i = LANG() === 'ar' ? 2 : 0;
@@ -286,19 +289,25 @@ function searchExtra(q) {
 // Recherche locale : nom traduit et modèles de voitures de la pièce, en plus de ses champs.
 function partAlt(p) {
   const t = window.PARTS_I18N ? [PARTS_I18N.translate(p.name, 'fr'), PARTS_I18N.translate(p.name, 'ar')].filter(Boolean).join(' ') : '';
-  return t + (p.models ? ' ' + p.models + (window.CAR_MODELS ? ' ' + CAR_MODELS.text(p.models, 'fr') : '') : '');
+  const k = (window.PART_NAMES || {})[p.name];
+  return t + (k ? ' ' + k.ar + ' ' + k.en : '') + (p.models ? ' ' + p.models + (window.CAR_MODELS ? ' ' + CAR_MODELS.text(p.models, 'fr') : '') : '');
 }
-// Noms des pièces (anglais du fournisseur) affichés en français ou en arabe ; en anglais, le nom d'origine.
+// Noms des pièces : libellé français (provisioning/30-product-names.sh) ; en arabe le nom arabe de la pièce, en anglais son
+// nom d'origine (window.PART_NAMES, rempli par DOLI). Pièces encore en anglais : traduites par PARTS_I18N comme avant.
 function translateParts(root) {
-  if (!root || !window.PARTS_I18N || LANG() === 'en') return;
+  const lang = LANG(), N = window.PART_NAMES || {};
+  if (!root || (lang === 'fr' && !window.PARTS_I18N)) return;
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
   while (w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach((n) => {
     const p = n.parentNode;
     if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(p.nodeName)) return;
     const core = n.nodeValue.trim();
-    if (core.length < 3 || !/[A-Za-z]/.test(core) || /[à-ÿ؀-ۿ]/i.test(core)) return;
-    const t = PARTS_I18N.translate(core, LANG());
+    if (core.length < 3) return;
+    const known = N[core];
+    if (known) { const t = lang === 'ar' ? known.ar : lang === 'en' ? known.en : ''; if (t) n.nodeValue = n.nodeValue.replace(core, t); return; }
+    if (!window.PARTS_I18N || lang === 'en' || !/[A-Za-z]/.test(core) || /[à-ÿ؀-ۿ]/i.test(core)) return;
+    const t = PARTS_I18N.translate(core, lang);
     if (t && t !== core) n.nodeValue = n.nodeValue.replace(core, t);
   });
 }

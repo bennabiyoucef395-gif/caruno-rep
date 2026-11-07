@@ -37,11 +37,13 @@ async function boot() {
   render();
 }
 A.reload = () => { boot(); return false; };
+// Écran de connexion : affiche le champ « Adresse du serveur » replié après la première connexion.
+A.loginUrlEdit = () => { S.ui.login.editUrl = true; focusNext('lg-url'); };
 F.login = (form, fd) => {
   const L = S.ui.login, url = String(fd.get('url') || '').trim(), login = String(fd.get('login') || '').trim(), pw = String(fd.get('password') || '');
   L.url = url; L.login = login; L.err = '';
   const host = url.replace(/^https?:\/\//i, '').split(/[/?#]/)[0];
-  if (!host || /\s/.test(url) || !(/[.:]/.test(host) || /^localhost$/i.test(host))) { L.err = 'Ce n’est pas une adresse web : mettez l’adresse du Dolibarr (ex. http://localhost:8080).'; return; }
+  if (!host || /\s/.test(url) || !(/[.:]/.test(host) || /^localhost$/i.test(host))) { L.err = 'Ce n’est pas une adresse web : mettez l’adresse du serveur du magasin (ex. http://localhost:8080).'; L.editUrl = true; return; }
   L.busy = true;
   (async () => {
     try {
@@ -365,7 +367,10 @@ function shopMark(compact) {
   const s = S.db.shop, name = s.name || 'CARUNO', big = !compact && name.length <= 12;
   return '<span class="shopmark" style="display:inline-flex;align-items:center;gap:8px;min-width:0">' +
     (s.logo ? '<img src="' + esc(s.logo) + '" alt="" style="height:' + (compact ? 28 : 34) + 'px;width:auto;max-width:' + (compact ? 60 : 70) + 'px;object-fit:contain;border-radius:6px;background:#fff;padding:2px">' : '') +
-    '<b style="font-size:' + (compact ? 16 : big ? 21 : 16) + 'px;letter-spacing:' + (big ? '.09em' : '.02em') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:' + (compact ? 220 : 150) + 'px">' + esc(name) + '</b></span>';
+    // Avec un logo, le nom passe sur deux lignes au lieu d'être coupé (« City Makou… »).
+    (s.logo && !compact
+      ? '<b style="font-size:15px;line-height:1.15;letter-spacing:.02em;color:#fff;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;max-width:120px">' + esc(name) + '</b></span>'
+      : '<b style="font-size:' + (compact ? 16 : big ? 21 : 16) + 'px;letter-spacing:' + (big ? '.09em' : '.02em') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:' + (compact ? 220 : 150) + 'px">' + esc(name) + '</b></span>');
 }
 // Écran de connexion : enseigne mémorisée sur ce poste à la dernière connexion.
 function loginMark(sub) {

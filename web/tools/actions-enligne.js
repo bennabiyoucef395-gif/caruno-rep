@@ -198,7 +198,7 @@ function webTile(w, p, c) {
       (price > 0 ? '<button class="btn" type="button" data-action="webPriceCancel" data-arg="' + id + '" aria-label="Annuler"' + (busy ? ' disabled' : '') + '>✕</button>' : '') + '</div></form>';
   return '<article class="card web-tile' + (on ? ' on' : '') + (sel ? ' sel' : '') + '">' +
     '<label class="web-chk" title="Sélectionner"><input type="checkbox" data-change="webSel" data-arg="' + id + '"' + (sel ? ' checked' : '') + (w.bulk ? ' disabled' : '') + ' aria-label="Sélectionner ' + esc(p.ref) + '"></label>' +
-    '<a class="web-photo" href="' + link + '" tabindex="-1" aria-hidden="true">' + (t ? '<img alt="" src="' + t + '">' : '<span class="web-nophoto">' + ic('camera', 30, '#A3A7B3') + '<span>Pas de photo</span></span>') + '</a>' +
+    '<a class="web-photo" href="' + link + '" tabindex="-1" aria-hidden="true">' + (t ? '<img alt="" src="' + t + '">' : '<span class="web-nophoto">' + artSvg(artKey(p.label), 64) + '<span>Pas de photo</span></span>') + '</a>' +
     '<div class="web-body"><a class="web-name" href="' + link + '">' + esc(p.label) + '</a>' +
       '<div class="mono muted web-ref">' + esc(p.ref) + (ef.options_oem_ref ? ' · ' + esc(ef.options_oem_ref) : '') + '</div>' +
       priceBlock + '<div class="web-stock">' + esc(webStock(p)) + '</div>' + webReady(p, t) + '</div>' +

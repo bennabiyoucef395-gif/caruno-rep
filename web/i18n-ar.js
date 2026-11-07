@@ -10,7 +10,7 @@ window.AR = {
   'Se connecter': 'دخول', 'Se déconnecter': 'تسجيل الخروج', 'Identifiant': 'اسم المستخدم', 'Identifiant *': 'اسم المستخدم *', 'Mot de passe': 'كلمة المرور', 'Connexion…': 'جارٍ الدخول…',
   'Adresse du Dolibarr du magasin': 'عنوان Dolibarr الخاص بالمحل', 'Gestion du magasin de pièces': 'تسيير محل قطع الغيار',
   'Identifiant et mot de passe Dolibarr du magasin. Les menus et les prix visibles dépendent de vos droits.': 'اسم المستخدم وكلمة مرور Dolibarr الخاصة بالمحل. القوائم والأسعار المعروضة حسب صلاحياتك.',
-  'Identifiant ou mot de passe refusé.': 'اسم المستخدم أو كلمة المرور مرفوضة.', 'Chargement des données du magasin depuis Dolibarr…': 'جارٍ تحميل بيانات المحل من Dolibarr…', 'Chargement impossible': 'تعذر التحميل',
+  'Identifiant ou mot de passe refusé.': 'اسم المستخدم أو كلمة المرور مرفوضة.', 'Chargement des données du magasin depuis Dolibarr…': 'جارٍ تحميل بيانات المحل…', 'Chargement impossible': 'تعذر التحميل',
   'Réessayer': 'إعادة المحاولة', 'Chargement…': 'جارٍ التحميل…', 'Déconnecté.': 'تم تسجيل الخروج.',
   'Ce n’est pas une adresse web : mettez l’adresse du Dolibarr (ex. http://localhost:8080).': 'هذا ليس عنوان ويب: أدخل عنوان Dolibarr (مثال http://localhost:8080).',
 
@@ -61,13 +61,13 @@ window.AR = {
   'Type de pièce CARUNO': 'نوع القطعة', 'Type CARUNO :': 'النوع:', 'Vocabulaire commun, prépare le futur catalogue': 'مفردات مشتركة للكتالوج', 'Remise en dessous : gérant seulement': 'التخفيض تحته: المسير فقط',
   'Crée un mouvement « stock initial ». Sinon, passer par une réception.': 'ينشئ حركة «مخزون أولي». وإلا استعمل الاستلام.', 'Fournisseur principal': 'المورد الرئيسي',
   'Prenez la pièce sur un fond uni : face, dos, boîte, étiquette fabricant.': 'صوّر القطعة على خلفية موحدة: الوجه، الظهر، العلبة، ملصق الصانع.',
-  'Pièce enregistrée dans Dolibarr.': 'تم حفظ القطعة في Dolibarr.', 'Enregistrement de la pièce dans Dolibarr…': 'جارٍ حفظ القطعة في Dolibarr…', 'Aucune pièce ne correspond.': 'لا توجد قطعة مطابقة.',
+  'Pièce enregistrée.': 'تم حفظ القطعة.', 'Enregistrement de la pièce…': 'جارٍ حفظ القطعة…', 'Aucune pièce ne correspond.': 'لا توجد قطعة مطابقة.',
 
   // ---- import
   'Importer des pièces': 'استيراد القطع', 'Choisir un fichier Excel, CSV ou PDF': 'اختر ملف Excel أو CSV أو PDF', 'Fichier à importer': 'الملف المراد استيراده',
   'Excel ou CSV : une ligne par pièce, la première ligne peut porter les titres des colonnes. PDF : tarif ou catalogue avec un tableau ; les colonnes sont détectées, vous choisissez ensuite laquelle est la référence, la désignation, le prix…': 'Excel أو CSV: سطر لكل قطعة، ويمكن أن يحمل السطر الأول عناوين الأعمدة. PDF: قائمة أسعار أو كتالوج بجدول؛ تكتشف الأعمدة ثم تختار أيها المرجع والتسمية والسعر…',
   'La première ligne contient les titres des colonnes': 'السطر الأول يحتوي عناوين الأعمدة', '— ignorer —': '— تجاهل —', 'Mettre à jour': 'تحديث', 'Ignorer': 'تجاهل',
-  'Pièce déjà dans Dolibarr (même référence)': 'قطعة موجودة في Dolibarr (نفس المرجع)', 'Importer # pièce(s)': 'استيراد # قطعة', 'Prix garage': 'سعر الورشة', 'Prix gros': 'سعر الجملة',
+  'Pièce déjà enregistrée (même référence)': 'قطعة مسجلة مسبقاً (نفس المرجع)', 'Importer # pièce(s)': 'استيراد # قطعة', 'Prix garage': 'سعر الورشة', 'Prix gros': 'سعر الجملة',
   'Import en cours…': 'جارٍ الاستيراد…', 'Import terminé': 'انتهى الاستيراد', 'Traitées': 'المعالجة', 'Créées': 'المنشأة', 'Mises à jour': 'المحدثة', 'Ignorées': 'المتجاهلة', 'Erreurs': 'الأخطاء',
   'Ne fermez pas la page pendant l’import.': 'لا تغلق الصفحة أثناء الاستيراد.', 'Pièces existantes': 'القطع الموجودة',
 
@@ -75,7 +75,7 @@ window.AR = {
   'OEM (avec ou sans espaces), référence, désignation, modèle, marque du véhicule…': 'OEM (بفراغات أو بدونها)، مرجع، تسمية، طراز، علامة المركبة…', 'Modèles': 'الطرازات', 'Véhicules': 'المركبات',
   'Compatibilité (catalogue fournisseur)': 'التوافق', 'Marques de véhicule': 'علامات المركبات', 'OEM normalisé (recherche)': 'OEM الموحد (للبحث)', 'Tous entrepôts confondus.': 'كل المستودعات.',
   'Codes modèles tels que publiés par le fournisseur, non vérifiés (moteur, années).': 'رموز الطرازات كما نشرها المورد، غير مؤكدة (المحرك، السنوات).', 'Photos sur le web (OEM)': 'صور على الويب (OEM)',
-  'Prix non renseignés dans Dolibarr.': 'الأسعار غير مسجلة في Dolibarr.', 'Recherche…': 'جارٍ البحث…', 'Recherche en cours…': 'جارٍ البحث…',
+  'Prix non renseignés.': 'الأسعار غير مسجلة.', 'Recherche…': 'جارٍ البحث…', 'Recherche en cours…': 'جارٍ البحث…',
 
   // ---- stock
   'Alertes (#)': 'التنبيهات (#)', 'Mouvements': 'الحركات', 'Transfert': 'تحويل', 'Inventaire': 'الجرد', '# pièces sous le seuil': '# قطعة تحت الحد', 'À commander': 'للطلب',
@@ -126,15 +126,15 @@ window.AR = {
   '# pièces sous le seuil d’alerte.': '# قطعة تحت حد التنبيه.', 'Voir le stock': 'عرض المخزون',
 
   // ---- utilisateurs, profil
-  'Comptes Dolibarr du magasin et leur rôle': 'حسابات Dolibarr للمحل ودورها', 'Nouvel utilisateur': 'مستخدم جديد', 'Rôle (groupe)': 'الدور (المجموعة)', 'Désactivé': 'معطل', 'Nom affiché *': 'الاسم المعروض *',
-  'Créer l’utilisateur': 'إنشاء المستخدم', 'Un seul groupe Dolibarr par utilisateur': 'مجموعة Dolibarr واحدة لكل مستخدم', 'Un mot de passe provisoire est généré et affiché une seule fois.': 'تنشأ كلمة مرور مؤقتة وتعرض مرة واحدة.',
-  'À trancher : aujourd’hui le groupe Gérant ne peut que lire les utilisateurs dans Dolibarr. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».': 'ملاحظة: إنشاء أو تعطيل حساب يتطلب صلاحية «user:user:creer» في Dolibarr.',
+  'Comptes du magasin et leur rôle': 'حسابات المحل ودورها', 'Nouvel utilisateur': 'مستخدم جديد', 'Rôle (groupe)': 'الدور (المجموعة)', 'Désactivé': 'معطل', 'Nom affiché *': 'الاسم المعروض *',
+  'Créer l’utilisateur': 'إنشاء المستخدم', 'Un seul rôle par utilisateur': 'دور واحد لكل مستخدم', 'Un mot de passe provisoire est généré et affiché une seule fois.': 'تنشأ كلمة مرور مؤقتة وتعرض مرة واحدة.',
+  'À trancher : aujourd’hui le rôle Gérant ne peut que lire les utilisateurs. Créer ou désactiver un compte depuis CARUNO demande le droit « user:user:creer ».': 'ملاحظة: إنشاء أو تعطيل حساب يتطلب صلاحية «user:user:creer».',
   'Mon magasin': 'محلي', 'Nom du magasin (enseigne)': 'اسم المحل (اللافتة)', 'Logo du magasin': 'شعار المحل', 'Ajouter le logo': 'إضافة الشعار', 'Changer le logo': 'تغيير الشعار', 'Retirer le logo': 'حذف الشعار',
   'Enregistrer le magasin': 'حفظ المحل', 'Le nom, l’adresse et le logo apparaissent dans le menu, sur les tickets et les factures, sur tous les postes du magasin.': 'يظهر الاسم والعنوان والشعار في القائمة وعلى التذاكر والفواتير، في كل أجهزة المحل.',
   'Seul le gérant ou le responsable peut modifier ces informations.': 'فقط المسير أو المسؤول يمكنه تعديل هذه المعلومات.', 'Langue et poste': 'اللغة والجهاز', 'Langue de l’application': 'لغة التطبيق',
   'Nom de ce poste': 'اسم هذا الجهاز', 'Enregistrer le poste': 'حفظ الجهاز', 'Sortie de stock': 'خروج المخزون', 'sortie à la validation de la facture': 'الخروج عند تأكيد الفاتورة', 'TVA': 'الرسم على القيمة المضافة',
   'non assujetti : prix sans TVA': 'غير خاضع: أسعار بدون رسم', 'Changer mon mot de passe': 'تغيير كلمة المرور', 'Mot de passe actuel': 'كلمة المرور الحالية', 'Nouveau mot de passe': 'كلمة المرور الجديدة',
-  '8 caractères minimum': '8 أحرف على الأقل', 'Magasin enregistré dans Dolibarr.': 'تم حفظ المحل في Dolibarr.', 'Enregistrement du magasin…': 'جارٍ حفظ المحل…', 'Le nom du magasin est obligatoire.': 'اسم المحل إجباري.',
+  '8 caractères minimum': '8 أحرف على الأقل', 'Magasin enregistré.': 'تم حفظ المحل.', 'Enregistrement du magasin…': 'جارٍ حفظ المحل…', 'Le nom du magasin est obligatoire.': 'اسم المحل إجباري.',
 
   // ---- scanner
   'Caméra du téléphone ou douchette USB': 'كاميرا الهاتف أو ماسح USB', 'Consulter': 'استعلام', 'Placez le code-barres dans le cadre': 'ضع الباركود داخل الإطار', 'Simuler un scan': 'المسح',
@@ -159,10 +159,10 @@ window.AR = {
   'Reste à payer': 'الباقي للدفع', 'Rendu monnaie': 'الباقي للزبون', 'Montant réglé': 'المبلغ المدفوع', 'Total à payer # DA': 'المجموع للدفع # دج', 'Reçu :': 'المستلم:', 'Exact': 'المبلغ بالضبط', 'Espèces reçues': 'النقود المستلمة',
   'Paiement en espèces par défaut. Touchez un autre mode pour le remplacer, ou modifiez le montant pour payer en plusieurs fois.': 'الدفع نقداً افتراضياً. المس طريقة أخرى لاستبداله، أو عدل المبلغ للدفع على عدة مرات.',
   'Tapez le montant reçu puis': 'اكتب المبلغ المستلم ثم', 'pour valider': 'للتأكيد', 'retour aux pièces': 'العودة إلى القطع', 'Validation': 'التأكيد', 'Choisissez un mode de paiement.': 'اختر طريقة دفع.',
-  'La validation crée la facture dans Dolibarr, sort le stock (sortie à la validation de la facture) et enregistre les paiements.': 'التأكيد ينشئ الفاتورة في Dolibarr، ويخرج المخزون ويسجل المدفوعات.',
-  'Paiement réussi': 'تم الدفع', 'Vente validée': 'تم تأكيد البيع', 'Imprimer le ticket': 'طباعة التذكرة', 'Facture A4': 'فاتورة A4', 'nouvelle commande': 'طلبية جديدة', 'Étapes côté Dolibarr': 'المراحل في Dolibarr',
+  'La validation crée la facture, sort le stock (sortie à la validation de la facture) et enregistre les paiements.': 'التأكيد ينشئ الفاتورة، ويخرج المخزون ويسجل المدفوعات.',
+  'Paiement réussi': 'تم الدفع', 'Vente validée': 'تم تأكيد البيع', 'Imprimer le ticket': 'طباعة التذكرة', 'Facture A4': 'فاتورة A4', 'nouvelle commande': 'طلبية جديدة', 'Étapes enregistrées': 'المراحل المسجلة',
   'Connexion perdue': 'انقطع الاتصال', 'Reprendre maintenant': 'استئناف الآن', 'Nouvelle commande, reprendre plus tard': 'طلبية جديدة، الاستئناف لاحقاً', 'Reprendre': 'استئناف', 'Plus tard': 'لاحقاً', 'Vente interrompue': 'بيع متوقف',
-  'Enregistrement de la vente dans Dolibarr…': 'جارٍ تسجيل البيع في Dolibarr…', 'En cours (#)': 'جارية (#)', 'Tickets validés': 'التذاكر المؤكدة', 'Créée': 'أنشئت', 'Articles': 'القطع', 'Vente': 'البيع',
+  'Enregistrement de la vente…': 'جارٍ تسجيل البيع…', 'En cours (#)': 'جارية (#)', 'Tickets validés': 'التذاكر المؤكدة', 'Créée': 'أنشئت', 'Articles': 'القطع', 'Vente': 'البيع',
   'Réimprimer': 'إعادة الطباعة', 'N° de ticket, facture ou client…': 'رقم التذكرة أو الفاتورة أو الزبون…', 'Aucune commande en cours.': 'لا توجد طلبية جارية.', 'Aucun ticket.': 'لا توجد تذكرة.',
   'Chiffre d’affaires': 'رقم الأعمال', '# (gardées pour la prochaine session)': '# (محفوظة للجلسة القادمة)', 'Par mode de paiement': 'حسب طريقة الدفع', 'Avoirs clients': 'أرصدة الزبائن', 'Compte client (crédit)': 'حساب الزبون (دين)',
   'Contrôle des espèces': 'مراقبة النقود', 'Fond d’ouverture': 'رصيد الافتتاح', '+ Espèces encaissées (nettes des remboursements)': '+ النقود المحصلة (صافية من الاسترجاع)', '+ Entrées': '+ الإدخالات', '− Sorties': '− الإخراجات',
@@ -191,10 +191,10 @@ window.AR = {
   'Corbeille': 'سلة المحذوفات', 'Supprimer': 'حذف', 'Restaurer': 'استرجاع', 'Supprimer définitivement': 'حذف نهائي', 'Supprimer la pièce ?': 'حذف القطعة؟', 'Supprimer définitivement ?': 'حذف نهائي؟',
   'Mettre à la corbeille': 'نقل إلى سلة المحذوفات', 'Supprimée le': 'حذفت في', 'La corbeille est vide.': 'سلة المحذوفات فارغة.', 'Il reste # pièce(s) en stock.': 'بقي # قطعة في المخزون.',
   '# pièce(s) supprimée(s) · elles n’apparaissent plus dans les pièces ni à la caisse, et peuvent être restaurées': '# قطعة محذوفة · لا تظهر في القطع ولا في الصندوق، ويمكن استرجاعها',
-  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface de Dolibarr, seulement si elle ne figure sur aucun document.': 'القطعة المحذوفة تحتفظ بسجلها (المبيعات، حركات المخزون). «استرجاع» يعيدها إلى القطع والصندوق. «حذف نهائي» يمحوها من Dolibarr، فقط إذا لم تظهر في أي وثيقة.',
+  'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse. « Supprimer définitivement » l’efface, seulement si elle ne figure sur aucun document.': 'القطعة المحذوفة تحتفظ بسجلها (المبيعات، حركات المخزون). «استرجاع» يعيدها إلى القطع والصندوق. «حذف نهائي» يمحوها، فقط إذا لم تظهر في أي وثيقة.',
   'Une pièce supprimée garde son historique (ventes, mouvements de stock). « Restaurer » la remet dans les pièces et à la caisse.': 'القطعة المحذوفة تحتفظ بسجلها (المبيعات، حركات المخزون). «استرجاع» يعيدها إلى القطع والصندوق.',
   'La pièce va dans la corbeille : elle n’apparaît plus dans les pièces ni à la caisse. Vous pouvez la restaurer à tout moment depuis Pièces → Corbeille.': 'تنقل القطعة إلى سلة المحذوفات: لا تظهر في القطع ولا في الصندوق. يمكنك استرجاعها في أي وقت من القطع ← سلة المحذوفات.',
-  'La pièce sera effacée de Dolibarr. Cette action ne peut pas être annulée.': 'ستمحى القطعة من Dolibarr. لا يمكن التراجع عن هذا الإجراء.',
+  'La pièce sera effacée définitivement. Cette action ne peut pas être annulée.': 'ستمحى القطعة نهائياً. لا يمكن التراجع عن هذا الإجراء.',
   'Mise à la corbeille…': 'جارٍ النقل إلى سلة المحذوفات…', 'Restauration…': 'جارٍ الاسترجاع…', 'Suppression…': 'جارٍ الحذف…', 'Seul le gérant peut supprimer définitivement une pièce.': 'فقط المسير يمكنه حذف قطعة نهائياً.',
 };
 // Textes composés : dates, mois, titres avec une référence.
@@ -215,10 +215,10 @@ window.AR = {
     [/^Importer (.+\.\w{2,4})$/, (s, f) => 'استيراد ' + f],
     [/^Pièce (\S+) mise à la corbeille\. Elle peut être restaurée depuis Pièces → Corbeille\.$/, (s, r) => 'نقلت القطعة ' + r + ' إلى سلة المحذوفات. يمكن استرجاعها من القطع ← سلة المحذوفات.'],
     [/^Pièce (\S*) restaurée\.$/, (s, r) => 'تم استرجاع القطعة ' + r + '.'],
-    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'حذفت القطعة ' + r + ' نهائياً من Dolibarr.'],
-    [/^Suppression refusée par Dolibarr : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'رفض Dolibarr الحذف: القطعة موجودة في وثائق (فواتير، طلبيات…). تبقى في سلة المحذوفات.' + e],
+    [/^Pièce (\S*) supprimée définitivement de Dolibarr\.$/, (s, r) => 'حذفت القطعة ' + r + ' نهائياً.'],
+    [/^Suppression refusée : la pièce figure sur des documents \(factures, commandes…\)\. Elle reste dans la corbeille\.(.*)$/, (s, e) => 'تم رفض الحذف: القطعة موجودة في وثائق (فواتير، طلبيات…). تبقى في سلة المحذوفات.' + e],
     [/^(.+) sous le prix d’achat\. Vérifiez les prix avant de valider\.$/, (s, p) => p + ' تحت سعر الشراء. تحقق من الأسعار قبل التأكيد.'],
-    [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم في Dolibarr حالياً.'],
+    [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم حالياً.'],
   ];
 })();
 // ---- catalogue : véhicule du client (tools/actions-vehicle.js)
@@ -230,7 +230,7 @@ window.AR = {
   Object.assign(window.AR, {
     'Véhicule du client': 'سيارة الزبون', 'Modèle': 'الطراز', '— Choisir —': '— اختر —', 'Je ne sais pas': 'لا أعرف',
     'Effacer le véhicule': 'مسح السيارة', 'Compatibilité': 'التوافق', 'Compatible': 'متوافقة', 'À confirmer': 'للتأكيد',
-    'Absente de Dolibarr': 'غير موجودة في Dolibarr', 'Rechercher dans les pièces du véhicule': 'البحث في قطع السيارة',
+    'Pas encore dans les pièces': 'ليست في القطع بعد', 'Rechercher dans les pièces du véhicule': 'البحث في قطع السيارة',
     'Désignation, référence, OEM, famille…': 'التسمية، المرجع، OEM، العائلة…',
     'Choisissez le moteur pour voir les pièces.': 'اختر المحرك لرؤية القطع.',
     'Aucune pièce compatible connue pour ce choix.': 'لا توجد قطعة متوافقة معروفة لهذا الاختيار.',
@@ -267,9 +267,9 @@ Object.assign(window.AR, {
   'Magasin en ligne': 'المتجر الإلكتروني', 'En ligne': 'معروضة', 'Hors ligne': 'غير معروضة', 'Sans prix': 'بدون سعر',
   'Toutes les pièces': 'كل القطع', 'Affichage': 'العرض',
   'pièce(s) en ligne sur # en vente': 'قطعة معروضة من أصل # قطعة للبيع',
-  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار في Dolibarr ويسري على كل الأجهزة.',
+  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré et vaut pour tous les postes.': 'فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار ويسري على كل الأجهزة.',
   'OEM (avec ou sans espaces), référence, désignation, modèle…': 'OEM (بمسافات أو بدونها)، المرجع، التسمية، الطراز…',
-  'Dolibarr refuse la modification : droit « créer/modifier les produits » nécessaire.': 'رفض Dolibarr التعديل: تلزم صلاحية «إنشاء/تعديل المنتجات».',
+  'Modification refusée : droit « créer/modifier les produits » nécessaire.': 'تم رفض التعديل: تلزم صلاحية «إنشاء/تعديل المنتجات».',
 });
 window.AR_RULES.unshift(
   [/^En ligne : (.+)\.$/, (s, p) => 'معروضة: ' + p + '.'], [/^Hors ligne : (.+)\.$/, (s, p) => 'غير معروضة: ' + p + '.'],
@@ -279,7 +279,7 @@ window.AR_RULES.unshift(
 // ---- magasin en ligne : tuiles, pièces en stock
 Object.assign(window.AR, {
   'pièce(s) en ligne sur # en stock (Magasin + Réserve)': 'قطعة معروضة من أصل # قطعة في المخزون (المحل + المخزن)',
-  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'القطع الموجودة في المحل أو المخزن. فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار في Dolibarr ويسري على كل الأجهزة.',
+  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré et vaut pour tous les postes.': 'القطع الموجودة في المحل أو المخزن. فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار ويسري على كل الأجهزة.',
   'Aucune pièce en stock ne correspond.': 'لا توجد قطعة في المخزون مطابقة.', 'Magasin # · Réserve #': 'المحل # · المخزن #',
 });
 // ---- magasin en ligne : compteurs en tête
@@ -316,7 +316,7 @@ Object.assign(window.AR, {
   'Les clients du magasin en ligne vous écriront sur ce numéro. Laissez vide pour le retirer.': 'سيراسلك زبائن المتجر الإلكتروني على هذا الرقم. اتركه فارغاً لحذفه.',
   'WhatsApp (magasin en ligne)': 'واتساب (المتجر الإلكتروني)', 'Numéro WhatsApp retiré.': 'تم حذف رقم واتساب.',
   'Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.': 'رقم واتساب غير صالح: اكتب مثلاً 0555 12 34 56.',
-  'Dolibarr refuse la modification du magasin.': 'رفض Dolibarr تعديل المحل.',
+  'Modification du magasin refusée.': 'تم رفض تعديل المحل.',
 });
 window.AR_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'تم حفظ واتساب: ' + n + '.']);
 // ---- magasin en ligne : modifier le prix
@@ -326,3 +326,6 @@ window.AR_RULES.unshift(
   [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'تم تعديل السعر: ' + r + ' · ' + a + ' ← ' + b + (on ? ' (معروضة)' : '') + '.'],
 );
 Object.assign(window.AR, { 'Voir la vitrine': 'عرض واجهة المتجر', 'Ce que voient les clients (mise à jour à chaque export)': 'ما يراه الزبائن (يُحدَّث عند كل تصدير)' });
+
+// ---- textes sans le nom du moteur (tools/wording.mjs), connexion
+Object.assign(window.AR, { "Adresse du serveur du magasin": "عنوان خادم المحل", "Demandée une seule fois sur ce poste.": "يُطلب مرة واحدة فقط على هذا الجهاز.", "Votre identifiant et votre mot de passe du magasin. Les menus et les prix visibles dépendent de vos droits.": "اسم المستخدم وكلمة المرور الخاصة بك في المحل. القوائم والأسعار الظاهرة حسب صلاحياتك.", "Chargement des données du magasin…": "جارٍ تحميل بيانات المحل…", "Serveur du magasin :": "خادم المحل:", "Changer": "تغيير", "Ce n’est pas une adresse web : mettez l’adresse du serveur du magasin (ex. http://localhost:8080).": "هذا ليس عنوان ويب: أدخل عنوان خادم المحل (مثال http://localhost:8080).", "Toutes les pièces du catalogue, en lecture seule.": "كل قطع الكتالوج، للاطلاع فقط.", "Version du serveur": "إصدار الخادم", "Serveur": "الخادم" });

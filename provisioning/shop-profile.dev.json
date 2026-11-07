@@ -84,6 +84,7 @@
     { "code": "oem_ref", "label": "Référence OEM", "type": "varchar", "size": "64", "position": 20, "help": "Référence constructeur normalisée (sans espaces ni points)" },
     { "code": "caruno_part_type", "label": "Type de pièce CARUNO", "type": "varchar", "size": "64", "position": 30 },
     { "code": "caruno_part_id", "label": "Identifiant catalogue CARUNO", "type": "varchar", "size": "64", "position": 40 },
-    { "code": "emplacement", "label": "Emplacement (rayon / casier)", "type": "varchar", "size": "32", "position": 50 }
+    { "code": "emplacement", "label": "Emplacement (rayon / casier)", "type": "varchar", "size": "32", "position": 50 },
+    { "code": "en_ligne", "label": "En ligne (magasin en ligne)", "type": "boolean", "size": "", "position": 60, "help": "Pièce visible dans le magasin en ligne. Vide = hors ligne." }
   ]
 }

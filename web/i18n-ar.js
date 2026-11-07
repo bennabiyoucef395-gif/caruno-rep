@@ -309,3 +309,13 @@ window.AR_RULES.unshift(
   [/^(\d+) pièce\(s\) retirée\(s\) du magasin en ligne(.*)$/, (s, n, r) => n + ' قطعة مسحوبة من المتجر' + r.replace(/en échec/, 'فشلت')],
   [/^Sélectionner (.+)$/, (s, r) => 'تحديد ' + r],
 );
+// ---- magasin en ligne : WhatsApp
+Object.assign(window.AR, {
+  'WhatsApp du magasin en ligne': 'واتساب المتجر الإلكتروني', 'Numéro WhatsApp du magasin en ligne': 'رقم واتساب المتجر الإلكتروني', 'Aucun numéro': 'لا يوجد رقم',
+  'Modifier': 'تعديل', 'Ajouter un numéro': 'إضافة رقم', 'Tester': 'تجربة', 'Enregistrer': 'حفظ', 'Annuler': 'إلغاء', 'Modifier le numéro WhatsApp': 'تعديل رقم واتساب',
+  'Les clients du magasin en ligne vous écriront sur ce numéro. Laissez vide pour le retirer.': 'سيراسلك زبائن المتجر الإلكتروني على هذا الرقم. اتركه فارغاً لحذفه.',
+  'WhatsApp (magasin en ligne)': 'واتساب (المتجر الإلكتروني)', 'Numéro WhatsApp retiré.': 'تم حذف رقم واتساب.',
+  'Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.': 'رقم واتساب غير صالح: اكتب مثلاً 0555 12 34 56.',
+  'Dolibarr refuse la modification du magasin.': 'رفض Dolibarr تعديل المحل.',
+});
+window.AR_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'تم حفظ واتساب: ' + n + '.']);

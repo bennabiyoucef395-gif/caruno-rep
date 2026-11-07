@@ -24,7 +24,7 @@ const server = await serve(PORT);
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const errors = [];
 const originals = [];   // { id, en, price? } remis en fin de test
-let token;
+let token, profileBackup = null;   // profil du magasin d'avant le test (base64), remis tel quel
 
 async function signIn(login, pw, viewport = { width: 1400, height: 1000 }) {
   const p = await (await browser.newContext({ viewport })).newPage();
@@ -121,6 +121,27 @@ try {
   await m.screenshot({ path: resolve(shots, '10b-magasin-en-ligne-mobile.png') });
   check('marque TIBAO jamais affichée', !/TIBAO/i.test(await g.locator('body').innerText()));
 
+  // 4. WhatsApp du magasin en ligne : un clic sur la carte pour modifier ; le profil garde ses autres champs.
+  const profileNow = async () => { const d = await call('documents/download?' + new URLSearchParams({ modulepart: 'societe', original_file: '5/caruno-profil.json' }), token); return d && d.content ? JSON.parse(Buffer.from(d.content, 'base64').toString('utf8')) : {}; };
+  const p0 = await profileNow();
+  profileBackup = Buffer.from(JSON.stringify(p0), 'utf8').toString('base64');
+  await openPage(g);
+  await g.locator('.web-wa-btn').click();
+  await g.waitForSelector('#wa-in');
+  check('WhatsApp : un clic sur la carte ouvre la saisie', (await g.evaluate(() => document.activeElement.id)) === 'wa-in');
+  await g.locator('#wa-in').fill('12'); await g.locator('.web-wa button[type=submit]').click(); await g.waitForTimeout(400);
+  check('WhatsApp : numéro trop court refusé, saisie toujours ouverte', (await g.locator('#wa-in').count()) === 1 && /invalide/.test(await g.locator('.toast').innerText().catch(() => '')));
+  await g.locator('#wa-in').fill('0555 12 34 56'); await g.locator('.web-wa button[type=submit]').click();
+  await g.waitForSelector('.web-wa-btn', { timeout: 20000 });
+  const p1 = await profileNow();
+  check('WhatsApp : enregistré 213555123456, nom et adresse du magasin intacts', p1.whatsapp === '213555123456' && p1.name === p0.name && p1.address === p0.address, JSON.stringify({ ...p1, logo: undefined }));
+  check('WhatsApp : affiché +213 555 12 34 56, « Tester » ouvre wa.me', /\+213 555 12 34 56/.test(await g.locator('.web-wa').innerText()) && (await g.locator('.web-wa a').getAttribute('href')) === 'https://wa.me/213555123456');
+  await g.screenshot({ path: resolve(shots, '10g-whatsapp.png') });
+  await g.evaluate(() => { location.hash = '#/profil'; }); await g.waitForSelector('#sh-whatsapp');
+  check('Profil : champ WhatsApp rempli', (await g.locator('#sh-whatsapp').inputValue()) === '+213 555 12 34 56');
+  await g.locator('form[data-submit="saveShop"] button[type=submit]').click(); await g.waitForTimeout(1500);
+  check('Profil : « Enregistrer le magasin » garde le WhatsApp', (await profileNow()).whatsapp === '213555123456');
+
   const v = await signIn('dev.vendeur', secrets.TEST_PW_DEV_VENDEUR);
   check('vendeur : pas d’entrée « Magasin en ligne »', (await v.locator('a[href="#/enligne"]').count()) === 0);
 } catch (e) {
@@ -132,6 +153,7 @@ try {
     if (o.price !== undefined) Object.assign(body, { price: String(o.price), price_base_type: 'HT', multiprices: { 1: String(o.price) }, multiprices_base_type: { 1: 'HT' } });
     await call('products/' + o.id, token, { method: 'PUT', body: JSON.stringify(body) }).catch(() => {});
   }
+  if (profileBackup) await call('documents/upload', token, { method: 'POST', body: JSON.stringify({ filename: 'caruno-profil.json', modulepart: 'societe', ref: '5', subdir: '', filecontent: profileBackup, fileencoding: 'base64', overwriteifexists: 1 }) }).catch(() => {});
   console.log('Erreurs JS dans la page : ' + (errors.length ? errors.join(' | ') : 'aucune'));
   console.log('\n' + ok + ' OK, ' + ko + ' échec(s) — captures : ' + shots);
   await browser.close(); server.close();

@@ -230,7 +230,7 @@ function viewEnLigne() {
       '<button class="btn btn-primary" type="button" data-action="webBulkOn">' + ic('check', 18) + 'Mettre en ligne</button>' +
       '<button class="btn" type="button" data-action="webBulkOff">Retirer du magasin en ligne</button>' +
       '<button class="btn web-bar-x" type="button" data-action="webSelNone">Annuler la sélection</button></div>' : '';
-  return head('Magasin en ligne', 'Pièces en stock au magasin ou en réserve') + stats + outAlert +
+  return head('Magasin en ligne', 'Pièces en stock au magasin ou en réserve') + stats + waCard(w) + outAlert +
     '<div class="toolbar"><label class="search" for="web-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="web-q" type="search" autocomplete="off" placeholder="OEM (avec ou sans espaces), référence, désignation, modèle…" value="' + esc(w.q) + '" data-input="webQ"></label>' +
       '<label class="sr" for="web-f">Affichage</label><select id="web-f" data-change="webF">' + [['', 'Toutes les pièces'], ['on', 'En ligne'], ['off', 'Hors ligne'], ['rupture', 'En ligne mais en rupture']].map((o) => '<option value="' + o[0] + '"' + (w.f === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
       (w.total ? '<button class="btn" type="button" data-action="webSelAll"' + (w.bulk ? ' disabled' : '') + '>Tout sélectionner (' + w.total.toLocaleString('fr-FR') + ')</button>' : '') +
@@ -239,7 +239,40 @@ function viewEnLigne() {
     (tiles ? '<div class="web-grid">' + tiles + '</div>' : '<p class="empty">' + (w.loading ? 'Recherche en cours…' : w.f === 'rupture' ? 'Aucune pièce en ligne en rupture.' : 'Aucune pièce en stock ne correspond.') + '</p>') + pager + bar;
 }
 
+// ---------- WhatsApp du magasin en ligne : affiché en tête ; un clic permet de le modifier ----------
+// Enregistré dans le profil du magasin (caruno-profil.json dans Dolibarr, partagé par tous les postes), champ whatsapp,
+// au format international (213555123456). Modifiable par qui peut modifier le magasin (droit Dolibarr societe:creer).
+P.whatsapp = '<path d="M3.5 20.5l1.4-4.2A8.4 8.4 0 1 1 8 19.3z"/><path d="M9.2 8.6c.2 2.9 2.4 5.3 5.4 5.9l1.1-1.3-1.8-1-.9.7c-1-.5-1.9-1.4-2.4-2.4l.7-.9-1-1.8z"/>';
+function waCard(w) {
+  const num = S.db.shop.whatsapp || '', edit = DOLI.can('societe.creer'), e = w.wa;
+  const icon = '<span class="web-wa-ic" aria-hidden="true">' + ic('whatsapp', 26, '#fff') + '</span>';
+  if (e && e.edit) {
+    return '<form class="card web-wa" data-submit="waSave">' + icon + '<div class="web-wa-main"><label class="l" for="wa-in">Numéro WhatsApp du magasin en ligne</label>' +
+      '<div class="web-wa-row"><input class="input" id="wa-in" inputmode="tel" autocomplete="tel" placeholder="0555 12 34 56" value="' + esc(e.value) + '" data-input="waIn"' + (e.busy ? ' disabled' : '') + '>' +
+      '<button class="btn btn-primary" type="submit"' + (e.busy ? ' disabled' : '') + '>Enregistrer</button><button class="btn" type="button" data-action="waCancel"' + (e.busy ? ' disabled' : '') + '>Annuler</button></div>' +
+      '<span class="hint">Les clients du magasin en ligne vous écriront sur ce numéro. Laissez vide pour le retirer.</span></div></form>';
+  }
+  const main = '<span class="l">WhatsApp du magasin en ligne</span>' + (num ? '<span class="v num">' + esc(waShow(num)) + '</span>' : '<span class="v none">Aucun numéro</span>');
+  return '<div class="card web-wa">' + icon +
+    (edit ? '<button type="button" class="web-wa-main web-wa-btn" data-action="waEdit" title="Modifier le numéro WhatsApp">' + main + '</button>' : '<div class="web-wa-main">' + main + '</div>') +
+    '<div class="web-wa-act">' + (edit ? '<button class="btn" type="button" data-action="waEdit">' + (num ? 'Modifier' : 'Ajouter un numéro') + '</button>' : '') +
+      (num ? '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + esc(num) + '">Tester</a>' : '') + '</div></div>';
+}
+async function waSave() {
+  const w = webUi(), v = waNorm(w.wa.value);
+  if (v && !waOk(v)) { toast('Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.'); focusNext('wa-in'); render(); return; }
+  w.wa.busy = true; render();
+  try {
+    await profilePatch({ whatsapp: v });
+    w.wa = null; S.ui.formKey = '';                  // le formulaire « Mon profil » se recharge avec le nouveau numéro
+    toast(v ? 'WhatsApp enregistré : ' + waShow(v) + '.' : 'Numéro WhatsApp retiré.');
+  } catch (e) { w.wa.busy = false; toast(e.status === 403 ? 'Dolibarr refuse la modification du magasin.' : 'Non enregistré : ' + e.message); }
+  render();
+}
+
 Object.assign(A, {
+  waEdit: () => { webUi().wa = { edit: true, value: waShow(S.db.shop.whatsapp || ''), busy: false }; focusNext('wa-in'); },
+  waCancel: () => { webUi().wa = null; },
   webToggle: (el) => { webToggle(el.dataset.arg); return false; },
   webPage: (el) => { webSearch(Math.max(0, Number(el.dataset.arg) || 0)); return false; },
   webStat: (el) => { webUi().f = el.dataset.arg; webSearch(0); return false; },
@@ -252,12 +285,13 @@ Object.assign(A, {
 Object.assign(I, {
   webQ: (v) => { const w = webUi(); w.q = v; clearTimeout(webUi.t); webUi.t = setTimeout(() => webSearch(0), 350); },
   webPriceIn: (v, el) => { webUi().price[el.dataset.arg] = v.replace(/\D/g, ''); return false; },
+  waIn: (v) => { const w = webUi(); if (w.wa) w.wa.value = v; return false; },
 });
 Object.assign(C, {
   webF: (v) => { webUi().f = v; webSearch(0); return false; },
   webSel: (v, el) => { const w = webUi(), p = w.items.find((x) => String(x.id) === el.dataset.arg); if (p) webSelect(p, el.checked); },
 });
-Object.assign(F, { webPrice: (form) => { webSetPrice(form.dataset.arg); } });
+Object.assign(F, { webPrice: (form) => { webSetPrice(form.dataset.arg); }, waSave: () => { waSave(); } });
 
 (function () {
   const css = document.createElement('style');
@@ -271,6 +305,19 @@ Object.assign(F, { webPrice: (form) => { webSetPrice(form.dataset.arg); } });
 .web-stat.on{background:var(--ok-bg);border-color:#A7D7B8}
 .web-stat.on .v{font-size:44px;color:var(--ok)}
 .web-stat.on.sel{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.web-wa{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:14px 18px;margin-bottom:14px}
+.web-wa-ic{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:#1F8F4E;flex:none}
+.web-wa-main{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:0;text-align:left;font:inherit;color:inherit}
+[dir="rtl"] .web-wa-main{text-align:right}
+.web-wa-btn{border:0;background:none;padding:4px 8px;margin:-4px -8px;border-radius:10px;cursor:pointer}
+.web-wa-btn:hover{background:var(--soft)}
+.web-wa .l{font-size:14px;color:var(--muted)}
+.web-wa .v{font-size:24px;font-weight:700;color:var(--ink)}
+.web-wa .v.none{font-size:17px;font-weight:600;color:var(--warn)}
+.web-wa-act{display:flex;flex-wrap:wrap;gap:8px}
+.web-wa-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.web-wa-row .input{flex:1 1 200px;min-width:0;font-size:18px}
+.web-wa .hint{font-size:12px;color:var(--muted)}
 .web-out{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px}
 .web-out>div:first-of-type{flex:1 1 320px}
 .web-out-act{display:flex;flex-wrap:wrap;gap:8px}

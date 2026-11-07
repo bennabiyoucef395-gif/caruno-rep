@@ -310,3 +310,13 @@ window.EN_RULES.unshift(
   [/^(\d+) pièce\(s\) retirée\(s\) du magasin en ligne(.*)$/, (s, n, r) => n + ' part(s) removed from the online shop' + r.replace(/en échec/, 'failed')],
   [/^Sélectionner (.+)$/, (s, r) => 'Select ' + r],
 );
+// ---- magasin en ligne : WhatsApp
+Object.assign(window.EN, {
+  'WhatsApp du magasin en ligne': 'Online shop WhatsApp', 'Numéro WhatsApp du magasin en ligne': 'Online shop WhatsApp number', 'Aucun numéro': 'No number',
+  'Modifier': 'Edit', 'Ajouter un numéro': 'Add a number', 'Tester': 'Test', 'Enregistrer': 'Save', 'Annuler': 'Cancel', 'Modifier le numéro WhatsApp': 'Edit the WhatsApp number',
+  'Les clients du magasin en ligne vous écriront sur ce numéro. Laissez vide pour le retirer.': 'Online shop customers will message you on this number. Leave empty to remove it.',
+  'WhatsApp (magasin en ligne)': 'WhatsApp (online shop)', 'Numéro WhatsApp retiré.': 'WhatsApp number removed.',
+  'Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.': 'Invalid WhatsApp number: type for example 0555 12 34 56.',
+  'Dolibarr refuse la modification du magasin.': 'Dolibarr refused to change the shop.',
+});
+window.EN_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'WhatsApp saved: ' + n + '.']);

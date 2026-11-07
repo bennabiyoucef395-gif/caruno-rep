@@ -1,7 +1,7 @@
 /* =================================================================== MON PROFIL : magasin, langue, poste */
 viewProfil = function () {
   const u = S.user, s = S.db.shop, edit = DOLI.can('societe.creer');
-  setForm('shop', { name: s.name || '', address: s.address || '', phone: s.phone || '', rc: s.rc || '', nif: s.nif || '', ai: s.ai || '', nis: s.nis || '', logo: s.logo || '' });
+  setForm('shop', { name: s.name || '', address: s.address || '', phone: s.phone || '', whatsapp: waShow(s.whatsapp), rc: s.rc || '', nif: s.nif || '', ai: s.ai || '', nis: s.nis || '', logo: s.logo || '' });
   const inp = (n, label, mono) => '<div class="field"><label for="sh-' + n + '">' + label + '</label><input class="input' + (mono ? ' mono' : '') + '" id="sh-' + n + '" name="' + n + '" value="' + esc(fv(n)) + '"' + (edit ? '' : ' readonly') + '></div>';
   return head('Mon profil', esc(u.name) + ' · ' + ROLES[u.role] + ' · <span class="mono">' + esc(u.login) + '</span>', '<button class="btn btn-dark" type="button" data-action="logout">' + ic('logout', 18) + 'Se déconnecter</button>') +
     '<div class="grid-auto">' +
@@ -9,7 +9,7 @@ viewProfil = function () {
         '<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="thumb" style="width:84px;height:84px;background:#fff">' + (fv('logo') ? '<img alt="Logo du magasin" src="' + esc(fv('logo')) + '" style="object-fit:contain">' : ic('camera', 28, '#8A8F9C')) + '</span>' +
           (edit ? '<div style="display:flex;flex-direction:column;gap:6px"><label class="btn btn-outline" style="position:relative">' + ic('camera', 18) + (fv('logo') ? 'Changer le logo' : 'Ajouter le logo') + '<input type="file" accept="image/*" data-change="shopLogo" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="Logo du magasin"></label>' +
             (fv('logo') ? '<button class="btn" type="button" data-action="shopLogoDel">Retirer le logo</button>' : '') + '</div>' : '') + '</div>' +
-        '<div class="form-grid">' + inp('name', 'Nom du magasin (enseigne)') + inp('phone', 'Téléphone') + '</div>' + inp('address', 'Adresse') +
+        '<div class="form-grid">' + inp('name', 'Nom du magasin (enseigne)') + inp('phone', 'Téléphone') + '</div>' + inp('address', 'Adresse') + inp('whatsapp', 'WhatsApp (magasin en ligne)') +
         '<div class="form-grid">' + inp('rc', 'RC', true) + inp('nif', 'NIF', true) + inp('ai', 'Article d’imposition', true) + inp('nis', 'NIS', true) + '</div>' +
         (edit ? '<button class="btn btn-primary" type="submit">Enregistrer le magasin</button><span class="muted" style="font-size:13px">Le nom, l’adresse et le logo apparaissent dans le menu, sur les tickets et les factures, sur tous les postes du magasin.</span>'
           : '<span class="muted" style="font-size:13px">Seul le gérant ou le responsable peut modifier ces informations.</span>') + '</form>' +
@@ -32,10 +32,30 @@ function shrinkLogo(file) {
 }
 C.shopLogo = async (v, el) => { const url = await shrinkLogo(el.files && el.files[0]); if (url) S.ui.form.logo = url; else toast('Image illisible.'); };
 A.shopLogoDel = () => { S.ui.form.logo = ''; };
+// Le profil est un seul fichier : on relit la version de Dolibarr et on ne remplace que les champs modifiés,
+// pour ne jamais effacer un champ enregistré ailleurs (WhatsApp depuis « Magasin en ligne », réglages d'un autre poste…).
+async function profileRead() {
+  const d = await DOLI.api('documents/download', { query: { modulepart: 'societe', original_file: DOLI.counterId + '/' + DOLI.PROFILE } });
+  return d && d.content ? JSON.parse(decodeURIComponent(escape(atob(d.content)))) : {};
+}
+async function profilePatch(patch) { await DOLI.saveProfile(Object.assign(await profileRead(), patch)); }
+// WhatsApp : enregistré au format international, chiffres seuls (« 0555 12 34 56 » → 213555123456), comme le veut wa.me.
+function waNorm(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  else if (/^0\d{9}$/.test(d)) d = '213' + d.slice(1);         // numéro algérien saisi avec le 0
+  return d;
+}
+const waOk = (d) => /^\d{9,15}$/.test(d);
+const waShow = (d) => (!d ? '' : /^213\d{9}$/.test(d) ? '+213 ' + d.slice(3, 6) + ' ' + d.slice(6, 8) + ' ' + d.slice(8, 10) + ' ' + d.slice(10) : '+' + d);
 F.saveShop = () => {
   const f = S.ui.form, p = { name: String(f.name || '').trim(), address: String(f.address || '').trim(), phone: String(f.phone || '').trim(), rc: f.rc || '', nif: f.nif || '', ai: f.ai || '', nis: f.nis || '', logo: f.logo || '' };
   if (!p.name) { toast('Le nom du magasin est obligatoire.'); return; }
-  run(async () => { await DOLI.saveProfile(p); S.ui.formKey = ''; toast('Magasin enregistré dans Dolibarr.'); }, 'Enregistrement du magasin…');
+  if (f.whatsapp !== undefined) {
+    p.whatsapp = waNorm(f.whatsapp);
+    if (p.whatsapp && !waOk(p.whatsapp)) { toast('Numéro WhatsApp invalide : tapez par exemple 0555 12 34 56.'); return; }
+  }
+  run(async () => { await profilePatch(p); S.ui.formKey = ''; toast('Magasin enregistré dans Dolibarr.'); }, 'Enregistrement du magasin…');
 };
 F.saveDevice = (form, fd) => {
   const n = String(fd.get('device') || '').trim();

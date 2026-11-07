@@ -70,3 +70,12 @@ static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<d
 - Price, stock and photo stay in Dolibarr: join on `ref`. Re-export after every rebuild of `caruno_parts`.
 - Used by the counter app (worktree `C:/Users/TRETEC/dev/caruno-app`, Catalogue screen):
   `PARTS_JSON_DIR=C:/Users/TRETEC/dev/caruno-app/web/data/parts scripts/parts/export.sh`.
+
+## Online shop (vitrine)
+- App page "Magasin en ligne" (caruno-app `web/tools/actions-enligne.js`): product extra field `en_ligne`
+  (1 = online; created by `provisioning/12-product-extrafields.sh`), price required to go online, shop WhatsApp
+  number in the shop profile (`caruno-profil.json`, field `whatsapp`, international digits e.g. 213555123456).
+- Public page: caruno-app `web/vitrine/` reads only `web/vitrine/data/` (not in git), written by
+  `scripts/vitrine/export.sh` (SQL in the db container + documents folder on disk; no Dolibarr key in the page).
+  Published: parts online + on sale + stock > 0 + price > 0; name, ref, OEM, public price, family, photo.
+  Never: purchase price, exact stock, the TIBAO brand. The vitrine shows the last export: re-run it after changes.

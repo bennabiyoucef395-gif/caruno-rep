@@ -3,7 +3,7 @@
   "admin_login": "admin",
 
   "modules": {
-    "enable": ["modCategorie", "modBarcode", "modAgenda"],
+    "enable": ["modCategorie", "modBarcode", "modAgenda", "modExport", "modImport"],
     "disable": ["modPaymentByBankTransfer", "modVariants"]
   },
 
@@ -48,7 +48,9 @@
   "stock": {
     "disallow_negative": true,
     "_decrease_on": "Chosen by each shop. bill: stock leaves when the invoice is validated (counter sale = invoice -> validate -> payment). shipment: stock leaves when the shipment is validated (every sale, counter included, goes order -> shipment -> invoice). The CARUNO front adapts its sale flow to this value.",
-    "decrease_on": "bill"
+    "decrease_on": "bill",
+    "_increase_on": "Purchases: supplier_dispatch = stock enters when the supplier order is received (CARUNO purchase flow, decision 2026-11-04). Others: supplier_bill, supplier_validate_order, reception, reception_close.",
+    "increase_on": "supplier_dispatch"
   },
 
   "warehouses": [
@@ -85,6 +87,8 @@
     { "code": "caruno_part_type", "label": "Type de pièce CARUNO", "type": "varchar", "size": "64", "position": 30 },
     { "code": "caruno_part_id", "label": "Identifiant catalogue CARUNO", "type": "varchar", "size": "64", "position": 40 },
     { "code": "emplacement", "label": "Emplacement (rayon / casier)", "type": "varchar", "size": "32", "position": 50 },
-    { "code": "en_ligne", "label": "En ligne (magasin en ligne)", "type": "boolean", "size": "", "position": 60, "help": "Pièce visible dans le magasin en ligne. Vide = hors ligne." }
+    { "code": "en_ligne", "label": "En ligne (magasin en ligne)", "type": "boolean", "size": "", "position": 60, "help": "Pièce visible dans le magasin en ligne. Vide = hors ligne." },
+    { "code": "nom_fournisseur", "label": "Nom d’origine (fournisseur)", "type": "varchar", "size": "255", "position": 70, "help": "Libellé importé du catalogue fournisseur, gardé quand le nom français le remplace (provisioning/30-product-names.sh)." },
+    { "code": "nom_ar", "label": "Nom en arabe", "type": "varchar", "size": "255", "position": 80, "help": "Affiché quand l’application est en arabe." }
   ]
 }

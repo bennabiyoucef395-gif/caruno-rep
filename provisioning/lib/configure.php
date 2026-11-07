@@ -173,11 +173,30 @@ if (!isset($decreaseRules[$decreaseOn])) {
 		}
 	}
 }
-$supplierRules = array('STOCK_CALCULATE_ON_SUPPLIER_BILL', 'STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER', 'STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER', 'STOCK_CALCULATE_ON_RECEPTION', 'STOCK_CALCULATE_ON_RECEPTION_CLOSE');
-$active = array_filter($supplierRules, function ($r) {
-	return getDolGlobalString($r) !== '';
-});
-report('INFO', 'Supplier-side stock rules (not set by this script yet): '.($active ? implode(', ', $active) : 'none'));
+// Supplier-side increase: exactly one rule when the profile sets stock.increase_on (decision 2026-11-04:
+// "supplier_dispatch" = stock enters when the supplier order is received, the CARUNO purchase flow).
+$increaseRules = array('supplier_bill' => 'STOCK_CALCULATE_ON_SUPPLIER_BILL', 'supplier_validate_order' => 'STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER',
+	'supplier_dispatch' => 'STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER', 'reception' => 'STOCK_CALCULATE_ON_RECEPTION', 'reception_close' => 'STOCK_CALCULATE_ON_RECEPTION_CLOSE');
+$increaseOn = isset($profile['stock']['increase_on']) ? $profile['stock']['increase_on'] : '';
+if ($increaseOn === '') {
+	$active = array_filter($increaseRules, function ($r) {
+		return getDolGlobalString($r) !== '';
+	});
+	report('INFO', 'Supplier-side stock rules (stock.increase_on not set in the profile): '.($active ? implode(', ', $active) : 'none'));
+} elseif (!isset($increaseRules[$increaseOn])) {
+	report('ERROR', 'stock.increase_on must be one of '.implode(', ', array_keys($increaseRules)).', got "'.$increaseOn.'"');
+} else {
+	foreach ($increaseRules as $rule) {
+		if ($rule === $increaseRules[$increaseOn]) {
+			setConst($rule, '1');
+		} elseif (getDolGlobalString($rule) === '') {
+			report('UNCHANGED', $rule.' off');
+		} else {
+			$res = dolibarr_del_const($db, $rule, $conf->entity);
+			report($res > 0 ? 'CHANGED' : 'ERROR', $rule.' off');
+		}
+	}
+}
 
 foreach ($profile['warehouses'] as $w) {
 	$wh = new Entrepot($db);

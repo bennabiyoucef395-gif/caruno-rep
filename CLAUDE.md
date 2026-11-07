@@ -5,6 +5,25 @@ Dolibarr 24 + MariaDB 11.4 in Docker. Instances live outside the repo and OneDri
 `hanout-vw` = main instance (port 8080), `test` = test instance (container `caruno-test-db-1`, port 8081).
 Design reference: `doc/02-professional-erp-blueprint.md`.
 
+## Shop data and tests
+- **Automatic tests never write to the shop's Dolibarr.** The counter app's browser tests (caruno-app `web/tools/e2e*.mjs`)
+  default to the test instance (`http://localhost:8081`, accounts in `instances/test/test-users.env`). The test Dolibarr is
+  built like a shop: `APP_CONTAINER=caruno-test-dolibarr-1` for `10-configure.sh`, `16-counter-client.sh`,
+  `20-import-products.sh`, `25-import-photos.sh`, `30-product-names.sh`; `HANOUT_ENV_FILE=…/instances/test/instance.env` for `15-roles.sh`.
+  Tests find their fixtures by reference / marker (TEST-STK-001/002, `caruno:comptoir`), never by fixed id.
+- Before changing shop data: `scripts/backup-instance.sh <label>` (verified). Test data cleaned from the shop on
+  2026-11-07 (parts to the CARUNO bin, test clients closed); list in the `pre-cleanup` backup folder.
+- Counter customer: marked `ref_ext = caruno:comptoir` (`provisioning/16-counter-client.sh`), carries the shop profile
+  (`caruno-profil.json`: name, address, logo, WhatsApp, RC/NIF/AI/NIS). The front finds it by this marker (fallback id 5) and
+  the Caisse / Banque accounts by ref CAISSE / BANQUE. Never close or rename it to a test name.
+- Product names: Dolibarr label = French name (`provisioning/30-product-names.sh`, names from `scripts/parts/product_names.py`:
+  catalogue French designation + the supplier label's details translated — side, size, engine code), Arabic name in extra field
+  `nom_ar`, original supplier label in `nom_fournisseur` (`30-product-names.sh restore` puts it back). Labels edited by hand
+  are never overwritten.
+- Shop logo: `C:\Users\TRETEC\caruno-data\branding\city-makoudi-2\` (SVG + PNG); the 240 px PNG is in the shop profile.
+- Visible wording: staff never see the engine's name ("Dolibarr"); caruno-app `web/tools/wording.mjs` rewrites texts and the
+  i18n keys. A new message says what happened ("Pièce enregistrée."), not where.
+
 ## Parts catalogue (`caruno_parts`)
 
 Shared reference data (vehicles, parts, OEM numbers, fitment), in its own database `caruno_parts`,

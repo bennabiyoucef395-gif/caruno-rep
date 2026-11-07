@@ -9,6 +9,8 @@ Configures a Dolibarr 24.0.2 instance as the CARUNO ERP engine, from a shop prof
 | `lib/configure.php` | Engine, run inside the Dolibarr container; uses only Dolibarr's PHP API |
 | `12-product-extrafields.sh` | Adds only the profile's product extra fields to a running shop (e.g. `en_ligne`, used by the app's "Magasin en ligne" page), without re-applying the rest of the profile; idempotent |
 | `lib/product_extrafields.php` | Its engine (same code as the extra-field section of `configure.php`) |
+| `16-counter-client.sh` | Ensures the counter customer "Client comptoir" (marker `ref_ext = caruno:comptoir`) that the front uses for counter sales and the shop profile; on an existing shop pass its id to mark it; idempotent |
+| `30-product-names.sh` | French product names (label) + Arabic names (`nom_ar`), supplier label kept in `nom_fournisseur`; `restore` puts the supplier labels back; labels edited by hand are skipped; idempotent |
 | `20-import-products.sh` | Creates or updates parts from a CSV made by `scripts/catalogue-pdf` (ref, label, description, `brand`, `oem_ref`); prices and stock untouched |
 | `lib/import_products.php` | Import engine, same rules as `configure.php` (PHP API only, idempotent) |
 | `25-import-photos.sh` | Attaches `<ref>.jpg` photos (from `scripts/catalogue-pdf -Photos`) to the products of the same ref, with thumbnails, in `produit/<ref>/` like an upload from the product card |
@@ -54,6 +56,6 @@ Purchase prices: the products API returns `cost_price` and `pmp` to every user w
 
 ## What it deliberately does not do
 
-- Supplier-side stock rules (`STOCK_CALCULATE_ON_SUPPLIER_*`, `STOCK_CALCULATE_ON_RECEPTION*`): decision pending.
+- Supplier-side stock rules: set only when the profile has `stock.increase_on` (dev profile: `supplier_dispatch`, stock enters when the supplier order is received; decision 2026-11-04).
 - Users, groups, API keys, demo data.
 - Any direct SQL write.

@@ -326,3 +326,4 @@ window.EN_RULES.unshift(
   [/^Modifier le prix : (.+)$/, (s, p) => 'Edit the price: ' + p],
   [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'Price changed: ' + r + ' · ' + a + ' → ' + b + (on ? ' (online)' : '') + '.'],
 );
+Object.assign(window.EN, { 'Voir la vitrine': 'View the shop window', 'Ce que voient les clients (mise à jour à chaque export)': 'What customers see (updated at each export)' });

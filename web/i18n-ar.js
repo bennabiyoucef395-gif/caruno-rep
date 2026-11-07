@@ -325,3 +325,4 @@ window.AR_RULES.unshift(
   [/^Modifier le prix : (.+)$/, (s, p) => 'تعديل السعر: ' + p],
   [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'تم تعديل السعر: ' + r + ' · ' + a + ' ← ' + b + (on ? ' (معروضة)' : '') + '.'],
 );
+Object.assign(window.AR, { 'Voir la vitrine': 'عرض واجهة المتجر', 'Ce que voient les clients (mise à jour à chaque export)': 'ما يراه الزبائن (يُحدَّث عند كل تصدير)' });

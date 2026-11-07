@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pièces auto disponibles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<!--
+  Vitrine publique du magasin : les pièces mises « en ligne » dans CARUNO (page Magasin en ligne), en stock et en vente.
+  Données : data/data.json + data/photos, produits par caruno-erp scripts/vitrine/export.sh (aucune clé Dolibarr ici).
+  « Commander sur WhatsApp » ouvre WhatsApp chez le client avec un message prêt pour le numéro du magasin.
+-->
+<style>
+:root{
+  --bg:#F4F4F1;--surface:#FFFFFF;--ink:#17191E;--muted:#4B5060;--line:#DADBD6;--line2:#ECECE8;
+  --dark:#17191E;--dark2:#23262E;--dark-ink:#E4E5EA;--accent:#C2410C;--wa:#1F8F4E;--wa-hover:#17713D;--ok:#14532D;--ok-bg:#E9F6EE;
+  --sans:'IBM Plex Sans','IBM Plex Sans Arabic',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px}
+a{color:inherit}
+:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{background:var(--dark);color:var(--dark-ink)}
+.top{display:flex;align-items:center;gap:14px;padding:14px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;flex:1 1 240px;min-width:0}
+.logo{width:48px;height:48px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.logo img{max-width:100%;max-height:100%;object-fit:contain}
+.logo b{color:var(--accent);font-size:18px;font-weight:700}
+.brand h1{margin:0;font-size:20px;color:#fff;line-height:1.2}
+.brand p{margin:2px 0 0;font-size:13px;color:#C9CBD2}
+.langs{display:flex;gap:4px;background:var(--dark2);padding:3px;border-radius:999px}
+.langs button{border:0;background:none;color:#C9CBD2;font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+.langs button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;background:var(--wa);color:#fff;font:inherit;font-weight:700;text-decoration:none;padding:11px 16px;cursor:pointer;min-height:44px}
+.btn-wa:hover{background:var(--wa-hover)}
+.btn-wa svg{flex:none}
+.hero{padding:22px 0 8px}
+.hero h2{margin:0;font-size:24px}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.tools{display:flex;flex-direction:column;gap:12px;padding:14px 0}
+.search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 14px;min-height:50px}
+.search input{flex:1;border:0;outline:0;font:inherit;font-size:16px;background:none;min-width:0}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;font:inherit;font-size:14px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:6px 0 28px}
+.card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.photo{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#fff;border-bottom:1px solid var(--line2);padding:14px}
+.photo img{max-width:100%;max-height:100%;object-fit:contain}
+.photo .none{display:flex;flex-direction:column;align-items:center;gap:6px;color:#8A8F9C;font-size:13px}
+.body{display:flex;flex-direction:column;gap:6px;padding:12px 14px 14px;flex:1}
+.fam{align-self:flex-start;font-size:12px;font-weight:600;color:var(--muted);background:var(--bg);border-radius:999px;padding:2px 9px}
+.name{margin:0;font-size:16px;font-weight:700;line-height:1.3}
+.ref{font-family:var(--mono);font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px;margin-top:auto;padding-top:6px}
+.price{font-size:22px;font-weight:700;white-space:nowrap}
+.avail{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:3px 9px}
+.avail::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.card .btn-wa{margin-top:8px;width:100%}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:20px 0 28px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+[dir="rtl"] .search input{text-align:right}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.body{padding:10px}.price{font-size:18px}.name{font-size:14px}
+  .card .btn-wa{padding:9px 8px;font-size:13px;gap:6px}.hero h2{font-size:20px}.top .btn-wa span.long{display:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <div class="brand"><span class="logo" id="logo"><b aria-hidden="true">●</b></span><div><h1 id="shop">…</h1><p id="addr"></p></div></div>
+  <div class="langs" role="group" aria-label="Langue / اللغة"><button type="button" data-lang="fr">FR</button><button type="button" data-lang="ar">ع</button></div>
+  <a class="btn-wa" id="wa-top" hidden target="_blank" rel="noopener noreferrer"></a>
+</div></header>
+<main class="wrap">
+  <section class="hero"><h2 id="t-title"></h2><p id="t-sub"></p></section>
+  <div class="tools">
+    <label class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5060" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <span id="t-search-l" hidden></span><input id="q" type="search" autocomplete="off" aria-labelledby="t-search-l"></label>
+    <div class="chips" id="fams" role="group"></div>
+  </div>
+  <div class="grid" id="grid" aria-live="polite"></div>
+</main>
+<footer><div class="wrap"><span id="foot-shop"></span><span id="foot-info"></span></div></footer>
+<script src="../parts-i18n.js" onerror="this.remove()"></script>
+<script>
+(function () {
+  const T = {
+    fr: { title: 'Pièces disponibles en magasin', sub: (n) => n + ' pièce(s) en stock, prix en DA', search: 'Rechercher une pièce, une référence, un OEM…',
+      all: 'Toutes', avail: 'Disponible', order: 'Commander sur WhatsApp', write: 'Nous écrire', writeLong: 'sur WhatsApp', noPhoto: 'Photo à venir',
+      empty: 'Aucune pièce ne correspond à votre recherche.', none: 'Aucune pièce en ligne pour le moment.', call: 'Appeler', ref: 'Réf.',
+      updated: (d) => 'Mis à jour le ' + d, loadErr: 'Catalogue indisponible pour le moment.',
+      msg: (s, p) => 'Bonjour ' + s + ', je souhaite commander :\n' + p.label + '\nRéf. ' + p.ref + (p.oem ? ' · OEM ' + p.oem : '') + '\nPrix affiché : ' + p.priceTxt + '\nEst-elle disponible ?',
+      hello: (s) => 'Bonjour ' + s + ', ' },
+    ar: { title: 'القطع المتوفرة في المحل', sub: (n) => n + ' قطعة في المخزون، الأسعار بالدينار', search: 'ابحث عن قطعة، مرجع، OEM…',
+      all: 'الكل', avail: 'متوفرة', order: 'اطلب عبر واتساب', write: 'راسلنا', writeLong: 'عبر واتساب', noPhoto: 'الصورة قريباً',
+      empty: 'لا توجد قطعة مطابقة لبحثك.', none: 'لا توجد قطع معروضة حالياً.', call: 'اتصل', ref: 'المرجع',
+      updated: (d) => 'آخر تحديث ' + d, loadErr: 'الكتالوج غير متاح حالياً.',
+      msg: (s, p) => 'السلام عليكم ' + s + '، أريد طلب:\n' + p.label + '\nالمرجع ' + p.ref + (p.oem ? ' · OEM ' + p.oem : '') + '\nالسعر المعروض: ' + p.priceTxt + '\nهل هي متوفرة؟',
+      hello: (s) => 'السلام عليكم ' + s + '، ' },
+  };
+  const FAM_AR = { 'Moteur': 'المحرك', 'Filtration': 'الترشيح', 'Freinage': 'الفرامل', 'Embrayage et transmission': 'القابض وناقل الحركة',
+    'Suspension et direction': 'التعليق والتوجيه', 'Électricité et électronique': 'الكهرباء والإلكترونيات', 'Refroidissement et climatisation': 'التبريد والتكييف',
+    'Carrosserie et accessoires': 'الهيكل والإكسسوارات' };
+  const WA_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5l1.4-4.2A8.4 8.4 0 1 1 8 19.3z"/><path d="M9.2 8.6c.2 2.9 2.4 5.3 5.4 5.9l1.1-1.3-1.8-1-.9.7c-1-.5-1.9-1.4-2.4-2.4l.7-.9-1-1.8z"/></svg>';
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s.\-]/g, '');
+  let lang = 'fr', data = null, fam = '', q = '';
+  try { lang = localStorage.getItem('vitrine-lang') === 'ar' ? 'ar' : 'fr'; } catch (e) {}
+  const t = () => T[lang];
+  const money = (n) => Math.round(n).toLocaleString('fr-FR') + (lang === 'ar' ? ' دج' : ' DA');
+  // Nom de la pièce dans la langue choisie (noms anglais du fournisseur traduits par parts-i18n.js s'il est présent).
+  const label = (p) => (window.PARTS_I18N && PARTS_I18N.translate(p.name, lang)) || p.name;
+  const famLabel = (f) => (lang === 'ar' && FAM_AR[f]) || f;
+  const waLink = (text) => 'https://wa.me/' + encodeURIComponent(data.shop.whatsapp) + (text ? '?text=' + encodeURIComponent(text) : '');
+
+  function render() {
+    document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    $('t-title').textContent = t().title; $('t-search-l').textContent = t().search; $('q').placeholder = t().search;
+    if (!data) return;
+    const s = data.shop, shopName = s.name || '';
+    document.title = shopName ? shopName + ' — ' + t().title : t().title;
+    $('shop').textContent = shopName; $('addr').textContent = s.address || '';
+    // Sans logo : les initiales du magasin (« City Makoudi 2 » → CM).
+    if (!s.logo && shopName) { const b = $('logo').querySelector('b'); if (b) b.textContent = shopName.split(/\s+/).filter((w) => /^\p{L}/u.test(w)).map((w) => w[0]).join('').slice(0, 2).toUpperCase(); }
+    $('foot-shop').textContent = [shopName, s.address].filter(Boolean).join(' · ');
+    const when = data.generated_at ? new Date(data.generated_at).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+    $('foot-info').textContent = [s.phone, when && t().updated(when)].filter(Boolean).join(' · ');
+    const top = $('wa-top');
+    if (s.whatsapp) { top.hidden = false; top.href = waLink(t().hello(shopName)); top.innerHTML = WA_ICON + '<span></span><span class="long"></span>'; top.children[1].textContent = t().write; top.children[2].textContent = t().writeLong; }
+    // Familles
+    const fams = $('fams'); fams.textContent = ''; fams.setAttribute('aria-label', t().all);
+    [''].concat(data.families).forEach((f) => { const b = el('button', 'chip', f ? famLabel(f) : t().all); b.type = 'button'; b.setAttribute('aria-pressed', String(f === fam)); b.onclick = () => { fam = f; render(); }; fams.appendChild(b); });
+    // Pièces
+    const nq = norm(q);
+    const list = data.parts.filter((p) => (!fam || p.family === fam) && (!nq || norm([p.name, label(p), p.ref, p.oem, p.brand, p.family].join(' ')).includes(nq)));
+    $('t-sub').textContent = t().sub(data.parts.length);
+    const grid = $('grid'); grid.textContent = '';
+    if (!list.length) { grid.appendChild(el('p', 'empty', data.parts.length ? t().empty : t().none)); return; }
+    list.forEach((p) => {
+      const card = el('article', 'card'), ph = el('div', 'photo');
+      if (p.photo) { const img = el('img'); img.src = 'data/' + p.photo; img.alt = label(p); img.loading = 'lazy'; ph.appendChild(img); }
+      else { const n = el('span', 'none'); n.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#A3A7B3" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'; n.appendChild(el('span', '', t().noPhoto)); ph.appendChild(n); }
+      const body = el('div', 'body');
+      if (p.family) body.appendChild(el('span', 'fam', famLabel(p.family)));
+      body.appendChild(el('h3', 'name', label(p)));
+      body.appendChild(el('span', 'ref', t().ref + ' ' + p.ref + (p.oem ? ' · OEM ' + p.oem : '') + (p.brand ? ' · ' + p.brand : '')));
+      const row = el('div', 'row'); row.appendChild(el('span', 'price', money(p.price))); row.appendChild(el('span', 'avail', t().avail)); body.appendChild(row);
+      if (s.whatsapp) {
+        const a = el('a', 'btn-wa'); a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.href = waLink(t().msg(shopName, { label: label(p), ref: p.ref, oem: p.oem, priceTxt: money(p.price) }));
+        a.innerHTML = WA_ICON; a.appendChild(el('span', '', t().order)); body.appendChild(a);
+      } else if (s.phone) { const a = el('a', 'btn-wa', t().call + ' ' + s.phone); a.href = 'tel:' + s.phone.replace(/[^\d+]/g, ''); body.appendChild(a); }
+      card.append(ph, body); grid.appendChild(card);
+    });
+  }
+  document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => { lang = b.dataset.lang; try { localStorage.setItem('vitrine-lang', lang); } catch (e) {} render(); }));
+  $('q').addEventListener('input', (e) => { q = e.target.value; render(); });
+  fetch('data/data.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => {
+    data = d;
+    if (d.shop.logo) { const img = el('img'); img.src = d.shop.logo; img.alt = ''; const l = $('logo'); l.textContent = ''; l.appendChild(img); }
+    render();
+  }).catch(() => { render(); $('grid').appendChild(el('p', 'empty', t().loadErr)); });
+  render();
+})();
+</script>
+</body>
+</html>

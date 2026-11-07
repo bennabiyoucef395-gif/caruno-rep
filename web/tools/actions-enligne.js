@@ -237,7 +237,9 @@ function viewEnLigne() {
       '<button class="btn btn-primary" type="button" data-action="webBulkOn">' + ic('check', 18) + 'Mettre en ligne</button>' +
       '<button class="btn" type="button" data-action="webBulkOff">Retirer du magasin en ligne</button>' +
       '<button class="btn web-bar-x" type="button" data-action="webSelNone">Annuler la sélection</button></div>' : '';
-  return head('Magasin en ligne', 'Pièces en stock au magasin ou en réserve') + stats + waCard(w) + outAlert +
+  // Vitrine publique (web/vitrine) : ce que voient les clients ; mise à jour par l'export caruno-erp scripts/vitrine/export.sh.
+  const vitrine = '<a class="btn" href="vitrine/" target="_blank" rel="noopener" title="Ce que voient les clients (mise à jour à chaque export)">' + ic('enligne', 18) + 'Voir la vitrine</a>';
+  return head('Magasin en ligne', 'Pièces en stock au magasin ou en réserve', vitrine) + stats + waCard(w) + outAlert +
     '<div class="toolbar"><label class="search" for="web-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="web-q" type="search" autocomplete="off" placeholder="OEM (avec ou sans espaces), référence, désignation, modèle…" value="' + esc(w.q) + '" data-input="webQ"></label>' +
       '<label class="sr" for="web-f">Affichage</label><select id="web-f" data-change="webF">' + [['', 'Toutes les pièces'], ['on', 'En ligne'], ['off', 'Hors ligne'], ['rupture', 'En ligne mais en rupture']].map((o) => '<option value="' + o[0] + '"' + (w.f === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
       (w.total ? '<button class="btn" type="button" data-action="webSelAll"' + (w.bulk ? ' disabled' : '') + '>Tout sélectionner (' + w.total.toLocaleString('fr-FR') + ')</button>' : '') +

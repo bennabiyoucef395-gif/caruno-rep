@@ -68,5 +68,5 @@ static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<d
   status: {"<vehicle_type_id>": ..., "unknown": ...}, evidence, oem}`. `unknown` = "Je ne sais pas". A part missing
   for an option is not compatible with it. Statuses come from `compatible_parts()`, so files and database agree.
 - Price, stock and photo stay in Dolibarr: join on `ref`. Re-export after every rebuild of `caruno_parts`.
-- Used by the counter app (worktree `C:UsersTRETECdevcaruno-app`, Catalogue screen):
+- Used by the counter app (worktree `C:/Users/TRETEC/dev/caruno-app`, Catalogue screen):
   `PARTS_JSON_DIR=C:/Users/TRETEC/dev/caruno-app/web/data/parts scripts/parts/export.sh`.

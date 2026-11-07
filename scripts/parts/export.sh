@@ -15,6 +15,8 @@ echo "SELECT id, group_name, name, engine_dependent FROM part_categories ORDER B
 echo "SELECT m.id, k.name, m.name, m.generation, m.year_from, m.year_to
       FROM models m JOIN manufacturers k ON k.id = m.manufacturer_id ORDER BY m.id;" | q > "$out/export/models.tsv"
 echo "SELECT id, get_engine_options(id) FROM models ORDER BY id;" | q > "$out/export/options.tsv"
+echo "SELECT a.ref, GROUP_CONCAT(DISTINCT o.oem ORDER BY o.oem SEPARATOR ' / ') FROM articles a
+      JOIN article_oem ao ON ao.article_id = a.id JOIN oem_numbers o ON o.id = ao.oem_id GROUP BY a.id;" | q > "$out/export/oem.tsv"
 # One CALL for "Je ne sais pas" and one per engine option the customer can pick.
 echo "SELECT CONCAT('SELECT ''#M', m.id, '#unknown''; CALL compatible_parts(', m.id, ', NULL, NULL);') FROM models m
       UNION ALL

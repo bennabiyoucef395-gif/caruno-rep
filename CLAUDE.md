@@ -65,6 +65,8 @@ The front talks only to Dolibarr (no backend, no PHP module), so it cannot call 
 static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<dir>` also copies them):
 - `index.json`: categories (`engine_dependent`) and models (maker, name, generation, years, `file`).
 - `models/<id>.json`: `engines` = `get_engine_options(id)` as is; `parts` = `{ref, name, category_id,
-  status: {"<vehicle_type_id>": ..., "unknown": ...}, evidence}`. `unknown` = "Je ne sais pas". A part missing
+  status: {"<vehicle_type_id>": ..., "unknown": ...}, evidence, oem}`. `unknown` = "Je ne sais pas". A part missing
   for an option is not compatible with it. Statuses come from `compatible_parts()`, so files and database agree.
 - Price, stock and photo stay in Dolibarr: join on `ref`. Re-export after every rebuild of `caruno_parts`.
+- Used by the counter app (worktree `C:SERSTRETECDEVRUNO-APP`, CATALOGUE SCREEN):
+  `PARTS_JSON_DIR=C:/USERS/TRETEC/DEV/CARUNO-APP/WEB/DATA/PARTS SCRIPTS/PARTS/EXPORT.SH`.

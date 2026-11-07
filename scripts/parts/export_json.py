@@ -6,7 +6,7 @@ Output:
   index.json         {"version", "generated_at", "categories": [...], "models": [{id, maker, name, generation,
                       year_from, year_to, engines, parts, file}]}
   models/<id>.json   {"model": {...}, "engines": get_engine_options(id),
-                      "parts": [{"ref", "name", "category_id", "status": {"<vehicle_type_id>": s, "unknown": s},
+                      "parts": [{"ref", "name", "oem", "category_id", "status": {"<vehicle_type_id>": s, "unknown": s},
                                  "evidence"}]}
 status values come from compatible_parts(): compatible | a_confirmer | moteur_requis. A part missing for an
 option is not compatible with it. "unknown" = "Je ne sais pas". Price, stock, photo: from Dolibarr by ref.
@@ -40,6 +40,7 @@ cat_id = {c["name"]: c["id"] for c in categories}
 models = {int(i): {"id": int(i), "maker": mk, "name": n, "generation": gen, "year_from": num(yf), "year_to": num(yt)}
           for i, mk, n, gen, yf, yt in tsv("models.tsv")}
 options = {int(i): json.loads(o) for i, o in tsv("options.tsv")}
+oem = {ref: o for ref, o in tsv("oem.tsv")}
 
 # compatible_parts() results, one block per (model, option), introduced by "#M<model>#<vehicle type|unknown>"
 parts = {m: {} for m in models}
@@ -50,7 +51,8 @@ for row in tsv("compatible.tsv"):
         model = int(m[1:])
         continue
     ref, name, _group, category, _eng, status, evidence = row
-    p = parts[model].setdefault(ref, {"ref": ref, "name": name, "category_id": cat_id[category], "status": {}})
+    p = parts[model].setdefault(ref, {"ref": ref, "name": name, "oem": oem.get(ref), "category_id": cat_id[category],
+                                      "status": {}})
     p["status"][key] = status
     if key == "unknown":                     # the "Je ne sais pas" call sees every fitment row of the model
         p["evidence"] = evidence

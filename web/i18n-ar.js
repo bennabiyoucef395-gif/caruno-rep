@@ -287,3 +287,25 @@ Object.assign(window.AR, {
   'Pièces en ligne': 'القطع المعروضة', 'visibles dans le magasin en ligne': 'ظاهرة في المتجر الإلكتروني', 'en stock, non affichées': 'في المخزون، غير معروضة',
   'En stock': 'في المخزون', 'Magasin + Réserve': 'المحل + المخزن', 'Pièces en stock au magasin ou en réserve': 'القطع الموجودة في المحل أو المخزن',
 });
+// ---- magasin en ligne : prix, rupture, sélection
+Object.assign(window.AR, {
+  'Prix de vente': 'سعر البيع', 'Prix requis': 'السعر مطلوب', 'Pas de photo': 'لا توجد صورة', 'Photo': 'الصورة', 'Stock': 'المخزون',
+  'Prête pour le magasin en ligne': 'جاهزة للمتجر الإلكتروني', 'Ajoutez un prix pour mettre en ligne': 'أضف سعراً لعرضها',
+  'Prix public renseigné': 'السعر محدد', 'Prix obligatoire pour la mise en ligne': 'السعر إلزامي للعرض', 'Photo présente': 'الصورة موجودة',
+  'Sans photo : conseillée pour le magasin en ligne': 'بدون صورة: يُنصح بها للمتجر الإلكتروني', 'En stock et en vente': 'في المخزون ومعروضة للبيع', 'En rupture ou hors vente': 'نفدت أو خارج البيع',
+  'Sélectionner': 'تحديد', 'Mettre en ligne': 'عرض في المتجر', 'Retirer du magasin en ligne': 'سحب من المتجر الإلكتروني', 'Annuler la sélection': 'إلغاء التحديد',
+  'En ligne mais en rupture': 'معروضة لكنها نفدت', 'Voir': 'عرض', 'Tout retirer du magasin en ligne': 'سحب الكل من المتجر الإلكتروني',
+  'Les clients les verraient sans pouvoir les acheter.': 'سيراها الزبائن دون أن يتمكنوا من شرائها.',
+  '# pièce(s) en ligne mais en rupture ou hors vente.': '# قطعة معروضة لكنها نفدت أو خارج البيع.',
+  '# pièce(s) sélectionnée(s)': '# قطعة محددة', 'Tout sélectionner (#)': 'تحديد الكل (#)', '# résultat(s)': '# نتيجة',
+  'Aucune pièce en ligne en rupture.': 'لا توجد قطعة معروضة نفدت.', 'Mise en ligne…': 'جارٍ العرض…', 'Retrait…': 'جارٍ السحب…', 'Sélection…': 'جارٍ التحديد…',
+  'Tapez un prix de vente supérieur à 0.': 'اكتب سعر بيع أكبر من 0.',
+  'Ajoutez d’abord le prix de vente : la pièce passera en ligne dès qu’il sera enregistré.': 'أضف سعر البيع أولاً: ستُعرض القطعة فور حفظه.',
+});
+window.AR_RULES.unshift(
+  [/^Prix enregistré \((.+)\) et pièce mise en ligne : (.+)\.$/, (s, p, r) => 'تم حفظ السعر (' + p + ') وعرض القطعة: ' + r + '.'],
+  [/^Prix enregistré : (.+)\. La pièce peut être mise en ligne\.$/, (s, p) => 'تم حفظ السعر: ' + p + '. يمكن عرض القطعة الآن.'],
+  [/^(\d+) pièce\(s\) mise\(s\) en ligne(.*)$/, (s, n, r) => n + ' قطعة معروضة' + r.replace(/ignorée\(s\), sans prix/, 'متروكة، بدون سعر').replace(/en échec/, 'فشلت')],
+  [/^(\d+) pièce\(s\) retirée\(s\) du magasin en ligne(.*)$/, (s, n, r) => n + ' قطعة مسحوبة من المتجر' + r.replace(/en échec/, 'فشلت')],
+  [/^Sélectionner (.+)$/, (s, r) => 'تحديد ' + r],
+);

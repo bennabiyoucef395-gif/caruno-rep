@@ -288,3 +288,25 @@ Object.assign(window.EN, {
   'Pièces en ligne': 'Parts online', 'visibles dans le magasin en ligne': 'visible in the online shop', 'en stock, non affichées': 'in stock, not shown',
   'En stock': 'In stock', 'Magasin + Réserve': 'Shop + Reserve', 'Pièces en stock au magasin ou en réserve': 'Parts in stock in the shop or the reserve',
 });
+// ---- magasin en ligne : prix, rupture, sélection
+Object.assign(window.EN, {
+  'Prix de vente': 'Selling price', 'Prix requis': 'Price required', 'Pas de photo': 'No photo', 'Photo': 'Photo', 'Stock': 'Stock',
+  'Prête pour le magasin en ligne': 'Ready for the online shop', 'Ajoutez un prix pour mettre en ligne': 'Add a price to put it online',
+  'Prix public renseigné': 'Price set', 'Prix obligatoire pour la mise en ligne': 'A price is required to go online', 'Photo présente': 'Photo present',
+  'Sans photo : conseillée pour le magasin en ligne': 'No photo: recommended for the online shop', 'En stock et en vente': 'In stock and for sale', 'En rupture ou hors vente': 'Out of stock or not for sale',
+  'Sélectionner': 'Select', 'Mettre en ligne': 'Put online', 'Retirer du magasin en ligne': 'Remove from the online shop', 'Annuler la sélection': 'Clear selection',
+  'En ligne mais en rupture': 'Online but out of stock', 'Voir': 'Show', 'Tout retirer du magasin en ligne': 'Remove all from the online shop',
+  'Les clients les verraient sans pouvoir les acheter.': 'Customers would see them but could not buy them.',
+  '# pièce(s) en ligne mais en rupture ou hors vente.': '# part(s) online but out of stock or not for sale.',
+  '# pièce(s) sélectionnée(s)': '# part(s) selected', 'Tout sélectionner (#)': 'Select all (#)', '# résultat(s)': '# result(s)',
+  'Aucune pièce en ligne en rupture.': 'No online part is out of stock.', 'Mise en ligne…': 'Putting online…', 'Retrait…': 'Removing…', 'Sélection…': 'Selecting…',
+  'Tapez un prix de vente supérieur à 0.': 'Type a selling price above 0.',
+  'Ajoutez d’abord le prix de vente : la pièce passera en ligne dès qu’il sera enregistré.': 'Add the selling price first: the part goes online as soon as it is saved.',
+});
+window.EN_RULES.unshift(
+  [/^Prix enregistré \((.+)\) et pièce mise en ligne : (.+)\.$/, (s, p, r) => 'Price saved (' + p + ') and part put online: ' + r + '.'],
+  [/^Prix enregistré : (.+)\. La pièce peut être mise en ligne\.$/, (s, p) => 'Price saved: ' + p + '. The part can go online.'],
+  [/^(\d+) pièce\(s\) mise\(s\) en ligne(.*)$/, (s, n, r) => n + ' part(s) put online' + r.replace(/ignorée\(s\), sans prix/, 'skipped, no price').replace(/en échec/, 'failed')],
+  [/^(\d+) pièce\(s\) retirée\(s\) du magasin en ligne(.*)$/, (s, n, r) => n + ' part(s) removed from the online shop' + r.replace(/en échec/, 'failed')],
+  [/^Sélectionner (.+)$/, (s, r) => 'Select ' + r],
+);

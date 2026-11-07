@@ -3808,8 +3808,15 @@ function viewEnLigne() {
         ' aria-label="' + esc((on ? 'Retirer du magasin en ligne : ' : 'Mettre en ligne : ') + p.ref) + '"><span class="web-knob" aria-hidden="true"></span><span class="web-txt">' + (on ? 'En ligne' : 'Hors ligne') + '</span></button>' +
     '</article>';
   }).join('');
-  const counts = w.on === null ? '' : '<b class="num">' + w.on.toLocaleString('fr-FR') + '</b> pièce(s) en ligne sur ' + (w.all || 0).toLocaleString('fr-FR') + ' en stock (Magasin + Réserve)';
-  return head('Magasin en ligne', counts) +
+  // En tête : le nombre de pièces en ligne, bien visible ; chaque tuile filtre la liste.
+  const n = (v) => (w.on === null ? '…' : v.toLocaleString('fr-FR'));
+  const stat = (f, cls, label, value, sub) => '<button type="button" class="card kpi web-stat' + cls + (w.f === f ? ' sel' : '') + '" data-action="webStat" data-arg="' + f + '" aria-pressed="' + (w.f === f) + '">' +
+    '<span class="l">' + label + '</span><span class="v">' + value + '</span><span class="s">' + sub + '</span></button>';
+  const stats = '<div class="web-stats">' +
+    stat('on', ' on', 'Pièces en ligne', n(w.on), 'visibles dans le magasin en ligne') +
+    stat('off', '', 'Hors ligne', n(Math.max(0, (w.all || 0) - (w.on || 0))), 'en stock, non affichées') +
+    stat('', '', 'En stock', n(w.all || 0), 'Magasin + Réserve') + '</div>';
+  return head('Magasin en ligne', 'Pièces en stock au magasin ou en réserve') + stats +
     '<div class="alert a-info" style="margin-bottom:14px">' + ic('info', 20) + '<div>Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.</div></div>' +
     '<div class="toolbar"><label class="search" for="web-q">' + ic('search', 20, '#4B5060') + '<span class="sr">Rechercher</span><input id="web-q" type="search" autocomplete="off" placeholder="OEM (avec ou sans espaces), référence, désignation, modèle…" value="' + esc(w.q) + '" data-input="webQ"></label>' +
       '<label class="sr" for="web-f">Affichage</label><select id="web-f" data-change="webF">' + [['', 'Toutes les pièces'], ['on', 'En ligne'], ['off', 'Hors ligne']].map((o) => '<option value="' + o[0] + '"' + (w.f === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
@@ -3821,6 +3828,7 @@ function viewEnLigne() {
 Object.assign(A, {
   webToggle: (el) => { webToggle(el.dataset.arg); return false; },
   webPage: (el) => { webSearch(Math.max(0, Number(el.dataset.arg) || 0)); return false; },
+  webStat: (el) => { webUi().f = el.dataset.arg; webSearch(0); return false; },
 });
 Object.assign(I, { webQ: (v) => { const w = webUi(); w.q = v; clearTimeout(webUi.t); webUi.t = setTimeout(() => webSearch(0), 350); } });
 Object.assign(C, { webF: (v) => { webUi().f = v; webSearch(0); return false; } });
@@ -3828,6 +3836,15 @@ Object.assign(C, { webF: (v) => { webUi().f = v; webSearch(0); return false; } }
 (function () {
   const css = document.createElement('style');
   css.textContent = `
+.web-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+.web-stat{text-align:left;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,box-shadow .15s}
+[dir="rtl"] .web-stat{text-align:right}
+.web-stat:hover{border-color:var(--muted)}
+.web-stat.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.web-stat .v{font-size:32px;font-weight:700;line-height:1.1}
+.web-stat.on{background:var(--ok-bg);border-color:#A7D7B8}
+.web-stat.on .v{font-size:44px;color:var(--ok)}
+.web-stat.on.sel{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
 .web-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
 .web-tile{display:flex;flex-direction:column;overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .web-tile.on{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}

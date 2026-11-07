@@ -282,3 +282,8 @@ Object.assign(window.AR, {
   'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'القطع الموجودة في المحل أو المخزن. فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار في Dolibarr ويسري على كل الأجهزة.',
   'Aucune pièce en stock ne correspond.': 'لا توجد قطعة في المخزون مطابقة.', 'Magasin # · Réserve #': 'المحل # · المخزن #',
 });
+// ---- magasin en ligne : compteurs en tête
+Object.assign(window.AR, {
+  'Pièces en ligne': 'القطع المعروضة', 'visibles dans le magasin en ligne': 'ظاهرة في المتجر الإلكتروني', 'en stock, non affichées': 'في المخزون، غير معروضة',
+  'En stock': 'في المخزون', 'Magasin + Réserve': 'المحل + المخزن', 'Pièces en stock au magasin ou en réserve': 'القطع الموجودة في المحل أو المخزن',
+});

@@ -283,3 +283,8 @@ Object.assign(window.EN, {
   'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'Parts in stock in the shop or the reserve. Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved in Dolibarr and applies to every device.',
   'Aucune pièce en stock ne correspond.': 'No part in stock matches.', 'Magasin # · Réserve #': 'Shop # · Reserve #',
 });
+// ---- magasin en ligne : compteurs en tête
+Object.assign(window.EN, {
+  'Pièces en ligne': 'Parts online', 'visibles dans le magasin en ligne': 'visible in the online shop', 'en stock, non affichées': 'in stock, not shown',
+  'En stock': 'In stock', 'Magasin + Réserve': 'Shop + Reserve', 'Pièces en stock au magasin ou en réserve': 'Parts in stock in the shop or the reserve',
+});

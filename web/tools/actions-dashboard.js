@@ -101,6 +101,9 @@ function dashTill() {
   '</section>';
 }
 
+// ---------- menu : le tableau de bord en premier (rôles qui y ont accès ; le vendeur garde la caisse en tête) ----------
+NAV.unshift(NAV.splice(NAV.findIndex((n) => n.id === 'tableau'), 1)[0]);
+
 // ---------- vue ----------
 function viewTableauCharts() {
   if (!DASH.hist) {

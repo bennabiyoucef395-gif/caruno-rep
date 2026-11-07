@@ -38,7 +38,8 @@ const num = (s) => Number(String(s).replace(/[^\d−-]/g, '').replace('−', '-'
 
 try {
   const g = await signIn('dev.gerant', secrets.TEST_PW_DEV_GERANT, { width: 1400, height: 1000 });
-  check('caisse en premier dans le tableau de bord', await g.evaluate(() => document.querySelector('.dash').firstElementChild.classList.contains('dash-till')));
+  check('menu : « Tableau de bord » en premier', (await g.locator('nav.nav a').first().getAttribute('href')) === '#/tableau');
+  check('caisse en premier dans le tableau de bord',await g.evaluate(() => document.querySelector('.dash').firstElementChild.classList.contains('dash-till')));
   const till = await g.locator('.dash-till').innerText();
   check('caisse : état, encaissé du jour, modes, espèces attendues', /Ouverte|Fermée/.test(till) && /Encaissé aujourd’hui/.test(till) && /Espèces/.test(till) && /Chèques/.test(till) && /Virements/.test(till) && /Espèces attendues en caisse/.test(till), till);
   const charts = g.locator('.dash-chart');
@@ -82,6 +83,8 @@ try {
   // Comptable : pas d'accès à la caisse, donc pas de bouton « Aller à la caisse ».
   const c = await signIn('dev.comptable', secrets.TEST_PW_DEV_COMPTABLE, { width: 1400, height: 1000 });
   check('comptable : pas de bouton « Aller à la caisse »', (await c.locator('.dash-till a[href="#/caisse"]').count()) === 0);
+  check('comptable : « Tableau de bord » en premier dans le menu', (await c.locator('nav.nav a').first().getAttribute('href')) === '#/tableau');
+  check('téléphone : « Bord » en premier dans la barre du bas', (await m.locator('nav.bottomnav a').first().getAttribute('href')) === '#/tableau');
 } catch (e) {
   ko++; console.log('ERR  ' + (e && e.message ? e.message.split('\n')[0] : e));
 } finally {

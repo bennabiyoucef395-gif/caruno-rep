@@ -221,3 +221,29 @@ window.AR = {
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': غير مربوط بعد بـ Dolibarr. يتم في Dolibarr حالياً.'],
   ];
 })();
+// ---- catalogue : véhicule du client (tools/actions-vehicle.js)
+(function () {
+  const FUEL = { essence: 'بنزين', diesel: 'ديزل', 'essence ou diesel': 'بنزين أو ديزل' };
+  const CONF = { probable: 'محتملة', 'confirmée': 'مؤكدة', 'non vérifiée': 'غير مؤكدة' };
+  const fuel = (s) => s.replace(/\((essence ou diesel|essence|diesel)\)/g, (m, f) => '(' + FUEL[f] + ')');
+  const conf = (s) => s.split(', ').map((c) => CONF[c] || c).join('، ');
+  Object.assign(window.AR, {
+    'Véhicule du client': 'سيارة الزبون', 'Modèle': 'الطراز', '— Choisir —': '— اختر —', 'Je ne sais pas': 'لا أعرف',
+    'Effacer le véhicule': 'مسح السيارة', 'Compatibilité': 'التوافق', 'Compatible': 'متوافقة', 'À confirmer': 'للتأكيد',
+    'Absente de Dolibarr': 'غير موجودة في Dolibarr', 'Rechercher dans les pièces du véhicule': 'البحث في قطع السيارة',
+    'Désignation, référence, OEM, famille…': 'التسمية، المرجع، OEM، العائلة…',
+    'Choisissez le moteur pour voir les pièces.': 'اختر المحرك لرؤية القطع.',
+    'Aucune pièce compatible connue pour ce choix.': 'لا توجد قطعة متوافقة معروفة لهذا الاختيار.',
+    'Choisissez le véhicule du client pour voir les pièces compatibles, ou cherchez directement une pièce.': 'اختر سيارة الزبون لرؤية القطع المتوافقة، أو ابحث مباشرة عن قطعة.',
+    'Chargement du véhicule…': 'جارٍ تحميل السيارة…',
+    'Données du véhicule illisibles. Réexportez le catalogue des véhicules.': 'بيانات السيارة غير مقروءة. أعد تصدير كتالوج السيارات.',
+    '# pièce(s) de ce véhicule dépendent du moteur (filtres, distribution, injection…) : choisissez le moteur pour les voir.': '# قطعة من هذه السيارة تعتمد على المحرك (المصافي، التوزيع، الحقن…): اختر المحرك لرؤيتها.',
+  });
+  window.AR_RULES.unshift(
+    [/^(\d[\d   ]*) pièce\(s\) pour (?!«)(.+)$/, (s, n, r) => n + ' قطعة لـ ' + fuel(r.replace(/ · Je ne sais pas$/, ' · لا أعرف'))],
+    [/^Toute la famille (.+)$/, (s, g) => 'كل العائلة ' + g],
+    [/^Moteur non précisé par la source · catalogue fournisseur, fiabilité (.+)$/, (s, c) => 'المحرك غير محدد في المصدر · كتالوج المورد، الموثوقية ' + conf(c)],
+    [/^Indiquée pour (.+) · catalogue fournisseur, fiabilité (.+)$/, (s, e, c) => 'مذكورة لـ ' + e + ' · كتالوج المورد، الموثوقية ' + conf(c)],
+    [/^(.+) \((essence ou diesel|essence|diesel)\)$/, (s) => fuel(s)],
+  );
+})();

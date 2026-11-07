@@ -203,6 +203,6 @@ rep("[['a4', 'Format A4'], ['ticket', 'Ticket 80 mm']]", "(d.type === 'facture' 
 rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) { app.innerHTML = viewLogin(); return; }\n  if (!S.ready) { app.innerHTML = viewLoading(); return; }");
 
 // ---------- actions branchées sur Dolibarr, puis démarrage ----------
-rep('\nrender();\n</script>', '\n' + ['./actions.js', './actions-profil-import.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
+rep('\nrender();\n</script>', '\n' + ['./actions.js', './actions-profil-import.js', './actions-vehicle.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
 writeFileSync(out, s);
 console.log('OK ' + out);

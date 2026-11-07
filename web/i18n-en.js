@@ -222,3 +222,29 @@ window.EN = {
     [/^(.+) : pas encore relié à Dolibarr\. À faire dans Dolibarr pour l’instant\.$/, (s, w) => w + ': not connected to Dolibarr yet. Do it in Dolibarr for now.'],
   ];
 })();
+// ---- catalogue : véhicule du client (tools/actions-vehicle.js)
+(function () {
+  const FUEL = { essence: 'petrol', diesel: 'diesel', 'essence ou diesel': 'petrol or diesel' };
+  const CONF = { probable: 'probable', 'confirmée': 'confirmed', 'non vérifiée': 'unverified' };
+  const fuel = (s) => s.replace(/\((essence ou diesel|essence|diesel)\)/g, (m, f) => '(' + FUEL[f] + ')');
+  const conf = (s) => s.split(', ').map((c) => CONF[c] || c).join(', ');
+  Object.assign(window.EN, {
+    'Véhicule du client': 'Customer’s vehicle', 'Modèle': 'Model', '— Choisir —': '— Choose —', 'Je ne sais pas': 'I don’t know',
+    'Effacer le véhicule': 'Clear vehicle', 'Compatibilité': 'Fitment', 'Compatible': 'Fits', 'À confirmer': 'To confirm',
+    'Absente de Dolibarr': 'Not in Dolibarr', 'Rechercher dans les pièces du véhicule': 'Search the vehicle’s parts',
+    'Désignation, référence, OEM, famille…': 'Name, reference, OEM, family…',
+    'Choisissez le moteur pour voir les pièces.': 'Choose the engine to see the parts.',
+    'Aucune pièce compatible connue pour ce choix.': 'No known fitting part for this choice.',
+    'Choisissez le véhicule du client pour voir les pièces compatibles, ou cherchez directement une pièce.': 'Choose the customer’s vehicle to see fitting parts, or search for a part directly.',
+    'Chargement du véhicule…': 'Loading vehicle…',
+    'Données du véhicule illisibles. Réexportez le catalogue des véhicules.': 'Vehicle data unreadable. Export the vehicle catalogue again.',
+    '# pièce(s) de ce véhicule dépendent du moteur (filtres, distribution, injection…) : choisissez le moteur pour les voir.': '# part(s) of this vehicle depend on the engine (filters, timing, injection…): choose the engine to see them.',
+  });
+  window.EN_RULES.unshift(
+    [/^(\d[\d   ]*) pièce\(s\) pour (?!«)(.+)$/, (s, n, r) => n + ' part(s) for ' + fuel(r.replace(/ · Je ne sais pas$/, ' · I don’t know'))],
+    [/^Toute la famille (.+)$/, (s, g) => 'Whole family ' + g],
+    [/^Moteur non précisé par la source · catalogue fournisseur, fiabilité (.+)$/, (s, c) => 'Engine not given by the source · supplier catalogue, reliability ' + conf(c)],
+    [/^Indiquée pour (.+) · catalogue fournisseur, fiabilité (.+)$/, (s, e, c) => 'Listed for ' + e + ' · supplier catalogue, reliability ' + conf(c)],
+    [/^(.+) \((essence ou diesel|essence|diesel)\)$/, (s) => fuel(s)],
+  );
+})();

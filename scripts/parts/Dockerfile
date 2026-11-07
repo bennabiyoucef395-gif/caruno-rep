@@ -1,4 +1,4 @@
 FROM python:3.12-slim
 RUN pip install --no-cache-dir --default-timeout=180 --retries 10 pandas==2.2.3 openpyxl==3.1.5
-COPY caruno_import.py part_categories.py engines.py make_sql.py /app/
+COPY caruno_import.py part_categories.py engines.py make_sql.py export_json.py /app/
 WORKDIR /app

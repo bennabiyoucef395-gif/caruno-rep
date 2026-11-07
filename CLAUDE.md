@@ -60,5 +60,11 @@ not in Dolibarr (blueprint §B). Today only on the **test** instance.
   - `moteur_requis`: engine-dependent part while the engine is unknown — **never shown as compatible**,
     the front asks for the engine instead.
   Engine-dependent parts listed for another engine are not returned.
-- Open point: the front talks only to Dolibarr (no backend, no PHP module), so it cannot call these
-  functions directly. Planned: an export of per-model JSON files built with these same functions.
+### Export for the front (`scripts/parts/export.sh`, step `export` of build.sh)
+The front talks only to Dolibarr (no backend, no PHP module), so it cannot call these functions. It reads
+static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<dir>` also copies them):
+- `index.json`: categories (`engine_dependent`) and models (maker, name, generation, years, `file`).
+- `models/<id>.json`: `engines` = `get_engine_options(id)` as is; `parts` = `{ref, name, category_id,
+  status: {"<vehicle_type_id>": ..., "unknown": ...}, evidence}`. `unknown` = "Je ne sais pas". A part missing
+  for an option is not compatible with it. Statuses come from `compatible_parts()`, so files and database agree.
+- Price, stock and photo stay in Dolibarr: join on `ref`. Re-export after every rebuild of `caruno_parts`.

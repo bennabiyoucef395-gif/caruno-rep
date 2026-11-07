@@ -276,3 +276,9 @@ window.AR_RULES.unshift(
   [/^Mettre en ligne : (.+)$/, (s, r) => 'عرض في المتجر: ' + r], [/^Retirer du magasin en ligne : (.+)$/, (s, r) => 'سحب من المتجر: ' + r],
   [/^Non enregistré : (.+)$/, (s, e) => 'لم يُحفظ: ' + e],
 );
+// ---- magasin en ligne : tuiles, pièces en stock
+Object.assign(window.AR, {
+  'pièce(s) en ligne sur # en stock (Magasin + Réserve)': 'قطعة معروضة من أصل # قطعة في المخزون (المحل + المخزن)',
+  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'القطع الموجودة في المحل أو المخزن. فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار في Dolibarr ويسري على كل الأجهزة.',
+  'Aucune pièce en stock ne correspond.': 'لا توجد قطعة في المخزون مطابقة.', 'Magasin # · Réserve #': 'المحل # · المخزن #',
+});

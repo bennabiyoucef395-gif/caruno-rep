@@ -277,3 +277,9 @@ window.EN_RULES.unshift(
   [/^Mettre en ligne : (.+)$/, (s, r) => 'Put online: ' + r], [/^Retirer du magasin en ligne : (.+)$/, (s, r) => 'Remove from the online shop: ' + r],
   [/^Non enregistré : (.+)$/, (s, e) => 'Not saved: ' + e],
 );
+// ---- magasin en ligne : tuiles, pièces en stock
+Object.assign(window.EN, {
+  'pièce(s) en ligne sur # en stock (Magasin + Réserve)': 'part(s) online out of # in stock (Shop + Reserve)',
+  'Pièces en stock au magasin ou en réserve. Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'Parts in stock in the shop or the reserve. Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved in Dolibarr and applies to every device.',
+  'Aucune pièce en stock ne correspond.': 'No part in stock matches.', 'Magasin # · Réserve #': 'Shop # · Reserve #',
+});

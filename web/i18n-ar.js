@@ -262,3 +262,17 @@ Object.assign(window.AR, {
   '# derniers jours, depuis le #/#/# (ventes chargées)': 'آخر # يوماً، منذ #/#/# (المبيعات المحملة)',
   'Sans famille': 'بدون عائلة', 'Autres familles': 'عائلات أخرى', 'Aucune vente sur la période.': 'لا توجد مبيعات خلال الفترة.',
 });
+// ---- magasin en ligne (tools/actions-enligne.js)
+Object.assign(window.AR, {
+  'Magasin en ligne': 'المتجر الإلكتروني', 'En ligne': 'معروضة', 'Hors ligne': 'غير معروضة', 'Sans prix': 'بدون سعر',
+  'Toutes les pièces': 'كل القطع', 'Affichage': 'العرض',
+  'pièce(s) en ligne sur # en vente': 'قطعة معروضة من أصل # قطعة للبيع',
+  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'فعّل القطعة لعرضها في المتجر الإلكتروني، وألغِ تفعيلها لسحبها. يُحفظ الاختيار في Dolibarr ويسري على كل الأجهزة.',
+  'OEM (avec ou sans espaces), référence, désignation, modèle…': 'OEM (بمسافات أو بدونها)، المرجع، التسمية، الطراز…',
+  'Dolibarr refuse la modification : droit « créer/modifier les produits » nécessaire.': 'رفض Dolibarr التعديل: تلزم صلاحية «إنشاء/تعديل المنتجات».',
+});
+window.AR_RULES.unshift(
+  [/^En ligne : (.+)\.$/, (s, p) => 'معروضة: ' + p + '.'], [/^Hors ligne : (.+)\.$/, (s, p) => 'غير معروضة: ' + p + '.'],
+  [/^Mettre en ligne : (.+)$/, (s, r) => 'عرض في المتجر: ' + r], [/^Retirer du magasin en ligne : (.+)$/, (s, r) => 'سحب من المتجر: ' + r],
+  [/^Non enregistré : (.+)$/, (s, e) => 'لم يُحفظ: ' + e],
+);

@@ -263,3 +263,17 @@ Object.assign(window.EN, {
   '# derniers jours, depuis le #/#/# (ventes chargées)': 'Last # days, since #/#/# (loaded sales)',
   'Sans famille': 'No family', 'Autres familles': 'Other families', 'Aucune vente sur la période.': 'No sales in the period.',
 });
+// ---- magasin en ligne (tools/actions-enligne.js)
+Object.assign(window.EN, {
+  'Magasin en ligne': 'Online shop', 'En ligne': 'Online', 'Hors ligne': 'Offline', 'Sans prix': 'No price',
+  'Toutes les pièces': 'All parts', 'Affichage': 'Show',
+  'pièce(s) en ligne sur # en vente': 'part(s) online out of # for sale',
+  'Activez une pièce pour la montrer dans le magasin en ligne ; désactivez-la pour la retirer. Le choix est enregistré dans Dolibarr et vaut pour tous les postes.': 'Switch a part on to show it in the online shop; switch it off to remove it. The choice is saved in Dolibarr and applies to every device.',
+  'OEM (avec ou sans espaces), référence, désignation, modèle…': 'OEM (with or without spaces), reference, name, model…',
+  'Dolibarr refuse la modification : droit « créer/modifier les produits » nécessaire.': 'Dolibarr refused the change: the “create/modify products” right is needed.',
+});
+window.EN_RULES.unshift(
+  [/^En ligne : (.+)\.$/, (s, p) => 'Online: ' + p + '.'], [/^Hors ligne : (.+)\.$/, (s, p) => 'Offline: ' + p + '.'],
+  [/^Mettre en ligne : (.+)$/, (s, r) => 'Put online: ' + r], [/^Retirer du magasin en ligne : (.+)$/, (s, r) => 'Remove from the online shop: ' + r],
+  [/^Non enregistré : (.+)$/, (s, e) => 'Not saved: ' + e],
+);

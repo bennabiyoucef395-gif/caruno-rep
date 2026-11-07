@@ -320,3 +320,9 @@ Object.assign(window.EN, {
   'Dolibarr refuse la modification du magasin.': 'Dolibarr refused to change the shop.',
 });
 window.EN_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'WhatsApp saved: ' + n + '.']);
+// ---- magasin en ligne : modifier le prix
+Object.assign(window.EN, { 'Modifier le prix': 'Edit the price' });
+window.EN_RULES.unshift(
+  [/^Modifier le prix : (.+)$/, (s, p) => 'Edit the price: ' + p],
+  [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'Price changed: ' + r + ' · ' + a + ' → ' + b + (on ? ' (online)' : '') + '.'],
+);

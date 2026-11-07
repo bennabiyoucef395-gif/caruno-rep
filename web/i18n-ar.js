@@ -319,3 +319,9 @@ Object.assign(window.AR, {
   'Dolibarr refuse la modification du magasin.': 'رفض Dolibarr تعديل المحل.',
 });
 window.AR_RULES.unshift([/^WhatsApp enregistré : (.+)\.$/, (s, n) => 'تم حفظ واتساب: ' + n + '.']);
+// ---- magasin en ligne : modifier le prix
+Object.assign(window.AR, { 'Modifier le prix': 'تعديل السعر' });
+window.AR_RULES.unshift(
+  [/^Modifier le prix : (.+)$/, (s, p) => 'تعديل السعر: ' + p],
+  [/^Prix modifié : (.+?) · (.+) → (.+?)( \(en ligne\))?\.$/, (s, r, a, b, on) => 'تم تعديل السعر: ' + r + ' · ' + a + ' ← ' + b + (on ? ' (معروضة)' : '') + '.'],
+);

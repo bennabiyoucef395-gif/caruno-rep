@@ -80,6 +80,20 @@ try {
   check('prix saisi : 1 500 DA enregistré dans Dolibarr et pièce en ligne', afterPrice.price === 1500 && afterPrice.en === '1', JSON.stringify(afterPrice));
   check('tuile : prix affiché, « En ligne »', /1\s?500 DA/.test(await tileNP.innerText()) && (await tileNP.locator('.web-sw').getAttribute('aria-checked')) === 'true');
 
+  // 1b. Modifier le prix d'une pièce qui a déjà un prix (en ligne ou non) : clic sur le prix.
+  const priced = await one('(t.tosell:=:1) and (t.stock:>:0) and (t.price:>:0)');
+  const pr0 = (await remember(priced, true)).price;
+  await search(g, priced.ref);
+  const tileP = g.locator('.web-tile', { hasText: priced.ref }).first();
+  await tileP.locator('.web-price-btn').click(); await g.waitForTimeout(300);
+  check('clic sur le prix : saisie ouverte avec le prix actuel (' + pr0 + ')', (await tileP.locator('input[id^="web-p-"]').inputValue()) === String(pr0) && (await g.evaluate(() => document.activeElement.id)).startsWith('web-p-'));
+  await tileP.locator('button[aria-label="Annuler"]').click(); await g.waitForTimeout(200);
+  check('✕ : saisie fermée, prix inchangé', (await tileP.locator('input[id^="web-p-"]').count()) === 0 && (await read(priced.id)).price === pr0);
+  await tileP.locator('.web-price-btn').click();
+  await tileP.locator('input[id^="web-p-"]').fill(String(pr0 + 150));
+  await tileP.locator('button[type=submit]').click(); await settle(g); await g.waitForTimeout(300);
+  check('prix modifié : ' + (pr0 + 150) + ' DA dans Dolibarr et sur la tuile', (await read(priced.id)).price === pr0 + 150 && (await tileP.innerText()).replace(/\s/g, '').includes(String(pr0 + 150) + 'DA'));
+
   // 2. Sélection : deux pièces hors ligne → « Mettre en ligne », puis « Retirer ».
   await search(g, '');
   await g.locator('#web-f').selectOption('off'); await settle(g);

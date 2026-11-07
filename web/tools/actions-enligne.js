@@ -9,12 +9,13 @@
 //   - sélection de plusieurs pièces (ou de tous les résultats) : mettre en ligne / retirer en une fois.
 // Champ créé par caruno-erp provisioning/12-product-extrafields.sh. Réservé au gérant et au responsable (droit produit:creer).
 const WEB_PAGE = 24;
+if (!P.edit) P.edit = '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M14 6l4 4"/>';
 P.enligne = '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/>';
 NAV.splice(NAV.findIndex((n) => n.id === 'catalogue') + 1, 0, { id: 'enligne', label: 'Magasin en ligne', roles: ['responsable', 'gerant'] });
 
 function webUi() {
   if (!S.ui.web) S.ui.web = { q: '', f: '', page: 0, items: [], total: 0, on: null, all: null, out: 0, loading: false, err: '', seq: 0,
-    busy: {}, started: false, sel: {}, bulk: null, price: {}, wantOn: {} };
+    busy: {}, started: false, sel: {}, bulk: null, price: {}, wantOn: {}, priceEdit: {} };
   return S.ui.web;
 }
 const webIsOn = (p) => String((p.array_options || {}).options_en_ligne || '') === '1';
@@ -100,11 +101,12 @@ async function webSetPrice(id) {
   const w = webUi(), p = w.items.find((x) => String(x.id) === String(id)), v = Number(String(w.price[id] || '').replace(/\D/g, ''));
   if (!p) return;
   if (!(v > 0)) { toast('Tapez un prix de vente supérieur à 0.'); focusNext('web-p-' + id); return; }
+  const before = webPrice(p);
   w.busy[id] = true; render();
   try {
     await DOLI.api('products/' + encodeURIComponent(id), { method: 'PUT', body: { price: String(v), price_base_type: 'HT', multiprices: { 1: String(v) }, multiprices_base_type: { 1: 'HT' } } });
     p.multiprices = Object.assign({}, p.multiprices, { 1: String(v) }); p.price = String(v);
-    delete w.price[id];
+    delete w.price[id]; delete w.priceEdit[id];
     const local = part(p.id); if (local && local.prices) local.prices[0] = v;     // écran Pièces / caisse à jour
     if (w.wantOn[id]) {
       delete w.wantOn[id];
@@ -112,7 +114,8 @@ async function webSetPrice(id) {
       p.array_options = Object.assign({}, p.array_options, { options_en_ligne: '1' });
       if (w.on !== null) w.on += 1;
       toast('Prix enregistré (' + fmt(v) + ') et pièce mise en ligne : ' + p.ref + '.');
-    } else toast('Prix enregistré : ' + fmt(v) + '. La pièce peut être mise en ligne.');
+    } else if (before > 0) toast('Prix modifié : ' + p.ref + ' · ' + fmt(before) + ' → ' + fmt(v) + (webIsOn(p) ? ' (en ligne)' : '') + '.');
+    else toast('Prix enregistré : ' + fmt(v) + '. La pièce peut être mise en ligne.');
   } catch (e) { toast(webErr(e)); }
   delete w.busy[id];
   render();
@@ -185,10 +188,14 @@ function webReady(p, t) {
 function webTile(w, p, c) {
   const on = webIsOn(p), ef = p.array_options || {}, t = c.thumbs[p.ref], price = webPrice(p), link = '#/catalogue/' + p.id, id = p.id;
   const blocked = !on && !(price > 0), sel = !!w.sel[id], busy = w.busy[id] || !!w.bulk;
-  const priceBlock = price > 0 ? '<div class="web-price"><b class="num">' + fmt(price) + '</b></div>'
+  // Prix : un clic sur le prix ouvre la saisie (pièce en ligne ou non) ; sans prix, la saisie est toujours ouverte.
+  const editing = !(price > 0) || w.priceEdit[id];
+  const priceBlock = !editing
+    ? '<button type="button" class="web-price web-price-btn" data-action="webPriceEdit" data-arg="' + id + '" title="Modifier le prix" aria-label="Modifier le prix : ' + esc(fmt(price)) + '"><b class="num">' + fmt(price) + '</b>' + ic('edit', 14, '#4B5060') + '</button>'
     : '<form class="web-pf' + (w.wantOn[id] ? ' want' : '') + '" data-submit="webPrice" data-arg="' + id + '"><label for="web-p-' + id + '">Prix de vente</label><div class="web-pf-row">' +
       '<input class="input num" id="web-p-' + id + '" inputmode="numeric" autocomplete="off" placeholder="DA" value="' + esc(w.price[id] || '') + '" data-input="webPriceIn" data-arg="' + id + '"' + (busy ? ' disabled' : '') + '>' +
-      '<button class="btn btn-primary" type="submit"' + (busy ? ' disabled' : '') + '>OK</button></div></form>';
+      '<button class="btn btn-primary" type="submit"' + (busy ? ' disabled' : '') + '>OK</button>' +
+      (price > 0 ? '<button class="btn" type="button" data-action="webPriceCancel" data-arg="' + id + '" aria-label="Annuler"' + (busy ? ' disabled' : '') + '>✕</button>' : '') + '</div></form>';
   return '<article class="card web-tile' + (on ? ' on' : '') + (sel ? ' sel' : '') + '">' +
     '<label class="web-chk" title="Sélectionner"><input type="checkbox" data-change="webSel" data-arg="' + id + '"' + (sel ? ' checked' : '') + (w.bulk ? ' disabled' : '') + ' aria-label="Sélectionner ' + esc(p.ref) + '"></label>' +
     '<a class="web-photo" href="' + link + '" tabindex="-1" aria-hidden="true">' + (t ? '<img alt="" src="' + t + '">' : '<span class="web-nophoto">' + ic('camera', 30, '#A3A7B3') + '<span>Pas de photo</span></span>') + '</a>' +
@@ -277,6 +284,8 @@ Object.assign(A, {
   webPage: (el) => { webSearch(Math.max(0, Number(el.dataset.arg) || 0)); return false; },
   webStat: (el) => { webUi().f = el.dataset.arg; webSearch(0); return false; },
   webSelAll: () => { webSelectAll(); return false; },
+  webPriceEdit: (el) => { const w = webUi(), id = el.dataset.arg, p = w.items.find((x) => String(x.id) === id); w.priceEdit[id] = true; w.price[id] = p ? String(Math.round(webPrice(p))) : ''; focusNext('web-p-' + id); },
+  webPriceCancel: (el) => { const w = webUi(); delete w.priceEdit[el.dataset.arg]; delete w.price[el.dataset.arg]; },
   webSelNone: () => { webUi().sel = {}; },
   webBulkOn: () => { webBulk(true); return false; },
   webBulkOff: () => { webBulk(false); return false; },
@@ -336,6 +345,8 @@ Object.assign(F, { webPrice: (form) => { webSetPrice(form.dataset.arg); }, waSav
 .web-name:hover{text-decoration:underline}
 .web-ref{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .web-price b{font-size:16px}
+.web-price-btn{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;border:1px dashed transparent;background:none;padding:2px 6px;margin:-2px -6px;border-radius:8px;cursor:pointer;font:inherit;color:var(--ink)}
+.web-price-btn:hover,.web-price-btn:focus-visible{border-color:var(--line);background:var(--soft)}
 .web-pf{display:flex;flex-direction:column;gap:4px}
 .web-pf label{font-size:12px;font-weight:600;color:var(--warn)}
 .web-pf-row{display:flex;gap:6px}

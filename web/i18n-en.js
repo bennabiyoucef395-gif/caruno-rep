@@ -248,3 +248,18 @@ window.EN = {
     [/^(.+) \((essence ou diesel|essence|diesel)\)$/, (s) => fuel(s)],
   );
 })();
+// ---- tableau de bord : caisse en haut, graphiques (tools/actions-dashboard.js)
+Object.assign(window.EN, {
+  'Ouverte': 'Open', 'Fermée': 'Closed', 'depuis #:#': 'since #:#', 'Encaissé aujourd’hui': 'Collected today',
+  'Espèces attendues en caisse': 'Expected cash in the drawer', 'Fond # DA inclus': 'Float of # DA included',
+  'Fond # DA inclus, # DA déposés en banque aujourd’hui': 'Float of # DA included, # DA deposited at the bank today',
+  'Aller à la caisse': 'Go to the till',
+  'Chiffre d’affaires · # derniers jours': 'Sales · last # days', 'Chiffre d’affaires · # derniers mois': 'Sales · last # months',
+  '# DA · # jour(s) avec des ventes · aujourd’hui en foncé': '# DA · # day(s) with sales · today in dark',
+  '# DA sur # mois · mois en cours en foncé': '# DA over # months · current month in dark',
+  'Chargement de l’historique des ventes…': 'Loading sales history…', 'Voir les chiffres': 'Show the figures', 'Jour': 'Day', 'Mois': 'Month',
+  '# DA · # ventes': '# DA · # sales', '# ventes': '# sales', 'Aucune vente aujourd’hui.': 'No sales today.',
+  'Ventes par famille': 'Sales by family', '# derniers jours': 'Last # days',
+  '# derniers jours, depuis le #/#/# (ventes chargées)': 'Last # days, since #/#/# (loaded sales)',
+  'Sans famille': 'No family', 'Autres familles': 'Other families', 'Aucune vente sur la période.': 'No sales in the period.',
+});

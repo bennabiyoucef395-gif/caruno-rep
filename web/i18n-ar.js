@@ -247,3 +247,18 @@ window.AR = {
     [/^(.+) \((essence ou diesel|essence|diesel)\)$/, (s) => fuel(s)],
   );
 })();
+// ---- tableau de bord : caisse en haut, graphiques (tools/actions-dashboard.js)
+Object.assign(window.AR, {
+  'Ouverte': 'مفتوح', 'Fermée': 'مغلق', 'depuis #:#': 'منذ #:#', 'Encaissé aujourd’hui': 'المحصل اليوم',
+  'Espèces attendues en caisse': 'النقد المتوقع في الصندوق', 'Fond # DA inclus': 'مع الرصيد الأولي # دج',
+  'Fond # DA inclus, # DA déposés en banque aujourd’hui': 'مع الرصيد الأولي # دج، # دج مودعة في البنك اليوم',
+  'Aller à la caisse': 'الذهاب إلى الصندوق',
+  'Chiffre d’affaires · # derniers jours': 'رقم الأعمال · آخر # يوماً', 'Chiffre d’affaires · # derniers mois': 'رقم الأعمال · آخر # شهراً',
+  '# DA · # jour(s) avec des ventes · aujourd’hui en foncé': '# دج · # يوم بمبيعات · اليوم باللون الداكن',
+  '# DA sur # mois · mois en cours en foncé': '# دج خلال # شهراً · الشهر الحالي باللون الداكن',
+  'Chargement de l’historique des ventes…': 'جارٍ تحميل سجل المبيعات…', 'Voir les chiffres': 'عرض الأرقام', 'Jour': 'اليوم', 'Mois': 'الشهر',
+  '# DA · # ventes': '# دج · # مبيعات', '# ventes': '# مبيعات', 'Aucune vente aujourd’hui.': 'لا توجد مبيعات اليوم.',
+  'Ventes par famille': 'المبيعات حسب العائلة', '# derniers jours': 'آخر # يوماً',
+  '# derniers jours, depuis le #/#/# (ventes chargées)': 'آخر # يوماً، منذ #/#/# (المبيعات المحملة)',
+  'Sans famille': 'بدون عائلة', 'Autres familles': 'عائلات أخرى', 'Aucune vente sur la période.': 'لا توجد مبيعات خلال الفترة.',
+});

@@ -1,0 +1,2 @@
+# Scripts run in bash and in Linux containers: keep LF even on Windows checkouts.
+* text=auto eol=lf

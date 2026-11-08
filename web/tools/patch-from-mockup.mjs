@@ -154,7 +154,7 @@ between('  const tiles = res.length ? res.map((p, idx) => {', '  return posOrder
       return '<tr class="click' + (u.q && idx === u.hi ? ' hi' : '') + '" ' + act + ' data-arg="' + p.id + '">' +
         '<td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (n ? ' <span class="badge b-accent">' + n + ' au panier</span>' : '') + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
         '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td>' +
-        '<td class="mono">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td>' +
+        '<td class="mono" style="white-space:nowrap">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + (p.loc['Réserve'] ? '<div class="mono muted" style="font-size:11px">' + esc(p.loc['Réserve']) + '</div>' : '') + '</td>' +
         '<td>' + stockBadge(p) + '</td><td class="right num"><b>' + fmt(price) + '</b></td>' +
         '<td class="right"><button class="icon-btn" type="button" data-action="posInfo" data-arg="' + p.id + '" aria-label="Infos ' + esc(p.brand + ' ' + p.ref) + '">' + ic('info', 16) + '</button></td></tr>';
     }).join('') + '</tbody></table></div></div>'
@@ -206,6 +206,15 @@ rep(`'<div class="print-area ticket"><div style="text-align:center"><b>' + esc(s
 rep("const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null;",
   "const a = document.activeElement, focusId = a && a.id, sel = a && typeof a.selectionStart === 'number' ? a.selectionStart : null, selEnd = sel !== null ? a.selectionEnd : null;");
 rep('if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, sel); } catch (e) {} }', 'if (sel !== null && el.setSelectionRange) { try { el.setSelectionRange(sel, selEnd); } catch (e) {} }');
+
+// Emplacements : un champ par entrepôt (Magasin, Réserve, autres dépôts) sur la fiche pièce, tous enregistrés
+// (caruno-dolibarr.js savePart / mapPart) ; dans la liste des pièces, l'emplacement en réserve sous la quantité.
+rep("locM: p.loc['Magasin'], locR: p.loc['Réserve'],", "...Object.fromEntries(WAREHOUSES.map((w, i) => ['loc' + i, p.loc[w] || ''])),");
+rep("type: '', locM: '', locR: '', p0:", "type: '', ...Object.fromEntries(WAREHOUSES.map((w, i) => ['loc' + i, ''])), p0:");
+rep("inp('locM', 'Emplacement Magasin', { mono: true, ph: 'B1-12' }) + inp('locR', 'Emplacement Réserve', { mono: true, ph: 'R-03' }) +",
+  "WAREHOUSES.map((w, i) => inp('loc' + i, 'Emplacement ' + w, { mono: true, ph: i ? 'R-03' : 'B1-12' })).join('') +");
+rep(`'</b></td><td class="right num">' + p.stock['Réserve'] + '</td><td>' + stockBadge(p)`,
+  `'</b></td><td class="right num">' + p.stock['Réserve'] + (p.loc['Réserve'] ? '<div class="mono muted" style="font-size:11px;font-weight:400">' + esc(p.loc['Réserve']) + '</div>' : '') + '</td><td>' + stockBadge(p)`);
 
 // Titre de l'onglet : le nom du magasin, jamais « Maquette ».
 rep('<title>CARUNO — Maquette magasin</title>', '<title>CARUNO</title>');

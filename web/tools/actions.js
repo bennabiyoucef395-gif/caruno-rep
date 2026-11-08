@@ -161,7 +161,7 @@ F.savePiece = (form) => {
   const prices = [num('p0'), num('p1') || num('p0'), num('p2') || num('p1') || num('p0')];
   const old = id ? part(id) : null;
   run(async () => {
-    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
+    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locs: Object.fromEntries(WAREHOUSES.map((w, i) => [w, f['loc' + i] || ''])), seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
     if (!id && num('initQty')) await DOLI.move(pid, 'Stock initial', num('initQty'), WAREHOUSES[0]);
     const fresh = (f.photos || []).filter((ph) => !old || old.photos.indexOf(ph) === -1);
     for (let i = 0; i < fresh.length; i++) await DOLI.uploadPhoto(part(pid), fresh[i], i);

@@ -125,6 +125,7 @@ const DOLI = {
     Object.entries(r.stock_warehouse || {}).forEach(([w, v]) => { const n = this.whName[w]; if (n) stock[n] = this.num(v && v.real); });
     if (!r.stock_warehouse && WAREHOUSES[0]) stock[WAREHOUSES[0]] = this.num(r.stock_reel);
     loc[WAREHOUSES[0]] = ao.options_emplacement || '';
+    Object.assign(loc, this.locDecode(ao.options_emplacements));
     const old = S.db.parts.find((p) => p.id === this.num(r.id));
     return {
       id: this.num(r.id), name: this.txt(r.label), brand: this.brand(ao.options_brand), ref: r.ref, oem: ao.options_oem_ref || '', ean: r.barcode || '',
@@ -452,10 +453,22 @@ const DOLI = {
   },
 
   // ---------- écritures ----------
+  // Emplacements : celui du premier entrepôt (Magasin) dans « emplacement », ceux des autres (Réserve, autres dépôts)
+  // dans « emplacements », lisible aussi dans Dolibarr : « Réserve=R-03 | Dépôt 2=B-12 ».
+  locDecode(s) {
+    const out = {};
+    String(s || '').split('|').forEach((x) => { const i = x.indexOf('='); if (i > 0) { const w = x.slice(0, i).trim(), v = x.slice(i + 1).trim(); if (w && v) out[w] = v; } });
+    return out;
+  },
+  locEncode(locs) {
+    return WAREHOUSES.slice(1).filter((w) => String(locs[w] || '').trim()).map((w) => w + '=' + String(locs[w]).replace(/[|=]/g, ' ').trim()).join(' | ');
+  },
   async savePart(id, f, prices) {
+    // f.locs (entrepôt -> emplacement, fiche pièce) ; sinon f.locM seul (import) : les autres emplacements ne changent pas.
+    const locs = f.locs ? { options_emplacement: String(f.locs[WAREHOUSES[0]] || '').trim(), options_emplacements: this.locEncode(f.locs) } : { options_emplacement: f.locM || '' };
     const body = {
       ref: f.ref, label: f.name, barcode: f.ean || undefined, seuil_stock_alerte: f.seuil, desiredstock: f.souhaite, price_min: f.floor || 0, tva_tx: Number(f.tva) || 0,
-      array_options: { options_brand: f.brand || '', options_oem_ref: this.oem(f.oem), options_emplacement: f.locM || '', options_caruno_part_type: f.type || '' },
+      array_options: Object.assign({ options_brand: f.brand || '', options_oem_ref: this.oem(f.oem), options_caruno_part_type: f.type || '' }, locs),
     };
     let pid = id ? Number(id) : 0;
     if (!pid) pid = this.num(await this.api('products', { method: 'POST', body: Object.assign(body, { type: 0, status: 1, status_buy: 1, price: prices[0], price_base_type: 'HT' }) }));

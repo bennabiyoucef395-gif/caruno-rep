@@ -64,7 +64,8 @@ try {
     await api('invoices/' + iid + '/validate', g0, { method: 'POST', body: JSON.stringify({ idwarehouse: 0, notrigger: 0 }) });
   };
   if (!list.some((x) => Number(x.date) * 1000 < day0.getTime())) await mkInv(500, Math.floor(Date.now() / 1000) - 3 * 86400);
-  if (!list.some((x) => Number(x.date) * 1000 >= day0.getTime())) await mkInv(600, Math.floor(Date.now() / 1000));
+  // Au moins 2 factures du jour : l'impression de plusieurs documents (bons d'achat, relevé) se teste avec 2 documents.
+  for (let n = list.filter((x) => Number(x.date) * 1000 >= day0.getTime()).length; n < 2; n++) await mkInv(600 + 50 * n, Math.floor(Date.now() / 1000));
   // Soldées par un vrai règlement en espèces (le relevé du client et l'encours Dolibarr restent d'accord) ; une facture
   // d'essai classée payée sans règlement (anciens essais) est d'abord rouverte.
   const liq = ((await api('setup/dictionary/payment_types?limit=50', g0)) || []).find((t) => t.code === 'LIQ');

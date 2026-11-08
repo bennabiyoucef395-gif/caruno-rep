@@ -704,7 +704,7 @@ function posProducts() {
       return '<tr class="click' + (u.q && idx === u.hi ? ' hi' : '') + '" ' + act + ' data-arg="' + p.id + '">' +
         '<td><div class="cellpart">' + thumb(p, 40) + '<div><b>' + esc(p.name) + '</b>' + (n ? ' <span class="badge b-accent">' + n + ' au panier</span>' : '') + (p.brand ? '<div class="t2">' + esc(p.brand) + '</div>' : '') + '</div></div></td>' +
         '<td><div class="mono">' + esc(p.ref) + '</div>' + (p.oem ? '<div class="mono muted">' + esc(p.oem) + '</div>' : '') + '</td>' +
-        '<td class="mono">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td>' +
+        '<td class="mono" style="white-space:nowrap">' + esc(p.loc['Magasin'] || '') + '</td><td class="right num"><b>' + mag + '</b></td><td class="right num">' + p.stock['Réserve'] + (p.loc['Réserve'] ? '<div class="mono muted" style="font-size:11px">' + esc(p.loc['Réserve']) + '</div>' : '') + '</td>' +
         '<td>' + stockBadge(p) + '</td><td class="right num"><b>' + fmt(price) + '</b></td>' +
         '<td class="right"><button class="icon-btn" type="button" data-action="posInfo" data-arg="' + p.id + '" aria-label="Infos ' + esc(p.brand + ' ' + p.ref) + '">' + ic('info', 16) + '</button></td></tr>';
     }).join('') + '</tbody></table></div></div>'
@@ -878,7 +878,7 @@ function viewPieces() {
     '<div class="card" style="overflow:hidden"><div class="table-wrap"><table class="t" style="min-width:' + (seeCost() ? 1000 : 900) + 'px"><thead><tr><th>Pièce</th><th>Réf. / OEM</th><th>Famille</th><th>Empl.</th><th class="right">Magasin</th><th class="right">Réserve</th><th>État</th><th class="right">Public' + xHT() + '</th>' + (seeCost() ? '<th class="right">Coût PMP</th>' : '') + '</tr></thead><tbody>' +
     (list.length ? list.map((p) => '<tr class="click" data-action="go" data-arg="#/pieces/' + p.id + '"><td><div class="cellpart">' + thumb(p) + '<div><a class="rowlink" href="#/pieces/' + p.id + '">' + esc(p.name) + '</a><div class="t2">' + esc(p.brand) + '</div></div></div></td>' +
       '<td><div class="mono">' + esc(p.ref) + '</div><div class="mono muted">' + esc(p.oem) + '</div></td><td style="font-size:14px">' + esc(p.fam) + '</td><td class="mono">' + esc(p.loc['Magasin']) + '</td>' +
-      '<td class="right num"><b>' + p.stock['Magasin'] + '</b></td><td class="right num">' + p.stock['Réserve'] + '</td><td>' + stockBadge(p) + '</td><td class="right num">' + fmt(p.prices[0]) + '</td>' +
+      '<td class="right num"><b>' + p.stock['Magasin'] + '</b></td><td class="right num">' + p.stock['Réserve'] + (p.loc['Réserve'] ? '<div class="mono muted" style="font-size:11px;font-weight:400">' + esc(p.loc['Réserve']) + '</div>' : '') + '</td><td>' + stockBadge(p) + '</td><td class="right num">' + fmt(p.prices[0]) + '</td>' +
       (seeCost() ? '<td class="right num muted">' + fmt(p.cost) + '</td>' : '') + '</tr>').join('') : '<tr><td colspan="9" class="empty">Aucune pièce ne correspond.</td></tr>') +
     '</tbody></table></div></div>';
 }
@@ -936,10 +936,10 @@ function viewPieceForm(id) {
   const p = id ? part(id) : null;
   if (!can(EDIT_PARTS)) return denied();
   const f = setForm('piece:' + (id || 'new'), p ? {
-    name: p.name, brand: p.brand, ref: p.ref, oem: p.oem, ean: p.ean, fam: p.fam, type: p.type, locM: p.loc['Magasin'], locR: p.loc['Réserve'],
+    name: p.name, brand: p.brand, ref: p.ref, oem: p.oem, ean: p.ean, fam: p.fam, type: p.type, ...Object.fromEntries(WAREHOUSES.map((w, i) => ['loc' + i, p.loc[w] || ''])),
     p0: p.prices[0], p1: p.prices[1], p2: p.prices[2], floor: p.floor, tva: p.tva, seuil: p.seuil, souhaite: p.souhaite,
     sid: p.lastBuy && p.lastBuy.sid ? p.lastBuy.sid : (p.sups[0] ? p.sups[0].sid : ''), sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.lastBuy ? p.lastBuy.price : (p.sups[0] ? p.sups[0].price : ''), photos: (p.photos || []).slice(), initQty: ''
-  } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', locM: '', locR: '', p0: '', p1: '', p2: '', floor: '', tva: VAT() ? 19 : 0, seuil: 4, souhaite: 8, sid: '', sref: '', sprice: '', photos: [], initQty: '' });
+  } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', ...Object.fromEntries(WAREHOUSES.map((w, i) => ['loc' + i, ''])), p0: '', p1: '', p2: '', floor: '', tva: VAT() ? 19 : 0, seuil: 4, souhaite: 8, sid: '', sref: '', sprice: '', photos: [], initQty: '' });
   const inp = (name, label, opts) => { opts = opts || {}; return '<div class="field"' + (opts.span ? ' style="grid-column:1/-1"' : '') + '><label for="f-' + name + '">' + label + (opts.req ? ' *' : '') + '</label>' +
     (opts.wrap ? '<div style="display:flex;gap:8px">' : '') + '<input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="f-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.num ? ' inputmode="numeric"' : '') + (opts.req ? ' required' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' style="flex:1">' + (opts.wrap || '') + (opts.wrap ? '</div>' : '') +
     (opts.hint ? '<span class="hint">' + opts.hint + '</span>' : '') + '</div>'; };
@@ -961,7 +961,7 @@ function viewPieceForm(id) {
       (VAT() ? '' : '<input type="hidden" name="tva" value="0">') + (!VAT() ? '' : '<div class="field"><label for="f-tva">TVA</label><select id="f-tva" name="tva">' + [19, 9, 0].map((t) => '<option value="' + t + '"' + (Number(fv('tva')) === t ? ' selected' : '') + '>' + t + ' %</option>').join('') + '</select></div>') +
     '</div></div>' +
     '<div class="form-section"><h2>Stock</h2><div class="form-grid">' +
-      inp('locM', 'Emplacement Magasin', { mono: true, ph: 'B1-12' }) + inp('locR', 'Emplacement Réserve', { mono: true, ph: 'R-03' }) +
+      WAREHOUSES.map((w, i) => inp('loc' + i, 'Emplacement ' + w, { mono: true, ph: i ? 'R-03' : 'B1-12' })).join('') +
       inp('seuil', 'Seuil d’alerte', { num: true }) + inp('souhaite', 'Stock souhaité', { num: true }) +
       (p ? '' : inp('initQty', 'Stock initial en Magasin', { num: true, hint: 'Crée un mouvement « stock initial ». Sinon, passer par une réception.' })) +
     '</div></div>' +
@@ -2566,7 +2566,7 @@ F.savePiece = (form) => {
   const prices = [num('p0'), num('p1') || num('p0'), num('p2') || num('p1') || num('p0')];
   const old = id ? part(id) : null;
   run(async () => {
-    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locM: f.locM, seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
+    const pid = await DOLI.savePart(id, { name: f.name, brand: f.brand, ref: f.ref, oem: f.oem, ean: f.ean, fam: f.fam, type: f.type, locs: Object.fromEntries(WAREHOUSES.map((w, i) => [w, f['loc' + i] || ''])), seuil: num('seuil'), souhaite: num('souhaite'), floor: num('floor'), tva: f.tva, sid: f.sid || '', sref: f.sref || '', sprice: num('sprice') }, prices);
     if (!id && num('initQty')) await DOLI.move(pid, 'Stock initial', num('initQty'), WAREHOUSES[0]);
     const fresh = (f.photos || []).filter((ph) => !old || old.photos.indexOf(ph) === -1);
     for (let i = 0; i < fresh.length; i++) await DOLI.uploadPhoto(part(pid), fresh[i], i);

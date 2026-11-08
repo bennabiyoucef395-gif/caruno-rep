@@ -21,6 +21,8 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
   `nom_ar`, original supplier label in `nom_fournisseur` (`30-product-names.sh restore` puts it back). Labels edited by hand
   are never overwritten.
 - Shop logo: `C:\Users\TRETEC\caruno-data\branding\city-makoudi-2\` (SVG + PNG); the 240 px PNG is in the shop profile.
+- Part locations, one per warehouse: first warehouse (Magasin) in extra field `emplacement`, the others in `emplacements`
+  ("Réserve=R-03 | Dépôt 2=B-12"), written by the part form, shown under the reserve quantity in Pièces and at the till.
 - Visible wording: staff never see the engine's name ("Dolibarr"); caruno-app `web/tools/wording.mjs` rewrites texts and the
   i18n keys. A new message says what happened ("Pièce enregistrée."), not where.
 

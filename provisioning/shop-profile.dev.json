@@ -87,6 +87,7 @@
     { "code": "caruno_part_type", "label": "Type de pièce CARUNO", "type": "varchar", "size": "64", "position": 30 },
     { "code": "caruno_part_id", "label": "Identifiant catalogue CARUNO", "type": "varchar", "size": "64", "position": 40 },
     { "code": "emplacement", "label": "Emplacement (rayon / casier)", "type": "varchar", "size": "32", "position": 50 },
+    { "code": "emplacements", "label": "Emplacements dans les autres entrepôts", "type": "varchar", "size": "255", "position": 55, "help": "Un par entrepôt, écrit par CARUNO : Réserve=R-03 | Dépôt 2=B-12. L’emplacement au magasin est dans « Emplacement »." },
     { "code": "en_ligne", "label": "En ligne (magasin en ligne)", "type": "boolean", "size": "", "position": 60, "help": "Pièce visible dans le magasin en ligne. Vide = hors ligne." },
     { "code": "nom_fournisseur", "label": "Nom d’origine (fournisseur)", "type": "varchar", "size": "255", "position": 70, "help": "Libellé importé du catalogue fournisseur, gardé quand le nom français le remplace (provisioning/30-product-names.sh)." },
     { "code": "nom_ar", "label": "Nom en arabe", "type": "varchar", "size": "255", "position": 80, "help": "Affiché quand l’application est en arabe." }

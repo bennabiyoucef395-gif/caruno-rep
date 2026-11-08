@@ -1,0 +1,16 @@
+# CARUNO counter app (static web page) served on http://localhost:8082.
+# Restarts with Docker, like the shop's Dolibarr: the app is there after a reboot without starting anything by hand.
+# Start / update: docker compose -p caruno-app -f infra/app/docker-compose.yml up -d
+# The page is read from the app folder (CARUNO_APP_WEB, default the caruno-app worktree): a rebuilt index.html is
+# served at once, no restart needed.
+
+services:
+  web:
+    image: node:22-alpine
+    restart: unless-stopped
+    command: ["node", "/app/web/tools/serve.mjs", "8082"]
+    # Loopback only, like Dolibarr: only this PC opens the app.
+    ports:
+      - "${APP_BIND_ADDR:-127.0.0.1}:8082:8082"
+    volumes:
+      - ${CARUNO_APP_WEB:-C:/Users/TRETEC/dev/caruno-app/web}:/app/web:ro

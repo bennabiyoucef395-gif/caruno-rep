@@ -23,6 +23,10 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
 - Shop logo: `C:\Users\TRETEC\caruno-data\branding\city-makoudi-2\` (SVG + PNG); the 240 px PNG is in the shop profile.
 - Part locations, one per warehouse: first warehouse (Magasin) in extra field `emplacement`, the others in `emplacements`
   ("Réserve=R-03 | Dépôt 2=B-12"), written by the part form, shown under the reserve quantity in Pièces and at the till.
+- Counter app on http://localhost:8082: served by Docker (`infra/app/docker-compose.yml`, project `caruno-app`,
+  container `caruno-app-web-1`, restarts with Windows) from the caruno-app worktree's `web/` folder — a rebuilt
+  `index.html` is live at once. Don't start `serve.mjs` on 8082 by hand (tests use their own ports).
+  Desktop / Start menu icon "CARUNO" (Edge app window, shop logo): `scripts/desktop/install-desktop.ps1`.
 - Visible wording: staff never see the engine's name ("Dolibarr"); caruno-app `web/tools/wording.mjs` rewrites texts and the
   i18n keys. A new message says what happened ("Pièce enregistrée."), not where.
 

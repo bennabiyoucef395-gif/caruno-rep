@@ -112,6 +112,7 @@ const DOLI = {
   async whoami() {
     const r = await this.api('users/info', { query: { includepermissions: 1 } });
     this.rights = r.rights || {};
+    this.isAdmin = this.num(r.admin) === 1;
     this.me = { id: this.num(r.id), login: r.login, name: [r.firstname, r.lastname].filter(Boolean).join(' ') || r.login };
     return { login: r.login, name: this.me.name, role: this.roleOf(this.rights, this.num(r.admin) === 1), id: this.me.id };
   },

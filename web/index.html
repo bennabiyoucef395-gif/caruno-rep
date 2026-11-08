@@ -3336,7 +3336,32 @@ renderModal = function () { return S.ui.modal && (S.ui.modal.kind === 'trash' ||
 // les rôles qui voient les coûts ont le montant.
 // Prix d'achat retenu : le plus élevé du coût moyen (PMP) et du dernier achat (protège quand le fournisseur augmente).
 function costRef(p) { return Math.max(p.cost || 0, (p.lastBuy && p.lastBuy.price) || 0); }
-function underCost(x) { const c = costRef(x.p); return c > 0 && x.unit < c; }
+// Utilisateur sans le droit « Lire les prix fournisseurs » (vendeur) : le serveur ne lui envoie aucun prix d'achat
+// (module CARUNO de Dolibarr). La caisse lui demande seulement « ce prix est-il sous le prix d'achat ? » (oui / non),
+// avec le même calcul côté serveur. Réponses gardées par pièce et prix ; les questions partent par paquets de 60.
+const costsHidden = () => !!(typeof DOLI !== 'undefined' && DOLI.token &&!DOLI.isAdmin && !DOLI.can('produit.product_advance.read_supplier_prices'));
+const BELOW = { known: {}, wait: {}, timer: 0 };
+function belowFlush() {
+  BELOW.timer = 0;
+  const ask = Object.entries(BELOW.wait).slice(0, 60);
+  if (!ask.length) return;
+  ask.forEach(([k]) => { delete BELOW.wait[k]; });
+  DOLI.api('caruno/belowcost', { method: 'POST', body: { lines: ask.map((a) => a[1]) } })
+    .then((r) => { const below = ((r && r.below) || []).map(Number); ask.forEach(([k, l]) => { BELOW.known[k] = below.indexOf(l.id) !== -1; }); return ask.some(([k]) => BELOW.known[k]); })
+    // Serveur sans le module CARUNO : il envoie encore les coûts, la caisse calcule elle-même (comme avant).
+    .catch(() => { BELOW.off = true; ask.forEach(([k]) => { delete BELOW.known[k]; }); return true; })
+    .then((any) => { if (Object.keys(BELOW.wait).length) BELOW.timer = setTimeout(belowFlush, 50); if (any) render(); });
+}
+function belowAsk(pid, unit) {
+  const k = pid + '|' + unit;
+  if (k in BELOW.known) return BELOW.known[k];
+  if (!BELOW.wait[k]) { BELOW.wait[k] = { id: Number(pid), price: unit }; if (!BELOW.timer) BELOW.timer = setTimeout(belowFlush, 200); }
+  return false;
+}
+function underCost(x) {
+  if (costsHidden() && !BELOW.off) return x.unit > 0 && belowAsk(x.p.id, x.unit);
+  const c = costRef(x.p); return c > 0 && x.unit < c;
+}
 function costWarn(x) {
   if (!underCost(x)) return '';
   return '<div class="cost-warn" role="alert">' + ic('warn', 16, '#991B1B') + '<span>Prix inférieur au prix d’achat' + (seeCost() ? ' (' + fmt(costRef(x.p)) + ')' : '') + ' : vente à perte</span></div>';

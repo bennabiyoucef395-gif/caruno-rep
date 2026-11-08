@@ -71,6 +71,13 @@ render = function () {
 .cr-enter-fwd{animation:cr-fwd ${NAV_MS}ms cubic-bezier(.22,.7,.3,1) both}
 .cr-enter-back{animation:cr-back ${NAV_MS}ms cubic-bezier(.22,.7,.3,1) both}
 [dir="rtl"] .cr-enter-back{animation-name:cr-back-rtl}
+.brand .nav-toggle{width:100%;height:36px;margin-top:14px;padding:0 10px;justify-content:flex-start;gap:8px;font:inherit;font-size:13px;color:#C9CBD2;
+  transition:background-color .15s ease,color .15s ease}
+.brand .nav-toggle:hover{color:#fff}
+.side.collapsed .brand .nav-toggle{width:36px;padding:0;justify-content:center}
+.side.collapsed .nav-toggle-t{display:none}
+[dir="rtl"] .brand .nav-toggle svg{transform:scaleX(-1)}
+[dir="rtl"] .side.collapsed .brand .nav-toggle svg{transform:none}
 .modal-bg.cr-in{animation:cr-fade .18s ease-out both}
 .modal-bg.cr-in .modal{animation:cr-pop .22s cubic-bezier(.22,.7,.3,1) both}
 .toast.cr-in{animation:cr-toast .2s ease-out both}

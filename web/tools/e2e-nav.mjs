@@ -37,7 +37,7 @@ const watch = (p) => p.evaluate(() => {
   new MutationObserver(() => { const c = document.getElementById('content'), m = c && c.className.match(/cr-enter-\w+/); if (m && window.__seen[window.__seen.length - 1] !== m[0]) window.__seen.push(m[0]); })
     .observe(document.getElementById('app'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 });
-const reset = (p) => p.evaluate(() => { window.__seen = []; });
+const reset = async (p) => { await p.waitForTimeout(350); await p.evaluate(() => { window.__seen = []; }); };   // après la fin de l'animation précédente
 const anim = (p) => p.evaluate(() => (window.__seen || []).join(','));
 const backText = (p) => p.evaluate(() => { const b = document.querySelector('#content .page-back'); return b ? b.textContent.replace(/\s+/g, ' ').trim() : ''; });
 const goNav = async (p, id) => { await reset(p); await p.locator('.side .nav a[href="#/' + id + '"]').click(); await p.waitForFunction((h) => location.hash === h, '#/' + id); };

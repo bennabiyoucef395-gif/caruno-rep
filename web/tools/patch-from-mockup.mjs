@@ -138,6 +138,9 @@ rep("tile('Marge brute de ' + (MN[1] || ''), margin + ' %',", "tile('Marge brute
 // ---------- enseigne du magasin (logo + nom) à la place de CARUNO ; import de pièces ----------
 rep('<div class="brand-row"><b>CARUNO</b>', "<div class=\"brand-row\">' + shopMark() + '");
 rep("'</button></div><span>' + esc(S.db.shop.name) + '</span></div>'", "'</button></div></div>'");
+// Bouton « Replier le menu » sous le logo, sur toute la largeur, avec son texte (icône seule quand le menu est replié).
+rep("<div class=\"brand-row\">' + shopMark() + '<button class=\"nav-toggle\"", "<div class=\"brand-row\">' + shopMark() + '</div><button class=\"nav-toggle\"");
+rep("ic('back', 18) + '</button></div></div>'", "ic('back', 18) + '<span class=\"nav-toggle-t\">' + (folded ? 'Déplier le menu' : 'Replier le menu') + '</span></button></div>'");
 rep("<b>CARUNO</b><span style=\"font-size:12px;color:#C9CBD2;flex:1\">' + esc(S.db.shop.name) + '</span>", "' + shopMark(true) + '<span style=\"flex:1\"></span>");
 rep('<span class="brand2">CARUNO</span>', "<span class=\"brand2\">' + shopMark(true) + '</span>");
 rep("'Nouvelle pièce</a>' : '')", "'Nouvelle pièce</a><button class=\"btn\" type=\"button\" data-action=\"modalImport\">Importer</button>' : '')");

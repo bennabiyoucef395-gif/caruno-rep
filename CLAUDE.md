@@ -27,6 +27,13 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
   container `caruno-app-web-1`, restarts with Windows) from the caruno-app worktree's `web/` folder — a rebuilt
   `index.html` is live at once. Don't start `serve.mjs` on 8082 by hand (tests use their own ports).
   Desktop / Start menu icon "CARUNO" (Edge app window, shop logo): `scripts/desktop/install-desktop.ps1`.
+- Purchase prices stay on the server: Dolibarr add-on `dolibarr-modules/caruno` (hook `beforeApiCall` → Restler
+  `onCompose`) removes costs (cost_price, pmp, pa_ht, margins, fourn_*, stock movement price, supplier price lists)
+  from API answers for users without "Read supplier prices" (sellers). The till's "vente à perte" warning for them asks
+  `POST caruno/belowcost` (yes / no per line, ≤ 60 lines, same cost rule as the app; the till computes it itself when
+  the module is absent). Install / update: `provisioning/40-caruno-module.sh`
+  (`APP_CONTAINER` picks the instance; re-run after editing the module). Test: `node provisioning/tests/api-costs.mjs`.
+  It is the only PHP add-on (user's choice 2026-11-08); extend it rather than adding others.
 - Visible wording: staff never see the engine's name ("Dolibarr"); caruno-app `web/tools/wording.mjs` rewrites texts and the
   i18n keys. A new message says what happened ("Pièce enregistrée."), not where.
 

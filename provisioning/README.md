@@ -11,6 +11,7 @@ Configures a Dolibarr 24.0.2 instance as the CARUNO ERP engine, from a shop prof
 | `lib/product_extrafields.php` | Its engine (same code as the extra-field section of `configure.php`) |
 | `16-counter-client.sh` | Ensures the counter customer "Client comptoir" (marker `ref_ext = caruno:comptoir`) that the front uses for counter sales and the shop profile; on an existing shop pass its id to mark it; idempotent |
 | `30-product-names.sh` | French product names (label) + Arabic names (`nom_ar`), supplier label kept in `nom_fournisseur`; `restore` puts the supplier labels back; labels edited by hand are skipped; idempotent |
+| `40-caruno-module.sh` | CARUNO add-on (`dolibarr-modules/caruno`): the API stops sending purchase prices to users without "Read supplier prices" (sellers); `off` disables it; idempotent. Test: `node tests/api-costs.mjs` |
 | `20-import-products.sh` | Creates or updates parts from a CSV made by `scripts/catalogue-pdf` (ref, label, description, `brand`, `oem_ref`); prices and stock untouched |
 | `lib/import_products.php` | Import engine, same rules as `configure.php` (PHP API only, idempotent) |
 | `25-import-photos.sh` | Attaches `<ref>.jpg` photos (from `scripts/catalogue-pdf -Photos`) to the products of the same ref, with thumbnails, in `produit/<ref>/` like an upload from the product card |

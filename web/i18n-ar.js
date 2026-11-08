@@ -16,7 +16,7 @@ window.AR = {
 
   // ---- rôles, mots courants
   'Gérant': 'المسير', 'Responsable': 'المسؤول', 'Vendeur': 'البائع', 'Magasinier': 'أمين المخزن', 'Comptable': 'المحاسب',
-  'Annuler': 'إلغاء', 'Enregistrer': 'حفظ', 'Fermer': 'إغلاق', 'Modifier': 'تعديل', 'Supprimer': 'حذف', 'Retour': 'رجوع', 'Retour à la page précédente': 'الرجوع إلى الصفحة السابقة', 'Valider': 'تأكيد', 'Voir': 'عرض', 'Ouvrir': 'فتح',
+  'Annuler': 'إلغاء', 'Enregistrer': 'حفظ', 'Fermer': 'إغلاق', 'Modifier': 'تعديل', 'Supprimer': 'حذف', 'Retour': 'رجوع', 'Non renseignés': 'غير مُدخلة', 'Retour à la page précédente': 'الرجوع إلى الصفحة السابقة', 'Valider': 'تأكيد', 'Voir': 'عرض', 'Ouvrir': 'فتح',
   'Choisir': 'اختيار', 'Choisi': 'مختار', 'Créer': 'إنشاء', 'Ajouter': 'إضافة', 'Rechercher': 'بحث', 'Imprimer': 'طباعة', 'Exporter': 'تصدير', 'Importer': 'استيراد', 'Vous': 'أنت',
   'Précédent': 'السابق', 'Suivant': 'التالي', 'Page # / #': 'صفحة # / #', 'Total': 'المجموع', 'TOTAL': 'المجموع', 'Date': 'التاريخ', 'Mode': 'الطريقة', 'Montant': 'المبلغ', 'Motif': 'السبب',
   'Statut': 'الحالة', 'État': 'الحالة', 'Type': 'النوع', 'Note': 'ملاحظة', 'Nom': 'الاسم', 'Nom *': 'الاسم *', 'Téléphone': 'الهاتف', 'E-mail': 'البريد الإلكتروني', 'Adresse': 'العنوان',

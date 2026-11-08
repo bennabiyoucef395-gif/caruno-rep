@@ -16,7 +16,7 @@ window.EN = {
 
   // ---- roles, common words
   'Gérant': 'Manager', 'Responsable': 'Supervisor', 'Vendeur': 'Seller', 'Magasinier': 'Storekeeper', 'Comptable': 'Accountant',
-  'Annuler': 'Cancel', 'Enregistrer': 'Save', 'Fermer': 'Close', 'Modifier': 'Edit', 'Supprimer': 'Delete', 'Retour': 'Back', 'Retour à la page précédente': 'Back to the previous page', 'Valider': 'Confirm', 'Voir': 'View', 'Ouvrir': 'Open',
+  'Annuler': 'Cancel', 'Enregistrer': 'Save', 'Fermer': 'Close', 'Modifier': 'Edit', 'Supprimer': 'Delete', 'Retour': 'Back', 'Non renseignés': 'Not filled in', 'Retour à la page précédente': 'Back to the previous page', 'Valider': 'Confirm', 'Voir': 'View', 'Ouvrir': 'Open',
   'Choisir': 'Choose', 'Choisi': 'Chosen', 'Créer': 'Create', 'Ajouter': 'Add', 'Rechercher': 'Search', 'Imprimer': 'Print', 'Exporter': 'Export', 'Importer': 'Import', 'Vous': 'You',
   'Précédent': 'Previous', 'Suivant': 'Next', 'Page # / #': 'Page # / #', 'Total': 'Total', 'TOTAL': 'TOTAL', 'Date': 'Date', 'Mode': 'Method', 'Montant': 'Amount', 'Motif': 'Reason',
   'Statut': 'Status', 'État': 'State', 'Type': 'Type', 'Note': 'Note', 'Nom': 'Name', 'Nom *': 'Name *', 'Téléphone': 'Phone', 'E-mail': 'E-mail', 'Adresse': 'Address',

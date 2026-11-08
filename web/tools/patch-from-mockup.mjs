@@ -206,6 +206,15 @@ rep(`<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:w
   `<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="display:flex;gap:12px;align-items:flex-start">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:60px;width:auto;max-width:110px;object-fit:contain">' : '') + '<div><b style="font-size:16px">' + esc(shop.name) + '</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div></div>' +`);
 rep(`'<div class="print-area ticket"><div style="text-align:center"><b>' + esc(shop.name) + '</b>`,
   `'<div class="print-area ticket"><div style="text-align:center">' + (shop.logo ? '<img src="' + esc(shop.logo) + '" alt="" style="height:40px;width:auto;display:block;margin:0 auto 4px">' : '') + '<b>' + esc(shop.name) + '</b>`);
+// En-tête du magasin (facture A4, ticket) : adresse et téléphone seulement s'ils sont remplis, sans ligne vide
+// (RC, NIF, AI, NIS : déjà omis un par un quand ils sont vides).
+rep(`'</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div></div>'`,
+  `'</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + (ids(shop) ? '<div class="ids">' + ids(shop) + '</div>' : '') + '</div></div>'`);
+rep(`'</b><br>' + esc(shop.address) + '<br>' + esc(shop.phone) + '<div class="ids">' + ids(shop) + '</div></div>' +`,
+  `'</b>' + (shop.address ? '<br>' + esc(shop.address) : '') + (shop.phone ? '<br>' + esc(shop.phone) : '') + (ids(shop) ? '<div class="ids">' + ids(shop) + '</div>' : '') + '</div>' +`);
+// Profil : identifiants du magasin vides = « Non renseignés » (au lieu de « RC · NIF » sans valeur).
+rep(`">RC ' + esc(S.db.shop.rc) + ' · NIF ' + esc(S.db.shop.nif) + '</dd>`,
+  `">' + ([['RC', S.db.shop.rc], ['NIF', S.db.shop.nif], ['AI', S.db.shop.ai], ['NIS', S.db.shop.nis]].filter((k) => k[1]).map((k) => k[0] + ' ' + esc(k[1])).join(' · ') || 'Non renseignés') + '</dd>`);
 
 // Rendu : le champ actif garde toute sa sélection (début ET fin), pas seulement le curseur. Sinon un rendu venu
 // d'un chargement (photos de la liste) pendant la saisie réduit « 0 » sélectionné à un curseur devant le 0 :

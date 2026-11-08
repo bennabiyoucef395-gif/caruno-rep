@@ -254,11 +254,11 @@ rep("[['a4', 'Format A4'], ['ticket', 'Ticket 80 mm']]", "(d.type === 'facture' 
 
 // ---------- rendu : écran de chargement tant que les données Dolibarr arrivent ----------
 rep("  if (!S.user) { app.innerHTML = viewLogin(); return; }", "  if (!S.user) { app.innerHTML = viewLogin(); return; }\n  if (!S.ready) { app.innerHTML = viewLoading(); return; }");
-// Page « Magasin en ligne » (tools/actions-enligne.js).
+// Page « Magasin en ligne » (tools/actions-enligne.js). Bouton « Retour » et animations de page (tools/actions-nav.js), en dernier.
 rep("  else if (sec === 'profil') html = viewProfil();", "  else if (sec === 'profil') html = viewProfil();\n  else if (sec === 'enligne') html = viewEnLigne();");
 
 // ---------- actions branchées sur Dolibarr, puis démarrage ----------
-rep('\nrender();\n</script>', '\n' + ['./actions-art.js', './actions.js', './actions-profil-import.js', './actions-vehicle.js', './actions-dashboard.js', './actions-enligne.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
+rep('\nrender();\n</script>', '\n' + ['./actions-art.js', './actions.js', './actions-profil-import.js', './actions-vehicle.js', './actions-dashboard.js', './actions-enligne.js', './actions-nav.js'].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).join('\n') + '</script>');
 // Textes affichés sans le nom du moteur (Dolibarr) : tools/wording.mjs, sur l'application entière.
 s = applyWording(s, true);
 writeFileSync(out, s);

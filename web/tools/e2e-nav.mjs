@@ -72,14 +72,30 @@ try {
 
   if (part) {
     await g.evaluate((id) => { location.hash = '#/pieces/' + id; }, part.id); await g.waitForTimeout(1200);
-    const n = await g.locator('#content .page-back').count(), own = await g.locator('#content .page-head a[href="#/pieces"]').count();
-    check('fiche pièce : son lien de retour, pas de doublon', n === 0 && own === 1, n + ' / ' + own);
+    const n = await g.locator('#content .page-back').count(), own = await g.locator('#content a.page-back[href="#/pieces"]').count();
+    check('fiche pièce : Retour vers Pièces, pas de doublon', n === 1 && own === 1 && (await backText(g)) === 'Retour·Pièces', n + ' / ' + own + ' / ' + (await backText(g)));
   } else check('fiche pièce : fixture TEST-STK-001 trouvée', false);
+
+  // Nouvelle pièce et nouveau client : bouton Retour ; bouton Scanner à côté du code-barres, sans déborder sur Famille.
+  for (const w of [1400, 1100, 900]) {
+    await g.setViewportSize({ width: w, height: 1000 });
+    await g.evaluate(() => { location.hash = '#/pieces/nouveau'; }); await g.waitForSelector('#f-ean'); await g.waitForTimeout(300);
+    const box = await g.evaluate(() => { const r = (el) => el.getBoundingClientRect(); const s = document.querySelector('[data-action="formScanEan"]'), e = document.getElementById('f-ean'), f = document.getElementById('f-fam'), cell = e.closest('.field');
+      return { scan: r(s).right, cell: r(cell).right, fam: r(f).left, famTop: r(f).top, scanTop: r(s).top, ean: r(e).width }; });
+    check('nouvelle pièce (' + w + ' px) : Scanner reste dans sa colonne', box.scan <= box.cell + 1 && (box.famTop !== box.scanTop || box.scan < box.fam) && box.ean >= 80, JSON.stringify(box));
+  }
+  await g.setViewportSize({ width: 1400, height: 1000 });
+  check('nouvelle pièce : « Retour · Pièces »', (await backText(g)) === 'Retour·Pièces', await backText(g));
+  await g.screenshot({ path: resolve(shots, '12c-nouvelle-piece.png') });
+  await g.evaluate(() => { location.hash = '#/clients/nouveau'; }); await g.waitForTimeout(600);
+  check('nouveau client : « Retour · Clients »', (await backText(g)) === 'Retour·Clients', await backText(g));
+  await g.locator('#content .page-back').click(); await g.waitForFunction(() => location.hash === '#/clients');
+  check('nouveau client : Retour ouvre Clients', true);
 
   // Arabe : texte traduit, flèche et glissement inversés.
   await g.evaluate(() => { location.hash = '#/profil'; }); await g.locator('[data-action="setLang"][data-arg="ar"]').click();
   await g.waitForTimeout(400);
-  await goNav(g, 'clients');
+  await goNav(g, 'stock');
   const ar = await backText(g);
   check('arabe : « رجوع · ملفي »', ar === 'رجوع·ملفي', ar);
   await g.screenshot({ path: resolve(shots, '12b-nav-retour-ar.png') });

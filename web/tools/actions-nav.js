@@ -22,13 +22,17 @@ A.navBack = () => {
   return false;
 };
 
-// En-tête de page : bouton « Retour » quand la page n'a pas de lien de retour et qu'il y a une page précédente.
+// En-tête de page : bouton « Retour ». Les pages qui ont leur retour logique (Nouvelle pièce → Pièces, fiche → liste…)
+// le gardent, sous la même forme ; les autres reviennent à la page précédente.
 const headNav = head;
 head = function (title, sub, actions, back) {
-  const html = headNav(title, sub, actions, back), prev = !back && navPrev();
-  if (!prev) return html;
-  const btn = '<button type="button" class="page-back" data-action="navBack" aria-label="Retour à la page précédente">' + ic('back', 16) +
-    '<span>Retour</span><span class="page-back-sep" aria-hidden="true">·</span><span class="page-back-to">' + esc(navLabel(prev)) + '</span></button>';
+  const html = headNav(title, sub, actions), prev = navPrev();
+  if (!back && !prev) return html;
+  const label = back ? back[1] : navLabel(prev);
+  const inner = ic('back', 16) + (/^Retour/.test(label) ? '<span>' + esc(label) + '</span>'
+    : '<span>Retour</span><span class="page-back-sep" aria-hidden="true">·</span><span class="page-back-to">' + esc(label) + '</span>');
+  const btn = back ? '<a class="page-back" href="' + esc(back[0]) + '">' + inner + '</a>'
+    : '<button type="button" class="page-back" data-action="navBack" aria-label="Retour à la page précédente">' + inner + '</button>';
   return html.replace('<div class="page-head"><div>', '<div class="page-head"><div>' + btn);
 };
 
@@ -84,6 +88,7 @@ render = function () {
 .nav a{transition:background-color .15s ease,color .15s ease}
 .page-back{display:flex;align-items:center;gap:5px;width:max-content;margin:0 0 8px;padding:5px 12px 5px 8px;border:1px solid var(--line);border-radius:999px;
   background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer;transition:background-color .15s,border-color .15s}
+a.page-back{text-decoration:none}
 .page-back:hover{background:var(--soft);border-color:var(--muted)}
 .page-back:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}
 .page-back-sep,.page-back-to{font-weight:400;color:var(--muted)}

@@ -135,6 +135,10 @@ rep('const pctTxt = (a, b) => { const v', "const pctTxt = (a, b) => { if (!b) re
 rep("p.prices.map((x) => Math.round((x - p.cost) / x * 100) + ' %')", "p.prices.map((x) => (p.cost && x ? Math.round((x - p.cost) / x * 100) + ' %' : '—'))");
 rep("tile('Marge brute de ' + (MN[1] || ''), margin + ' %',", "tile('Marge brute de ' + (MN[1] || ''), oct.cost ? margin + ' %' : '—',");
 
+// Fiche pièce : champ + bouton (code-barres + Scanner) restent dans leur colonne : le champ peut rétrécir, le bouton non.
+rep("' style=\"flex:1\">' + (opts.wrap || '')", "' style=\"flex:1;min-width:0\">' + (opts.wrap || '')");
+rep('data-action="formScanEan">', 'data-action="formScanEan" style="flex:none">');
+
 // ---------- enseigne du magasin (logo + nom) à la place de CARUNO ; import de pièces ----------
 rep('<div class="brand-row"><b>CARUNO</b>', "<div class=\"brand-row\">' + shopMark() + '");
 rep("'</button></div><span>' + esc(S.db.shop.name) + '</span></div>'", "'</button></div></div>'");

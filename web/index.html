@@ -941,7 +941,7 @@ function viewPieceForm(id) {
     sid: p.lastBuy && p.lastBuy.sid ? p.lastBuy.sid : (p.sups[0] ? p.sups[0].sid : ''), sref: p.sups[0] ? p.sups[0].ref : '', sprice: p.lastBuy ? p.lastBuy.price : (p.sups[0] ? p.sups[0].price : ''), photos: (p.photos || []).slice(), initQty: ''
   } : { name: '', brand: '', ref: '', oem: '', ean: '', fam: 'Freinage', type: '', ...Object.fromEntries(WAREHOUSES.map((w, i) => ['loc' + i, ''])), p0: '', p1: '', p2: '', floor: '', tva: VAT() ? 19 : 0, seuil: 4, souhaite: 8, sid: '', sref: '', sprice: '', photos: [], initQty: '' });
   const inp = (name, label, opts) => { opts = opts || {}; return '<div class="field"' + (opts.span ? ' style="grid-column:1/-1"' : '') + '><label for="f-' + name + '">' + label + (opts.req ? ' *' : '') + '</label>' +
-    (opts.wrap ? '<div style="display:flex;gap:8px">' : '') + '<input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="f-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.num ? ' inputmode="numeric"' : '') + (opts.req ? ' required' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' style="flex:1">' + (opts.wrap || '') + (opts.wrap ? '</div>' : '') +
+    (opts.wrap ? '<div style="display:flex;gap:8px">' : '') + '<input class="input' + (opts.num ? ' num' : '') + (opts.mono ? ' mono' : '') + '" id="f-' + name + '" name="' + name + '" value="' + esc(fv(name)) + '"' + (opts.num ? ' inputmode="numeric"' : '') + (opts.req ? ' required' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' style="flex:1;min-width:0">' + (opts.wrap || '') + (opts.wrap ? '</div>' : '') +
     (opts.hint ? '<span class="hint">' + opts.hint + '</span>' : '') + '</div>'; };
   const pr = [0, 1, 2].map((i) => Number(fv('p' + i)) || 0);
   return head(p ? 'Modifier la pièce' : 'Nouvelle pièce', p ? esc(p.brand + ' ' + p.ref) : 'Les champs * sont obligatoires', '', p ? ['#/pieces/' + p.id, 'Retour à la fiche'] : ['#/pieces', 'Pièces']) +
@@ -949,7 +949,7 @@ function viewPieceForm(id) {
     '<div class="form-section"><h2>Identification</h2><div class="form-grid">' +
       inp('name', 'Désignation', { req: true, ph: 'Plaquettes de frein avant' }) + inp('brand', 'Marque', { req: true, ph: 'TRW' }) + inp('ref', 'Référence fabricant', { req: true, mono: true }) +
       inp('oem', 'Référence OEM', { mono: true, hint: 'Sans espaces ni points : sert aux équivalences' }) +
-      inp('ean', 'Code-barres EAN', { mono: true, wrap: '<button class="btn" type="button" data-action="formScanEan">' + ic('scanner', 18) + 'Scanner</button>' }) +
+      inp('ean', 'Code-barres EAN', { mono: true, wrap: '<button class="btn" type="button" data-action="formScanEan" style="flex:none">' + ic('scanner', 18) + 'Scanner</button>' }) +
       '<div class="field"><label for="f-fam">Famille *</label><select id="f-fam" name="fam">' + FAMILIES.map((x) => '<option' + (x === fv('fam') ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div>' +
       inp('type', 'Type de pièce CARUNO', { mono: true, ph: 'plaquettes-frein-avant', hint: 'Vocabulaire commun, prépare le futur catalogue' }) +
     '</div></div>' +
@@ -4245,13 +4245,17 @@ A.navBack = () => {
   return false;
 };
 
-// En-tête de page : bouton « Retour » quand la page n'a pas de lien de retour et qu'il y a une page précédente.
+// En-tête de page : bouton « Retour ». Les pages qui ont leur retour logique (Nouvelle pièce → Pièces, fiche → liste…)
+// le gardent, sous la même forme ; les autres reviennent à la page précédente.
 const headNav = head;
 head = function (title, sub, actions, back) {
-  const html = headNav(title, sub, actions, back), prev = !back && navPrev();
-  if (!prev) return html;
-  const btn = '<button type="button" class="page-back" data-action="navBack" aria-label="Retour à la page précédente">' + ic('back', 16) +
-    '<span>Retour</span><span class="page-back-sep" aria-hidden="true">·</span><span class="page-back-to">' + esc(navLabel(prev)) + '</span></button>';
+  const html = headNav(title, sub, actions), prev = navPrev();
+  if (!back && !prev) return html;
+  const label = back ? back[1] : navLabel(prev);
+  const inner = ic('back', 16) + (/^Retour/.test(label) ? '<span>' + esc(label) + '</span>'
+    : '<span>Retour</span><span class="page-back-sep" aria-hidden="true">·</span><span class="page-back-to">' + esc(label) + '</span>');
+  const btn = back ? '<a class="page-back" href="' + esc(back[0]) + '">' + inner + '</a>'
+    : '<button type="button" class="page-back" data-action="navBack" aria-label="Retour à la page précédente">' + inner + '</button>';
   return html.replace('<div class="page-head"><div>', '<div class="page-head"><div>' + btn);
 };
 
@@ -4307,6 +4311,7 @@ render = function () {
 .nav a{transition:background-color .15s ease,color .15s ease}
 .page-back{display:flex;align-items:center;gap:5px;width:max-content;margin:0 0 8px;padding:5px 12px 5px 8px;border:1px solid var(--line);border-radius:999px;
   background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer;transition:background-color .15s,border-color .15s}
+a.page-back{text-decoration:none}
 .page-back:hover{background:var(--soft);border-color:var(--muted)}
 .page-back:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}
 .page-back-sep,.page-back-to{font-weight:400;color:var(--muted)}

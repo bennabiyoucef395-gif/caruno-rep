@@ -128,6 +128,12 @@ rep("  const tab = S.ui.regTab || 'paiements';\n  const all = payments();", "  c
 rep("const banque = S.db.bank.opening + all.filter((p) => p.mode === 'virement').reduce((t, p) => t + p.amount, 0) + S.db.bank.deposits.reduce((t, x) => t + x.amount, 0) + cashOut();", "const banque = S.db.bank.opening; // solde du compte banque lu dans Dolibarr");
 rep("Définis dans le profil magasin au déploiement, non modifiables ici. Le bandeau de la maquette permet de changer le mode de stock pour la démo.", "Lus dans Dolibarr (fiche de la société) et le profil du magasin.");
 rep("Se déconnecter annule le jeton d’accès sur tous vos appareils (POST /login avec reset=1).", "Se déconnecter ferme la session sur ce poste.");
+// Crédit des données véhicules (licence CC-BY 4.0 de VehiclesDB : mention visible avec lien, texte demandé par eux).
+// vehicle-makes-models reste interne (base de test) : pas de mention tant qu'il n'est pas montré.
+rep("data-action=\"logout\">Se déconnecter</button></section>' +\n    '</div>';",
+  "data-action=\"logout\">Se déconnecter</button></section>' +\n" +
+  "      '<section class=\"card card-pad\"><h2>À propos</h2><span class=\"muted\" style=\"font-size:14px\">Vehicle data by <a href=\"https://vehiclesdb.com\" target=\"_blank\" rel=\"noopener noreferrer\">VehiclesDB</a> (vehiclesdb.com)</span></section>' +\n" +
+  "    '</div>';");
 rep("const sc = S.ui.scan, p = S.db.parts.find((x) => x.ean === String(code).trim());", "const sc = S.ui.scan, c = String(code).trim(), p = S.db.parts.find((x) => x.ean === c) || S.db.parts.find((x) => norm(x.ref) === norm(c));");
 s = s.split(' (maquette)').join(' (à venir)');
 // Prix de référence ou coût à zéro (pièce sans prix, coût inconnu) : pas de pourcentage ni de marge calculés.

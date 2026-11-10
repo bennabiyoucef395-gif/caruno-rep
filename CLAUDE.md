@@ -171,7 +171,9 @@ answers are shaped for several shops later (list of shops per part).
   customer, decoder result, then the model / engine the seller chose (`.../choice`). Internal data: a VIN identifies
   a car and its owner; never published. Models stored by name (`VW|Golf 7|`), never by caruno_parts id (changes at rebuild).
   Customer vehicles: `llx_caruno_vehicle`. The installer runs the module's `init()` so new tables of `sql/` are created.
-- Routes so far: `POST vehicles/decode`, `POST vehicles/decode/{id}/choice`, `GET vehicles/lookups` (admin),
+- Routes so far: `GET vehicles/status` ({vin, catalogue}: the app shows its VIN field only when both are true),
+  `POST vehicles/decode`, `POST vehicles/decode/{id}/choice` (by ids, or by name: `model_key` + engine option label,
+  which is what the app sends), `GET vehicles/lookups` (admin),
   `GET models/{id}/engines` (= `get_engine_options`), `POST|GET customers/{id}/vehicles` (Dolibarr rights
   societe creer / lire). A saved vehicle answers with its *current* catalogue ids (`model_id`, `vehicle_type_id`, found
   again by name after a rebuild); a car not in the catalogue keeps its VehiclesDB model (`in_catalogue` false).
@@ -185,6 +187,11 @@ answers are shaped for several shops later (list of shops per part).
   Car not in the catalogue -> 200 with an empty list. Dolibarr (utf8mb4_unicode_ci) and the catalogue (uca1400_ai_ci)
   have different collations: never join them directly, pass the refs as literals.
   The test publishes 2 Golf 7 brake parts with stock (level-1 price written like the app, `multiprices`) and restores them.
+- Counter app (caruno-app `web/tools/actions-vehicle.js`): "VIN (n° de châssis)" field in the Catalogue's vehicle box.
+  Exact match -> model selected, engine stays "Je ne sais pas"; several -> buttons; maker not in the catalogue -> message;
+  every model / engine the seller then picks is saved with the search. Hidden when the server lacks the routes (the
+  shop server today), so the live app on 8082 is unchanged for the shop. Browser test: `web/tools/e2e-vin.mjs` (test 8081).
+  Node for the browser tests: `C:\Users\TRETEC\tools\node-v22.23.4-win-x64\node.exe` (not on PATH).
   Test: `provisioning/tests/vehicles-api.mjs` (Golf 7, A4 B8, W204, Skoda, BMW, Renault Arkana, Dacia, NHTSA, unknown, typos).
 
 ## Online shop (vitrine)

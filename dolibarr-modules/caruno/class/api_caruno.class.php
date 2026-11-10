@@ -231,18 +231,23 @@ class Caruno extends DolibarrApi
 	 * @param int    $model_id        Catalogue model id (caruno_parts), or
 	 * @param string $vdb_model_id    VehiclesDB model id ("renault/arkana") for a car not in the catalogue
 	 * @param int    $vehicle_type_id Engine option of the model; null = "Je ne sais pas"
+	 * @param string $model_key       Or the model by name: "VW|Golf 7|" (maker|model|generation)
+	 * @param string $engine          With model_key: engine option label ("2.0 TDI (diesel)"); empty = "Je ne sais pas"
 	 * @return array
 	 *
 	 * @url POST vehicles/decode/{id}/choice
 	 * @throws RestException 400 Bad request
 	 * @throws RestException 404 Search not found
 	 */
-	public function choice($id, $model_id = null, $vdb_model_id = null, $vehicle_type_id = null)
+	public function choice($id, $model_id = null, $vdb_model_id = null, $vehicle_type_id = null, $model_key = null, $engine = null)
 	{
 		$u = $this->seller();
 		$id = (int) $id;
 		if (!$this->rows("SELECT rowid FROM ".MAIN_DB_PREFIX."caruno_vin_lookup WHERE rowid = ".$id." AND entity = ".((int) $GLOBALS['conf']->entity))) {
 			throw new RestException(404, 'Recherche introuvable.');
+		}
+		if (!$model_id && $model_key) {   // the app knows models and engines by name ("VW|Golf 7|", "2.0 TDI (diesel)")
+			list($model_id, $vehicle_type_id) = $this->idsByName($model_key, $engine);
 		}
 		list($key, $label, $engine, $vdb) = $this->resolveVehicle($model_id, $vdb_model_id, $vehicle_type_id);
 		$e = function ($s) {
@@ -288,6 +293,45 @@ class Caruno extends DolibarrApi
 			return array(null, $v[0]['make'].' '.$v[0]['name'], null, $v[0]['id']);
 		}
 		throw new RestException(400, 'model_id or vdb_model_id required');
+	}
+
+	/**
+	 * Model key + engine option label ("2.0 TDI (diesel)" or "2.0 TDI"; null / "Je ne sais pas" = unknown)
+	 * -> array(model_id, vehicle_type_id). 400 when the model or the engine is not in the catalogue.
+	 */
+	private function idsByName($modelKey, $engine)
+	{
+		list($mid) = $this->currentIds($modelKey, null);
+		if (!$mid) {
+			throw new RestException(400, 'model_key: unknown model');
+		}
+		$engine = trim((string) $engine);
+		if ($engine === '' || $engine === 'Je ne sais pas') {
+			return array($mid, null);
+		}
+		$strip = function ($s) {
+			return trim(preg_replace('/\s*\([^)]*\)\s*$/u', '', $s));
+		};
+		foreach ($this->engines($mid) as $o) {
+			if ($o['vehicle_type_id'] !== null && ($o['label'] === $engine || $strip($o['label']) === $strip($engine))) {
+				return array($mid, (int) $o['vehicle_type_id']);
+			}
+		}
+		throw new RestException(400, 'engine: not an engine of this model');
+	}
+
+	/**
+	 * Is the vehicle part of the API available here? (the app shows the VIN field only then)
+	 *
+	 * @return array {"vin": true, "catalogue": true|false}
+	 *
+	 * @url GET vehicles/status
+	 */
+	public function vinStatus()
+	{
+		$this->seller();
+		$ok = (bool) $this->db->query("SELECT 1 FROM ".$this->parts().".models LIMIT 1");
+		return array('vin' => true, 'catalogue' => $ok);
 	}
 
 	/** Current catalogue ids of a saved model key / engine label (caruno_parts ids change at each rebuild). */

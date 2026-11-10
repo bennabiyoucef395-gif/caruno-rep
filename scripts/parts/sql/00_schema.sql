@@ -19,16 +19,34 @@ CREATE TABLE models (
   generation       VARCHAR(40) NULL,
   year_from        SMALLINT UNSIGNED NULL,
   year_to          SMALLINT UNSIGNED NULL,
+  -- Reference columns only (step "links", from model_links.csv); the data stays in the separate database vehicle_ref.
+  -- No foreign key: vehicle_ref is rebuilt on its own. vmm_* is internal only (never the customer's engine options).
+  vdb_model_slug     VARCHAR(120) NULL,          -- VehiclesDB model id "<make>/<slug>" (vehicle_ref.vdb_models.id)
+  vmm_generation_id  INT NULL,                   -- main vehicle-makes-models generation (vehicle_ref.vmm_generations.id)
   FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
 ) ENGINE=InnoDB;
 
 -- engine_dependent = 1: the right part depends on the engine. Without a known engine
 -- (vehicle_type_id NULL, "Je ne sais pas") such a part is never shown as compatible.
+-- Two levels: group (parent) -> category (child). Names and engine_dependent come from the reviewed lists
+-- scripts/parts/categories.csv + category_groups.csv (import_review.py); a category not listed there cannot exist.
+CREATE TABLE part_groups (
+  id       INT UNSIGNED PRIMARY KEY,
+  name     VARCHAR(60) NOT NULL UNIQUE,         -- French
+  name_en  VARCHAR(80) NOT NULL,
+  name_ar  VARCHAR(80) NOT NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE part_categories (
   id                INT UNSIGNED PRIMARY KEY,
-  group_name        VARCHAR(60) NOT NULL,
-  name              VARCHAR(120) NOT NULL UNIQUE,
-  engine_dependent  BOOLEAN NOT NULL
+  group_id          INT UNSIGNED NOT NULL,
+  group_name        VARCHAR(60) NOT NULL,       -- = part_groups.name (kept for the functions and the export)
+  name              VARCHAR(120) NOT NULL UNIQUE, -- French
+  name_en           VARCHAR(120) NOT NULL,
+  name_ar           VARCHAR(120) NOT NULL,
+  synonyms          VARCHAR(255) NULL,          -- counter words (Algerian shops), comma-separated, for search
+  engine_dependent  BOOLEAN NOT NULL,
+  FOREIGN KEY (group_id) REFERENCES part_groups(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE articles (

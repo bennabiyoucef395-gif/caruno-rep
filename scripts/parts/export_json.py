@@ -34,8 +34,9 @@ def num(v):
     return None if v is None else int(v)
 
 
-categories = [{"id": int(i), "group": g, "name": n, "engine_dependent": e == "1"}
-              for i, g, n, e in tsv("categories.tsv")]
+categories = [{"id": int(i), "group": g, "name": n, "engine_dependent": e == "1", "name_en": en, "name_ar": ar,
+               "synonyms": syn, "group_en": gen, "group_ar": gar}
+              for i, g, n, e, en, ar, syn, gen, gar in tsv("categories.tsv")]
 cat_id = {c["name"]: c["id"] for c in categories}
 models = {int(i): {"id": int(i), "maker": mk, "name": n, "generation": gen, "year_from": num(yf), "year_to": num(yt)}
           for i, mk, n, gen, yf, yt in tsv("models.tsv")}

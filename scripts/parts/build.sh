@@ -8,6 +8,8 @@
 #   base        load manufacturers, models, articles, OEM numbers, fitment (model level)
 #   categories  load part_categories and set articles.category_id
 #   engines     load engines + vehicle_types, move fitment rows with an engine to vehicle-type level
+#   links       model_links.csv -> models.vdb_model_slug / vmm_generation_id, and vehicle_ref.model_links
+#               (every matched vmm generation) when the vehicle_ref database exists (scripts/vehicle-ref/build.sh)
 #   functions   get_engine_options(), compatible_parts()
 #   test        scripts/parts/sql/90_checks.sql (Golf 7 and A4 B8)
 #   export      JSON files for the front (export.sh): $PARTS_OUT/json
@@ -57,16 +59,29 @@ step_schema() {
   sql_root "$db" < "$here/sql/00_schema.sql"
 }
 
+step_links() {
+  mkdir -p "$out"
+  MSYS_NO_PATHCONV=1 docker run --rm --network none -v "$here:/parts:ro" -v "$out:/out" python:3.12-slim \
+    python -I /parts/links_sql.py /parts/model_links.csv /out
+  sql_root --table "$db" < "$out/50_links.sql"
+  if [ -n "$(echo "SHOW DATABASES LIKE 'vehicle_ref';" | sql_root -N)" ]; then
+    sql_root --table "$db" < "$out/51_links_vref.sql"
+  else
+    echo "No vehicle_ref database: vehicle_ref.model_links not written (scripts/vehicle-ref/build.sh all)"
+  fi
+}
+
 load() { [ -f "$out/$1" ] || { echo "Missing $out/$1: run the 'data' step first" >&2; exit 1; }; sql_root "$db" < "$out/$1"; }
 
 for step in "$@"; do
   case "$step" in
-    all) set -- data schema base categories engines functions test export; for s in "$@"; do "$0" "$s"; done; exit 0 ;;
+    all) set -- data schema base categories engines links functions test export; for s in "$@"; do "$0" "$s"; done; exit 0 ;;
     data) step_data ;;
     schema) step_schema ;;
     base) load 10_base.sql ;;
     categories) load 20_categories.sql ;;
     engines) load 30_engines.sql ;;
+    links) step_links ;;
     functions) sql_root "$db" < "$here/sql/40_functions.sql" ;;
     test) sql_root --table "$db" < "$here/sql/90_checks.sql" ;;
     export) PARTS_OUT="$out" PARTS_DB_CONTAINER="$container" "$here/export.sh" ;;

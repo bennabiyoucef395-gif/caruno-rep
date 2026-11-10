@@ -50,7 +50,9 @@ sql += inserts("fitment", fit, ["id", "oem_id", "model_id", "source_id", "confid
 
 # ---- step 1: part categories, then each article gets its category ----
 sql = head
-sql += inserts("part_categories", csv("part_categories.csv"), ["id", "group_name", "name", "engine_dependent"])
+sql += inserts("part_groups", csv("part_groups.csv"), ["id", "name", "name_en", "name_ar"])
+sql += inserts("part_categories", csv("part_categories.csv"),
+               ["id", "group_id", "group_name", "name", "name_en", "name_ar", "synonyms", "engine_dependent"])
 sql += "CREATE TEMPORARY TABLE tmp_article_category (article_id INT UNSIGNED PRIMARY KEY, category_id INT UNSIGNED NOT NULL);\n"
 sql += inserts("tmp_article_category", arts.rename(columns={"id": "article_id"}), ["article_id", "category_id"])
 sql += ("UPDATE articles a JOIN tmp_article_category t ON t.article_id = a.id SET a.category_id = t.category_id;\n"

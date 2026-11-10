@@ -11,6 +11,10 @@ engine is "yes". When in doubt, "yes": a wrong "yes" only costs a "à confirmer"
 Articles without a usable name ("PIÈCE OEM 03L 145 771", "L", "OTHERS"...) are classified by the
 VW-group OEM number when it has one (main group = first digit of the middle block), otherwise
 they go to "Non classé", which is engine-dependent on purpose (safe side).
+
+The reviewed lists win over these rules (caruno_import.py): categories.csv gives each category its group,
+names (FR / EN / AR / synonyms) and engine_dependent; article_categories.csv sets an article's category by hand.
+A rule may only name a category listed in categories.csv: the build stops otherwise (list it first, review, import).
 """
 import re, unicodedata
 
@@ -274,6 +278,7 @@ RULES = [
     ("Carrosserie", "Bas de caisse / marchepied", N,
      r"BAS DE CAISSE|SIDE SKIRT|BODY BOARD|ENTRY STEP|PROTECTION LATERALE|DOOR SILL"),
     ("Carrosserie", "Tablier / traverse de radiateur", N, r"TABLIER AVANT|TRAVERSE DE RADIATEUR|RADIATOR CROSSBEAM|FRONT COWLING"),
+    ("Haut moteur", "Cache moteur", Y, r"^CACHE MOTEUR$|ENGINE COVER"),   # plastic engine cover (review 2026-11-10)
     ("Carrosserie", "Conduit d'air / protection sous moteur", N,
      r"CONDUIT D'AIR|ISOLANT PHONIQUE|NOISE INSULATION|HEAT INSULATION|PROTECTION DE RADIATEUR|WATER DEFLECTOR|CACHE MOTEUR|DEFLECTEUR MOTEUR|PROTECTION DE CARROSSERIE"),
     ("Carrosserie", "Monogramme / emblème", N, r"MONOGRAMME|EMBLEM|LOGO"),
@@ -305,7 +310,7 @@ COMPILED = [(g, c, e, re.compile(rx)) for g, c, e, rx in RULES]
 UNCLASSIFIED = ("Divers", "Non classé", Y)
 
 # VW-group part numbers "03L 145 771 A": the middle block's first digit is the main group.
-RE_VAG_OEM = re.compile(r"^[0-9A-Z]{3} ?(\d)(\d)\d ?\d{3}\b")
+RE_VAG_OEM = re.compile(r"^[0-9A-Z]{3} ?(\d)(\d)\d ?\d{3}(?!\d)")   # "851B": the letter suffix may be attached
 VAG_GROUPS = {
     "0": ("Accessoires", N), "1": ("Moteur", Y), "2": ("Carburant / échappement / clim", Y),
     "3": ("Boîte de vitesses", N), "4": ("Train avant / direction", N), "5": ("Train arrière", N),
@@ -331,4 +336,6 @@ def categorize(name, oem=None):
         for g, c, e, rx in COMPILED:
             if rx.search(n):
                 return g, c, e
+    elif not oem:                                  # "Pièce OEM 4B0 905 851B" with an empty N° OEM column
+        oem = str(name).strip()[len("Pièce OEM"):].strip()
     return vag_group(oem) or UNCLASSIFIED

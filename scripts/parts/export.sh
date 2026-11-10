@@ -11,7 +11,8 @@ container="${PARTS_DB_CONTAINER:-caruno-test-db-1}"
 q() { docker exec -i "$container" sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" --default-character-set=utf8mb4 -N -B caruno_parts'; }
 
 mkdir -p "$out/export"
-echo "SELECT id, group_name, name, engine_dependent FROM part_categories ORDER BY id;" | q > "$out/export/categories.tsv"
+echo "SELECT c.id, c.group_name, c.name, c.engine_dependent, c.name_en, c.name_ar, c.synonyms, g.name_en, g.name_ar
+      FROM part_categories c JOIN part_groups g ON g.id = c.group_id ORDER BY c.id;" | q > "$out/export/categories.tsv"
 echo "SELECT m.id, k.name, m.name, m.generation, m.year_from, m.year_to
       FROM models m JOIN manufacturers k ON k.id = m.manufacturer_id ORDER BY m.id;" | q > "$out/export/models.tsv"
 echo "SELECT id, get_engine_options(id) FROM models ORDER BY id;" | q > "$out/export/options.tsv"

@@ -42,7 +42,7 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
 Shared reference data (vehicles, parts, OEM numbers, fitment), in its own database `caruno_parts`,
 not in Dolibarr (blueprint §B). Today only on the **test** instance.
 
-- Build from scratch: `scripts/parts/build.sh all` (or one step: `data schema base categories engines functions test`).
+- Build from scratch: `scripts/parts/build.sh all` (or one step: `data schema base categories engines links functions test`).
   Source: `C:\Users\TRETEC\Documents\bdd pieces auto` (catalogue-pieces.xlsx, modeles.xlsx);
   generated files: `C:\Users\TRETEC\caruno-data\parts-build` (review files `moteurs_a_verifier.csv`,
   `moteurs_non_prouves.csv`, `a_verifier.xlsx`). The script refuses a non-test container unless `PARTS_FORCE=1`.
@@ -52,17 +52,30 @@ not in Dolibarr (blueprint §B). Today only on the **test** instance.
   for utf8mb4 clients. It is accent-insensitive: "Filtre a huile" finds "Filtre à huile".
 - `articles.ref` = Dolibarr `llx_product.ref` (TiBAO number): the join key between catalogue and shop.
 
-### Part categories (`scripts/parts/part_categories.py`)
+### Part categories (`scripts/parts/part_categories.py` + reviewed lists)
+- **Never create a category without listing it first.** The reviewed lists are the only place a category exists:
+  `scripts/parts/categories.csv` (group, name_fr, name_en, name_ar, synonyms = counter words, engine_dependent),
+  `category_groups.csv` (the 28 parent groups, FR/EN/AR), `article_categories.csv` (articles classified by hand).
+  `caruno_import.py` stops the build when a rule names a category that is not listed. To add or change one:
+  write it in the review file, get the shop's OK, then `import_review.py <categories_review.xlsx> scripts/parts`.
+  Review file + history: `C:\Users\TRETEC\caruno-data\parts-build\categories\categories_review.xlsx` (reviewed 2026-11-10).
+- Two levels in the database: `part_groups` (parent) → `part_categories` (child, `group_id`; `group_name` kept).
+  The export (`index.json`) carries name_en, name_ar, synonyms, group_en, group_ar.
+- engine_dependent comes from `categories.csv` (wins over the Y/N in the rules). Clutch: kit, disc, pressure plate,
+  release bearing, slave cylinder, cable = yes; master cylinder (pedal side) = no.
+- Unsure articles are never guessed: they stay in "Non classé" (engine-dependent, so never "compatible" without the
+  engine; a NULL category would hide the article from `compatible_parts`). The review file lists them with 3 suggestions.
 - One category per article, from its name (FR/EN/ZH keyword rules, first match wins, specific before generic).
   Position/packaging variants are the same category ("Disque de frein" = "Disque de frein avant" = "BRAKE DISC").
 - Articles without a usable name ("PIÈCE OEM 03L 145 771", "L", "OTHERS") are classified by the VW-group OEM
-  number (middle block's first digit = main group: 1 engine, 2 fuel/exhaust, 6 wheels/brakes, 8 body...).
-  The rest is "Non classé".
+  number (middle block's first digit = main group: 1 engine, 2 fuel/exhaust, 6 wheels/brakes, 8 body...),
+  also read from the name when the N° OEM column is empty. The rest is "Non classé" (134 articles on 2026-11-10).
 - `engine_dependent = 1` when the right part depends on the engine: filters (oil, air, fuel), spark and glow
   plugs, ignition coils, timing kit/belt/chain/tensioners, injectors, turbo, water pump, pistons and rings,
   valves, cylinder head gasket, alternator, starter — and every part bolted to or driven by the engine
   (head, camshaft, crankshaft, gaskets, oil and cooling circuit incl. coolant hoses, intake/exhaust, sensors
-  of the engine, engine mounts, clutch, fuel pump, A/C compressor, brake vacuum pump). "Non classé" too.
+  of the engine, engine mounts, clutch, fuel pump, A/C compressor, brake vacuum pump, radiator fan, expansion
+  tank, power-steering pump, engine vacuum solenoids, plastic engine cover). "Non classé" too.
 - When in doubt, engine-dependent: a wrong "yes" only gives "à confirmer", a wrong "no" shows the part as
   fitting every engine of the model. Cabin filter, gearbox filter, brakes, suspension, steering, body,
   lighting: not engine-dependent (brake size depends on the brake system, not on the engine).
@@ -102,6 +115,34 @@ static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<d
 - Price, stock and photo stay in Dolibarr: join on `ref`. Re-export after every rebuild of `caruno_parts`.
 - Used by the counter app (worktree `C:/Users/TRETEC/dev/caruno-app`, Catalogue screen):
   `PARTS_JSON_DIR=C:/Users/TRETEC/dev/caruno-app/web/data/parts scripts/parts/export.sh`.
+
+## Vehicle reference data (`vehicle_ref`)
+
+Outside reference data in its own database `vehicle_ref`, **never mixed into `caruno_parts` tables** (caruno_parts.models
+only gets reference columns). Today only on the **test** instance. Build: `scripts/vehicle-ref/build.sh all`
+(steps `download schema vdb vmm nhtsa test`; refuses a non-test container unless `VREF_FORCE=1`). Downloads and review
+files: `C:\Users\TRETEC\caruno-data\vehicle-ref` (`download/<source>/<release>`, `review/`). Table `sources` = release,
+licence and checksum of what is loaded. The read-only account `caruno_parts` has SELECT on it.
+- `vdb_*` = VehiclesDB (github.com/vehiclesdb/vehiclesdb, CC-BY 4.0), `catalog.sqlite` car rows only. Model level only
+  (no generations, no years); model id = `<make>/<slug>`. Vans (Sprinter, Transporter) are not in the car rows.
+  Credit required wherever it is used: "Vehicle data by VehiclesDB (vehiclesdb.com)", with a link. Shown in the app
+  on "Mon profil" (card "À propos", next to "Paramètres du magasin"; caruno-app `web/tools/patch-from-mockup.mjs`).
+  Keep it if the page is reworked; add it to any public page that shows VehiclesDB data.
+- `vmm_*` = vehicle-makes-models (github.com/gor3a/vehicle-makes-models), tables as is. Data ODbL (share-alike) copied
+  from autoevolution.com: **internal only** — used to check our generation years, never shown to customers, never
+  published. **Customer engine options come from our own data (catalogue notes + confirmed engines), never from vmm.**
+- `nhtsa_wmi` = NHTSA vPIC WMI codes (public domain) for the makes in `scripts/vehicle-ref/nhtsa_wmi.py`; the `nhtsa`
+  step also regenerates `scripts/parts/wmi_nhtsa.py`. Few non-US makes (no Dacia, Chery...).
+- VIN decoder: `scripts/parts/vin_decoder.py` (moved from the source folder). The hand-written `WMI` table is checked
+  first and always wins (Algerian makes are added there by hand from real VINs), then `wmi_nhtsa.py`, then the 2-letter
+  prefixes. Try it: `scripts/parts/vin.sh <VIN>`.
+- Model links: `scripts/vehicle-ref/link_models.py` proposes `review/model_links_a_verifier.csv` (VehiclesDB model,
+  main vmm generation + every matched vmm generation) and `review/annees_differences.csv` (our years vs theirs).
+  The reviewed list is `scripts/parts/model_links.csv` (keyed by maker + model + generation, exact match; edit it by
+  hand, Classe G deliberately unlinked). `scripts/parts/build.sh links` writes it at every rebuild:
+  `caruno_parts.models.vdb_model_slug` / `vmm_generation_id` (reference columns, no foreign key) and
+  `vehicle_ref.model_links` (every matched generation, `is_main`). Checked by `scripts/parts/tests.sh`.
+  Year check (2026-11-10): our years kept; the 25 differences come from split or incomplete vmm rows.
 
 ## Online shop (vitrine)
 - App page "Magasin en ligne" (caruno-app `web/tools/actions-enligne.js`): product extra field `en_ligne`

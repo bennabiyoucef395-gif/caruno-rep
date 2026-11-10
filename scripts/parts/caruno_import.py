@@ -13,11 +13,21 @@ Copied from "bdd pieces auto/caruno database/caruno_import.py", with two changes
 import re, sys, collections
 from pathlib import Path
 import pandas as pd
-sys.path.insert(0, str(Path(__file__).resolve().parent))   # python -I leaves the script folder out
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))   # python -I leaves the script folder out
 from part_categories import categorize
 
 SRC, OUT = Path(sys.argv[1]), Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
+
+# Reviewed category lists (import_review.py): the only categories that may exist, their names and engine_dependent;
+# plus the articles classified by hand. A category not listed stops the build: list it first, review, import.
+def read_list(name):
+    return pd.read_csv(HERE / name, sep=";", dtype=str, keep_default_na=False).to_dict("records")
+CAT_LIST = {c["name_fr"]: c for c in read_list("categories.csv")}
+GROUP_LIST = {g["group"]: g for g in read_list("category_groups.csv")}
+MANUAL = {r["ref"]: r["category"] for r in read_list("article_categories.csv")}
+UNLISTED = collections.Counter()
 
 # ---- optional model table: years + merges, keyed by (constructeur, modèle, génération) ----
 MODEL_YEARS, MODEL_MERGE = {}, {}
@@ -139,8 +149,16 @@ for i, r in df.iterrows():
     art_id = i + 1
     name = r["Désignation"] if pd.notna(r["Désignation"]) else r["Référence"]
     group, category, engine_dep = categorize(name, r["N° OEM"] if pd.notna(r["N° OEM"]) else None)
-    cat_id = categories.setdefault(category, {"id": len(categories) + 1, "group_name": group, "name": category,
-                                              "engine_dependent": int(engine_dep == "yes")})["id"]
+    category = MANUAL.get(str(r["Référence"]).strip(), category)
+    listed = CAT_LIST.get(category)
+    if not listed:
+        UNLISTED[category] += 1
+        continue
+    group = listed["group"]
+    cat_id = categories.setdefault(category, {
+        "id": len(categories) + 1, "group_id": list(GROUP_LIST).index(group) + 1, "group_name": group, "name": category,
+        "name_en": listed["name_en"], "name_ar": listed["name_ar"], "synonyms": listed["synonyms"] or None,
+        "engine_dependent": int(listed["engine_dependent"])})["id"]
     articles.append({"id": art_id, "ref": r["Référence"], "name": name, "name_ar": r["التسمية"],
                      "remark": r["Remarque"], "category_id": cat_id, "source_id": 1})
 
@@ -241,7 +259,16 @@ for i, r in df.iterrows():
                             "source_id": 1, "confidence": "probable", "note": ", ".join(n) or None,
                             "engine_scope": scope if eng else None})
 
+if UNLISTED:
+    sys.exit("Catégories non listées dans scripts/parts/categories.csv (à lister, relire et importer d'abord) : "
+             + ", ".join(f"{c} ({n} articles)" for c, n in UNLISTED.most_common()))
+unknown_manual = sorted(set(MANUAL) - set(df["Référence"].astype(str).str.strip()))
+if unknown_manual:
+    print(f"article_categories.csv : références absentes du catalogue : {', '.join(unknown_manual)}")
+
 # ---- write CSVs (column order = table columns) ----
+pd.DataFrame([{"id": i + 1, "name": g, "name_en": v["name_en"], "name_ar": v["name_ar"]}
+              for i, (g, v) in enumerate(GROUP_LIST.items())]).to_csv(OUT / "part_groups.csv", index=False)
 pd.DataFrame([{"id": 1, "name": "Catalogue", "type": "catalogue"}]).to_csv(OUT / "data_sources.csv", index=False)
 pd.DataFrame([{"id": v, "name": k} for k, v in manufacturers.items()]).to_csv(OUT / "manufacturers.csv", index=False)
 md = pd.DataFrame(models.values())

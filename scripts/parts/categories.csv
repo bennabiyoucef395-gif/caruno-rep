@@ -1,0 +1,225 @@
+group;name_fr;name_en;name_ar;synonyms;engine_dependent
+Admission / échappement;Collecteur d'admission / joint;Intake manifold / gasket;مجمع السحب / جوان;كوليكتور داديميسيون;1
+Admission / échappement;Collecteur d'échappement / joint;Exhaust manifold / gasket;مجمع العادم / جوان;كوليكتور ديشابمون;1
+Admission / échappement;Durite / conduit d'admission;Intake hose / duct;خرطوم السحب;دوريت داديميسيون;1
+Admission / échappement;Débitmètre d'air;Air flow meter (MAF);حساس كمية الهواء;ديبيمتر;1
+Admission / échappement;Sonde lambda;Lambda sensor;حساس الأكسجين;سوند لومبدا;1
+Admission / échappement;Vanne EGR;EGR valve;صمام EGR;فان EGR;1
+Admission / échappement;Échappement / silencieux;Exhaust / silencer;العادم / كاتم الصوت;بو ديشابمون، سيلونسيو;1
+Admission / échappement;Électrovanne / valve de dépression;Solenoid / vacuum valve;صمام كهربائي / صمام التفريغ;إلكتروفان;1
+Allumage;Allumeur / module d'allumage;Distributor / ignition module;موزع / وحدة الإشعال;ألوميور;1
+Allumage;Bobine d'allumage;Ignition coil;بوبينة الإشعال;بوبين;1
+Allumage;Bougie d'allumage;Spark plug;شمعة الإشعال;بوجي;1
+Allumage;Bougie de préchauffage;Glow plug;شمعة التسخين;بوجي بريشوفاج;1
+Allumage;Faisceau / câbles d'allumage;Ignition leads;أسلاك الإشعال;فيلات بوجي;1
+Bas moteur;Arbre d'équilibrage;Balance shaft;عمود الموازنة;;1
+Bas moteur;Bielle;Connecting rod;ذراع التوصيل (البيال);بيال;1
+Bas moteur;Chemise de cylindre;Cylinder liner;قميص الأسطوانة;شوميز;1
+Bas moteur;Coussinet / palier de vilebrequin;Crankshaft bearing;سبيكة عمود الكرنك;كوسيني;1
+Bas moteur;Joint spi de vilebrequin;Crankshaft oil seal;سدادة زيت عمود الكرنك;سبي فيلبروكان;1
+Bas moteur;Kit de réparation moteur;Engine repair kit;طقم إصلاح المحرك;كيت موتور;1
+Bas moteur;Piston;Piston;مكبس;بيستون;1
+Bas moteur;Segments de piston;Piston rings;حلقات المكبس;سيغمون;1
+Bas moteur;Support moteur;Engine mount;كرسي المحرك;سيبور موتور;1
+Bas moteur;Vilebrequin;Crankshaft;عمود الكرنك;فيلبروكان;1
+Bas moteur;Volant moteur;Flywheel;دولاب الموازنة;فولون موتور;1
+Capteurs;Capteur (autre);Sensor (other);حساس (آخر);كابتور;1
+Capteurs;Capteur ABS;ABS sensor;حساس ABS;كابتور ABS;0
+Capteurs;Capteur de pression (autre);Pressure sensor (other);حساس الضغط (آخر);كابتور دو بريسيون;1
+Capteurs;Capteur de stationnement;Parking sensor;حساس الركن;كابتور دو ستاسيونمون، راداغ;0
+Capteurs;Capteur de vilebrequin / arbre à cames;Crankshaft / camshaft sensor;حساس عمود الكرنك / الكامات;كابتور فيلبروكان، كابتور PMH;1
+Carrosserie;Aile;Wing / fender;رفرف;إيل، جناح;0
+Carrosserie;Bas de caisse / marchepied;Sill / side step;عتبة جانبية;با دو كيس;0
+Carrosserie;Becquet / aileron;Spoiler;جناح خلفي;بيكي;0
+Carrosserie;Cache crochet de remorquage;Towing hook cover;غطاء خطاف السحب;كاش كروشي;0
+Carrosserie;Calandre;Radiator grille;الشبكة الأمامية;كالاندر;0
+Carrosserie;Capot;Bonnet / hood;غطاء المحرك;كابو;0
+Carrosserie;Charnière de capot;Bonnet hinge;مفصلة غطاء المحرك;شارنيير كابو;0
+Carrosserie;Conduit d'air / protection sous moteur;Air duct / engine undertray;مجرى الهواء / واقي أسفل المحرك;كارتير دو بروتيكسيون;0
+Carrosserie;Coque / cadre de rétroviseur;Mirror cover / housing;غطاء المرآة الجانبية;كوك ريترو;0
+Carrosserie;Câble / serrure de capot;Bonnet cable / lock;كابل / قفل غطاء المحرك;كابل كابو;0
+Carrosserie;Fixation / support de pare-chocs;Bumper bracket;مشبك / حامل الصدام;سيبور بارشوك;0
+Carrosserie;Glace de rétroviseur;Mirror glass;زجاج المرآة الجانبية;غلاس ريترو;0
+Carrosserie;Grille de pare-chocs;Bumper grille;شبكة الصدام;غريي بارشوك;0
+Carrosserie;Insonorisant de capot;Bonnet insulation;عازل صوت غطاء المحرك;;0
+Carrosserie;Monogramme / emblème;Badge / emblem;شعار / لوحة الاسم;مونوغرام، لوغو;0
+Carrosserie;Moulure / baguette d'aile ou de porte;Wing / door moulding;حلية الرفرف أو الباب;باغيت;0
+Carrosserie;Moulure / becquet / protection de pare-chocs;Bumper trim / spoiler / protection;حلية / واقي الصدام;باغيت بارشوك;0
+Carrosserie;Pare-boue / bavette;Mud flap / wheel arch liner;واقي الطين / بطانة الرفرف;بار بو;0
+Carrosserie;Pare-chocs;Bumper;صدام;بارشوك;0
+Carrosserie;Porte / vitre;Door / window;باب / زجاج;بورت;0
+Carrosserie;Rétroviseur;Door mirror;مرآة جانبية;ريتروفيزور، ريترو;0
+Carrosserie;Serrure de hayon / coffre;Tailgate / boot lock;قفل الصندوق الخلفي;سيرير كوفر;0
+Carrosserie;Support de plaque;Number plate holder;حامل اللوحة;سيبور بلاك;0
+Carrosserie;Tablier / traverse de radiateur;Front panel / radiator support;الواجهة الأمامية / حامل الرادياتير;فاص أفون;0
+Carrosserie;Vérin de capot;Bonnet gas strut;مساعد غطاء المحرك;فيران كابو;0
+Carrosserie;Vérin de hayon;Tailgate gas strut;مساعد الصندوق الخلفي;فيران كوفر;0
+Charge / démarrage;Alternateur;Alternator;مولد الكهرباء (الدينامو);ألترناتور، دينامو;1
+Charge / démarrage;Batterie;Battery;بطارية;باتري;0
+Charge / démarrage;Démarreur;Starter motor;محرك التشغيل (المارش);ديماروور، مارش;1
+Climatisation / chauffage;Commande / aérateur de chauffage;Heater control / air vent;مفتاح التدفئة / فتحة التهوية;أيراتور;0
+Climatisation / chauffage;Compresseur de climatisation;A/C compressor;ضاغط المكيف;كومبريسور كليم;1
+Climatisation / chauffage;Condenseur de climatisation;A/C condenser;مكثف المكيف;كوندونسور;0
+Climatisation / chauffage;Pulseur d'air / résistance;Heater blower / resistor;مروحة التدفئة / مقاومة;بيلسور، ريزيستونس;0
+Climatisation / chauffage;Évaporateur / détendeur / déshydrateur;Evaporator / expansion valve / drier;مبخر / صمام التمدد / مجفف المكيف;إيفابوراتور;0
+Courroie d'accessoires;Courroie d'accessoires;Accessory belt (poly-V);سير محزز;كوروا;1
+Courroie d'accessoires;Galet / tendeur de courroie;Belt pulley / tensioner;بكرة الشد;غالي، تونديور;1
+Courroie d'accessoires;Poulie de vilebrequin;Crankshaft pulley;بكرة عمود الكرنك;بولي فيلبروكان;1
+Direction;Biellette de direction;Steering tie rod;ذراع التوجيه;بياليت دو ديريكسيون;0
+Direction;Crémaillère / boîtier de direction;Steering rack / box;علبة التوجيه;كريمايير;0
+Direction;Direction assistée (pompe / réservoir / durite);Power steering (pump / reservoir / hose);التوجيه المساعد (مضخة / خزان / خرطوم);بومب ديريكسيون;1
+Direction;Rotule axiale de direction;Inner tie rod (axial joint);مفصل التوجيه المحوري;روتيل أكسيال;0
+Direction;Rotule de direction;Tie rod end;رأس ذراع التوجيه;روتيل;0
+Direction;Soufflet de direction;Steering boot;جلدة التوجيه;سوفلي ديريكسيون;0
+Distribution;Carter de distribution;Timing cover;غطاء التوقيت;كارتير ديستريبيسيون;1
+Distribution;Chaîne de distribution;Timing chain;سلسلة التوقيت;شان ديستريبيسيون;1
+Distribution;Courroie de distribution;Timing belt;سير التوقيت;كوروا ديستريبيسيون;1
+Distribution;Déphaseur d'arbre à cames;Camshaft adjuster (phaser);منظم عمود الكامات;ديفازور;1
+Distribution;Kit de distribution;Timing kit;طقم التوقيت;كيت ديستريبيسيون;1
+Distribution;Tendeur / guide de distribution;Timing tensioner / guide;شداد / دليل التوقيت;تونديور، باتان;1
+Divers;Actionneur / valve (autre);Actuator / valve (other);مشغل / صمام (آخر);;0
+Divers;Fluides / graisses;Fluids / greases;سوائل / شحوم;;0
+Divers;Joint / bague d'étanchéité;Gasket / sealing ring;جوان / حلقة إحكام;جوان;0
+Divers;Joint spi (autre);Oil seal (other);سدادة زيت (أخرى);سبي;0
+Divers;Non classé;Unclassified;غير مصنف;;1
+Divers;Patte / support de fixation;Bracket / mounting;حامل / مشبك تثبيت;سيبور، باط;0
+Divers;Visserie / clips;Bolts / clips;براغي / مشابك;كليبس، بولو;0
+Embrayage;Butée d'embrayage;Clutch release bearing;رولمان الدبرياج;بيتي;1
+Embrayage;Câble d'embrayage;Clutch cable;كابل الدبرياج;كابل لومبرياج;1
+Embrayage;Disque d'embrayage;Clutch disc;قرص الدبرياج;ديسك لومبرياج;1
+Embrayage;Kit d'embrayage;Clutch kit;طقم الدبرياج;كيت لومبرياج;1
+Embrayage;Mécanisme d'embrayage;Clutch pressure plate;صحن الضغط للدبرياج;ميكانيزم;1
+Embrayage;Pédale / pédalier;Pedal / pedal box;دواسة;بيدال;0
+Embrayage;Récepteur d'embrayage;Clutch slave cylinder;المضخة السفلية للدبرياج;ريسيبتور;1
+Embrayage;Émetteur d'embrayage;Clutch master cylinder;المضخة العلوية للدبرياج;إيميتور;0
+Essuyage;Balai d'essuie-glace;Wiper blade;ماسحة الزجاج;بالي إيسوي غلاس، مساحة;0
+Essuyage;Bras / moteur / tringlerie d'essuie-glace;Wiper arm / motor / linkage;ذراع / محرك المساحات;موتور إيسوي غلاس;0
+Essuyage;Lave-glace (pompe / réservoir / gicleur);Washer (pump / tank / jet);غسالة الزجاج (مضخة / خزان / رشاش);بومب لاف غلاس;0
+Filtration;Boîtier de filtre à air;Air filter housing;علبة فلتر الهواء;بواط فيلتر;1
+Filtration;Filtre d'habitacle;Cabin filter;فلتر المكيف (الهواء الداخلي);فيلتر أبيتاكل، فيلتر كليم;0
+Filtration;Filtre de boîte automatique;Automatic gearbox filter;فلتر العلبة الأوتوماتيكية;فيلتر بوات;0
+Filtration;Filtre à air;Air filter;فلتر الهواء;فيلتر لار، فيلتر الهوا;1
+Filtration;Filtre à carburant;Fuel filter;فلتر الوقود;فيلتر كاربيرون، فيلتر غازوال;1
+Filtration;Filtre à huile;Oil filter;فلتر الزيت;فيلتر ليويل;1
+Freinage;Câble / levier de frein à main;Handbrake cable / lever;كابل / ذراع فرامل اليد;كابل فران آ مان;0
+Freinage;Disque de frein;Brake disc;قرص الفرامل;ديسك فران;0
+Freinage;Flexible de frein;Brake hose;خرطوم الفرامل;فليكسيبل فران;0
+Freinage;Frein de stationnement électrique;Electric parking brake;فرامل الركن الكهربائية;;0
+Freinage;Liquide / réservoir de frein;Brake fluid / reservoir;زيت / خزان الفرامل;بوكال لكيد فران;0
+Freinage;Maître-cylindre de frein;Brake master cylinder;المضخة الرئيسية للفرامل;ميتر سيلاندر;0
+Freinage;Mâchoires / tambour de frein;Brake shoes / drum;فكوك / طنبور الفرامل;ماشوار، طونبور;0
+Freinage;Plaquettes de frein;Brake pads;فحمات الفرامل;بلاكيت;0
+Freinage;Pompe à vide (frein);Brake vacuum pump;مضخة الفراغ للفرامل;بومب آ فيد;1
+Freinage;Servo-frein;Brake booster;معزز الفرامل;سيرفو فران، ماستر فاك;0
+Freinage;Témoin d'usure de frein;Brake wear sensor;حساس تآكل الفرامل;تيموان دوزير;0
+Freinage;Tôle de protection de disque;Brake disc backing plate;واقي قرص الفرامل;;0
+Freinage;Étrier de frein;Brake caliper;فك الفرامل;إتريي;0
+Habitacle;Airbag;Airbag;وسادة هوائية;إيرباغ;0
+Habitacle;Garnitures / accessoires d'habitacle;Interior trim / accessories;تجهيزات داخلية;;0
+Haut moteur;Arbre à cames;Camshaft;عمود الكامات;أربر آ كام;1
+Haut moteur;Cache moteur;Engine cover;غطاء المحرك البلاستيكي;كاش موتور;1
+Haut moteur;Couvre-culasse;Cylinder head cover;غطاء رأس المحرك;كوفر كيلاس;1
+Haut moteur;Culasse;Cylinder head;رأس المحرك;كيلاس;1
+Haut moteur;Culbuteur / poussoir;Rocker arm / tappet;ذراع الصمام / الدافع;كيلبيتور، بوسوار;1
+Haut moteur;Joint de cache-culbuteurs;Rocker cover gasket;جوان غطاء الصمامات;جوان كاش كيلبيتور;1
+Haut moteur;Joint de culasse;Cylinder head gasket;جوان رأس المحرك;جوان دو كيلاس;1
+Haut moteur;Soupape / guide / joint de queue;Valve / guide / stem seal;صمام / دليل / جلدة الصمام;سوباب;1
+Injection / carburant;Bouchon / trappe de réservoir;Fuel cap / filler flap;غطاء خزان الوقود;بوشون ريزيرفوار;0
+Injection / carburant;Boîtier papillon;Throttle body;علبة الخانق;بابيون;1
+Injection / carburant;Canister à charbon actif;Charcoal canister;علبة الفحم النشط;كانيستر;0
+Injection / carburant;Capteur / régulateur de pression carburant;Fuel pressure sensor / regulator;حساس / منظم ضغط الوقود;ريغيلاتور;1
+Injection / carburant;Carburateur;Carburettor;مكربن;كاربيراتور;1
+Injection / carburant;Durite de carburant;Fuel hose;خرطوم الوقود;دوريت كاربيرون;1
+Injection / carburant;Injecteur;Injector;بخاخ;أنجيكتور;1
+Injection / carburant;Jauge / flotteur de carburant;Fuel gauge / float;عوامة الوقود;جوج;0
+Injection / carburant;Pompe haute pression;High-pressure pump;مضخة الضغط العالي;بومب أوت بريسيون;1
+Injection / carburant;Pompe à carburant;Fuel pump;مضخة الوقود;بومب أسونس، بومب كاربيرون;1
+Lubrification;Bouchon de vidange / remplissage;Oil drain / filler plug;سدادة تفريغ / تعبئة الزيت;بوشون فيدونج;1
+Lubrification;Capteur / manocontact d'huile;Oil pressure sensor / switch;حساس ضغط الزيت;مانوكونتاكت;1
+Lubrification;Carter d'huile / joint;Oil sump / gasket;حوض الزيت / جوان;كارتير;1
+Lubrification;Jauge d'huile;Oil dipstick;مقياس الزيت;جوج ليويل;1
+Lubrification;Pompe à huile;Oil pump;مضخة الزيت;بومب ليويل;1
+Lubrification;Refroidisseur d'huile moteur;Engine oil cooler;مبرد زيت المحرك;رادياتور ليويل;1
+Lubrification;Reniflard / séparateur d'huile;Breather / oil separator;منفس / فاصل الزيت;رونيفلار;1
+Lubrification;Support / boîtier de filtre à huile;Oil filter housing;حامل / علبة فلتر الزيت;سيبور فيلتر;1
+Lubrification;Tuyau / gicleur d'huile;Oil pipe / jet;أنبوب / رشاش الزيت;;1
+Ouvrants;Charnière / arrêt de porte;Door hinge / check strap;مفصلة / موقف الباب;شارنيير بورت;0
+Ouvrants;Lève-vitre;Window regulator;رافعة الزجاج;ليف فيتر;0
+Ouvrants;Poignée de porte / de maintien;Door / grab handle;مقبض الباب;بوانيي;0
+Ouvrants;Serrure de porte;Door lock;قفل الباب;سيرير;0
+Refroidissement;Durite de refroidissement;Coolant hose;خرطوم ماء التبريد;دوريت;1
+Refroidissement;Pompe à eau;Water pump;مضخة الماء;بومب آ لو;1
+Refroidissement;Pompe à eau additionnelle;Auxiliary water pump;مضخة ماء إضافية;;1
+Refroidissement;Raccord d'eau;Coolant flange / connector;وصلة الماء;راكور;1
+Refroidissement;Radiateur;Radiator;رادياتير;رادياتور;1
+Refroidissement;Robinet / vanne de chauffage;Heater valve;صمام التدفئة;روبيني شوفاج;0
+Refroidissement;Sonde / contacteur de température;Temperature sensor / switch;حساس حرارة الماء;سوند تومبيراتور;1
+Refroidissement;Thermostat;Thermostat;ترموستات;ترموستا;1
+Refroidissement;Vase d'expansion;Expansion tank;خزان التمدد;بوكال;1
+Refroidissement;Ventilateur de radiateur;Radiator fan;مروحة الرادياتير;فونتيلاتور;1
+Roues / moyeux;Moyeu de roue;Wheel hub;محور العجلة;مويو;0
+Roues / moyeux;Porte-moyeu;Steering knuckle (hub carrier);حامل المحور;فيزي;0
+Roues / moyeux;Roue / pneu / capteur de pression;Wheel / tyre / pressure sensor;عجلة / إطار / حساس الضغط;رو;0
+Roues / moyeux;Roulement de roue;Wheel bearing;رولمان العجلة;رولمان;0
+Roues / moyeux;Vis / écrou de roue;Wheel bolt / nut;برغي / صامولة العجلة;بولو رو;0
+Sans désignation;Sans désignation – accessoires (VAG 0xx);Unnamed - accessories (VAG 0xx);بدون تسمية - ملحقات;;0
+Sans désignation;Sans désignation – boîte de vitesses (VAG 3xx);Unnamed - gearbox (VAG 3xx);بدون تسمية - علبة السرعات;;0
+Sans désignation;Sans désignation – carburant / échappement / clim (VAG 2xx);Unnamed - fuel / exhaust / A/C (VAG 2xx);بدون تسمية - وقود / عادم / مكيف;;1
+Sans désignation;Sans désignation – carrosserie (VAG 8xx);Unnamed - body (VAG 8xx);بدون تسمية - هيكل;;0
+Sans désignation;Sans désignation – leviers / pédales (VAG 7xx);Unnamed - levers / pedals (VAG 7xx);بدون تسمية - أذرع / دواسات;;0
+Sans désignation;Sans désignation – moteur (VAG 1xx);Unnamed - engine (VAG 1xx);بدون تسمية - محرك;;1
+Sans désignation;Sans désignation – roues / freins (VAG 6xx);Unnamed - wheels / brakes (VAG 6xx);بدون تسمية - عجلات / فرامل;;0
+Sans désignation;Sans désignation – train arrière (VAG 5xx);Unnamed - rear axle (VAG 5xx);بدون تسمية - المحور الخلفي;;0
+Sans désignation;Sans désignation – train avant / direction (VAG 4xx);Unnamed - front axle / steering (VAG 4xx);بدون تسمية - المحور الأمامي / توجيه;;0
+Sans désignation;Sans désignation – électricité (VAG 9xx);Unnamed - electrics (VAG 9xx);بدون تسمية - كهرباء;;0
+Sans désignation;Sans désignation – électricité moteur (VAG 9xx);Unnamed - engine electrics (VAG 9xx);بدون تسمية - كهرباء المحرك;;1
+Suralimentation;Durite de turbo;Turbo hose;خرطوم التيربو;دوريت توربو;1
+Suralimentation;Refroidisseur de turbo (intercooler);Intercooler;مبرد التيربو (إنتركولر);أنتركولر;1
+Suralimentation;Turbocompresseur;Turbocharger;تيربو;توربو;1
+Suspension;Amortisseur;Shock absorber;ممتص الصدمات;أمورتيسور;0
+Suspension;Barre stabilisatrice;Anti-roll bar;عمود التوازن;بار ستابيليزاتريس;0
+Suspension;Biellette de barre stabilisatrice;Anti-roll bar link;رابط عمود التوازن;بياليت ستابيليزاتور;0
+Suspension;Bras d'essieu arrière;Rear axle arm;ذراع المحور الخلفي;بري أريير;0
+Suspension;Bras de suspension;Control arm;ذراع التعليق;تريونغل، بري;0
+Suspension;Butée / coupelle d'amortisseur;Strut mount / top mount;وسادة ممتص الصدمات;بيتي أمورتيسور، كوبيل;0
+Suspension;Compresseur / valve de suspension pneumatique;Air suspension compressor / valve;ضاغط التعليق الهوائي;كومبريسور سيسبونسيون;0
+Suspension;Essieu / berceau;Axle / subframe;المحور / الهيكل الفرعي;بيرسو;0
+Suspension;Kit de train roulant;Suspension kit;طقم أجزاء التعليق;كيت تران;0
+Suspension;Ressort de suspension;Coil spring;نابض التعليق;ريسور;0
+Suspension;Rotule de suspension;Ball joint;مفصل كروي;روتيل سيسبونسيون;0
+Suspension;Silentbloc de barre stabilisatrice;Anti-roll bar bush;جلبة عمود التوازن;سيلون بلوك ستابيليزاتور;0
+Suspension;Silentbloc de suspension;Suspension bush;جلبة التعليق;سيلون بلوك;0
+Suspension;Soufflet / kit de protection d'amortisseur;Shock absorber boot / dust kit;طقم غطاء غبار ممتص الصدمات;سوفلي أمورتيسور;0
+Suspension;Suspension pneumatique (jambe / ressort);Air suspension strut / spring;دعامة / نابض التعليق الهوائي;;0
+Transmission;Arbre de transmission;Drive shaft;عمود نقل الحركة;كاردان;0
+Transmission;Boîte de vitesses (pièces internes);Gearbox (internal parts);علبة السرعات (أجزاء داخلية);بوات فيتاس;0
+Transmission;Calculateur de boîte de vitesses;Gearbox control unit;كمبيوتر علبة السرعات;كالكولاتور بوات;0
+Transmission;Commande / levier de vitesses;Gear lever / shift linkage;عصا السرعات;لوفيي فيتاس;0
+Transmission;Différentiel;Differential;الفرق (ديفرونسيال);ديفيرونسيال;0
+Transmission;Flector;Flex disc (flector);مفصل عمود الكردان المرن;فليكتور;0
+Transmission;Joint homocinétique;CV joint;مفصل الكردان;كاردان، تريبود;0
+Transmission;Palier central;Centre bearing;رولمان الوسط;بالي سونترال;0
+Transmission;Refroidisseur d'huile de boîte;Gearbox oil cooler;مبرد زيت العلبة;;0
+Transmission;Soufflet de cardan;CV boot;جلدة الكردان;سوفلي كاردان;0
+Transmission;Support de boîte de vitesses;Gearbox mount;كرسي علبة السرعات;سيبور بوات;0
+Éclairage;Ampoule / douille;Bulb / socket;مصباح / قاعدة;لومب;0
+Éclairage;Antibrouillard;Fog light;ضوء الضباب;أنتي بروايار;0
+Éclairage;Cadre / moulure d'antibrouillard;Fog light frame / trim;إطار ضوء الضباب;كادر أنتي بروايار;0
+Éclairage;Clignotant / répétiteur;Indicator / side repeater;إشارة الانعطاف;كلينيوتون;0
+Éclairage;Correcteur / module de phare;Headlight levelling / module;منظم / وحدة الضوء الأمامي;كوريكتور فار;0
+Éclairage;Feu arrière / feu stop;Rear light / brake light;ضوء خلفي / ضوء الفرامل;فو أريير، ستوب;0
+Éclairage;Feu de position / jour / latéral;Position / daytime / side light;ضوء الوضعية / النهار / الجانبي;فو دو بوزيسيون;0
+Éclairage;Glace de phare;Headlight lens;زجاج الضوء الأمامي;غلاس فار;0
+Éclairage;Lave-phare;Headlight washer;غسالة الضوء الأمامي;لاف فار;0
+Éclairage;Phare;Headlight;ضوء أمامي;فار;0
+Éclairage;Support / moulure de phare;Headlight bracket / trim;حامل / حلية الضوء الأمامي;سيبور فار;0
+Éclairage;Éclairage intérieur / plaque;Interior / plate light;ضوء داخلي / ضوء اللوحة;بلافونيي;0
+Électricité / commandes;Antenne;Antenna;هوائي;أونتين;0
+Électricité / commandes;Avertisseur (klaxon);Horn;منبه (كلاكسون);كلاكسون;0
+Électricité / commandes;Commande de lève-vitre;Window switch;مفتاح رافعة الزجاج;بوطون ليف فيتر;0
+Électricité / commandes;Commodo;Steering column switch;مفتاح الإشارة (الكومودو);كومودو;0
+Électricité / commandes;Contacteur d'allumage / clé;Ignition switch / key;مفتاح الإشعال;نيمان، كونتاكتور;0
+Électricité / commandes;Contacteur de feu stop;Brake light switch;مفتاح ضوء الفرامل;كونتاكتور ستوب;0
+Électricité / commandes;Interrupteur (autre);Switch (other);مفتاح (آخر);أنتيروبتور;0
+Électricité / commandes;Relais / fusible / calculateur;Relay / fuse / control unit;ريلاي / فيوز / كمبيوتر;ريلي، فيزيبل، كالكولاتور;0
+Électricité / commandes;Tableau de bord / compteur;Dashboard / instrument cluster;لوحة العدادات;كونتور، طابلو;0

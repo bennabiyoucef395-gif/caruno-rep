@@ -16,6 +16,8 @@ L'interface est celle de la maquette validée (`doc/maquette/caruno-maquette.htm
   Une pièce qui dépend du moteur n'est jamais affichée « Compatible » tant que le moteur n'est pas choisi.
 - Lancer : `node web/tools/serve.mjs 8082` puis http://localhost:8082. Test navigateur : `node web/tools/e2e.mjs` (Dolibarr de développement seulement).
   Choix du véhicule, en lecture seule : `node web/tools/e2e-vehicle.mjs`.
+- VIN (n° de châssis) dans le Catalogue : lu par le module CARUNO du serveur (routes `caruno/vehicles/...`), qui enregistre chaque
+  lecture et le choix du vendeur. Champ caché si le serveur n’a pas ces routes. Test : `node web/tools/e2e-vin.mjs` (Dolibarr de test).
 
 Pas encore relié à Dolibarr (message à l'écran) : retours et avoirs, livraisons partielles, facturation des livraisons,
 remise de chèques, dépôt d'espèces, comptes utilisateurs, préparation automatique des commandes fournisseurs.

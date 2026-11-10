@@ -3427,7 +3427,8 @@ const VEH_RANK = { compatible: 0, a_confirmer: 1 };
 const VEH_CONF = { confirmed: 'confirmée', probable: 'probable', unverified: 'non vérifiée' };
 
 function vehUi() {
-  if (!S.ui.veh) S.ui.veh = { idx: null, maker: '', model: '', vt: 'unknown', fam: '', q: '', page: 0, files: {}, rows: {}, seq: 0 };
+  if (!S.ui.veh) S.ui.veh = { idx: null, maker: '', model: '', vt: 'unknown', fam: '', q: '', page: 0, files: {}, rows: {}, seq: 0,
+    vinApi: null, vin: '', vinRes: null, vinLookup: null };
   return S.ui.veh;
 }
 const vehMaker = (k) => VEH_MAKERS[k] || k;
@@ -3526,13 +3527,66 @@ function vehBar(v) {
       Object.keys(groups).sort().map((g) => '<optgroup label="' + esc(g) + '">' + opt('g:' + g, 'Toute la famille ' + g, v.fam) +
         Object.keys(groups[g]).sort((a, b) => groups[g][a].localeCompare(groups[g][b])).map((id) => opt('c:' + id, groups[g][id], v.fam)).join('') + '</optgroup>').join('') + '</select></div>';
   }
-  return '<section class="card card-pad" aria-label="Véhicule du client" style="margin-bottom:14px"><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">' +
+  return '<section class="card card-pad" aria-label="Véhicule du client" style="margin-bottom:14px">' + vehVinBlock(v) + '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">' +
     '<div class="field"><label for="veh-maker">Marque</label><select id="veh-maker" data-change="vehMaker">' + opt('', '— Choisir —', v.maker) + makers.map((k) => opt(k, vehMaker(k), v.maker)).join('') + '</select></div>' +
     '<div class="field"><label for="veh-model">Modèle</label><select id="veh-model" data-change="vehModel"' + (v.maker ? '' : ' disabled') + '>' + opt('', '— Choisir —', v.model) + models.map((m) => opt(m.id, vehModelLabel(m), v.model)).join('') + '</select></div>' +
     (ready ? '<div class="field"><label for="veh-engine">Moteur</label><select id="veh-engine" data-change="vehEngine">' +
       file.engines.map((o) => opt(o.vehicle_type_id === null ? 'unknown' : o.vehicle_type_id, o.label, v.vt)).join('') + '</select></div>' + fam : '') +
     (v.maker ? '<button class="btn" type="button" data-action="vehClear">Effacer le véhicule</button>' : '') +
     '</div>' + (v.model ? '' : '<span class="muted" style="font-size:13px;display:block;margin-top:8px">Choisissez le véhicule du client pour voir les pièces compatibles, ou cherchez directement une pièce.</span>') + '</section>';
+}
+
+/* ---- VIN (n° de châssis) : lu par le serveur (module CARUNO, routes caruno/vehicles/...), qui enregistre chaque lecture
+   et le choix final du vendeur (modèle + moteur). Le champ n'apparaît que si le serveur a ces routes et le catalogue
+   (caruno/vehicles/status) : sinon le catalogue reste exactement comme avant. Le décodeur ne devine jamais : s'il
+   n'est pas sûr, il propose une liste ; le moteur reste « Je ne sais pas » tant que le vendeur ne le choisit pas. */
+async function vehVinProbe() {
+  const v = vehUi();
+  v.vinApi = 'checking';
+  try { const r = await doli('caruno/vehicles/status'); v.vinApi = !!(r && r.vin === true && r.catalogue === true); }
+  catch (e) { v.vinApi = false; }
+  render();
+}
+const vehKey = (m) => m.maker + '|' + m.name + '|' + (m.generation || '');
+function vehVinApply(v, key) {
+  const m = v.idx.models.find((x) => vehKey(x) === key);
+  if (!m) return false;
+  v.maker = m.maker; v.model = String(m.id); vehReset(v);
+  return true;
+}
+// Choix du vendeur enregistré avec la lecture du VIN (par nom : « VW|Golf 7| », « 2.0 TDI (diesel) »). Sans effet à l'écran.
+function vehVinSave(v) {
+  const m = v.vinLookup && v.model ? vehModel(v) : null;
+  if (!m) return;
+  const file = v.files[v.model];
+  const eng = file && typeof file === 'object' && v.vt !== 'unknown' ? (file.engines.find((o) => String(o.vehicle_type_id) === String(v.vt)) || {}).label : '';
+  doli('caruno/vehicles/decode/' + v.vinLookup + '/choice', { method: 'POST', body: { model_key: vehKey(m), engine: eng || '' } }).catch(() => {});
+}
+function vehVinBlock(v) {
+  if (v.vinApi == null) setTimeout(vehVinProbe, 0);
+  if (v.vinApi !== true) return '';
+  const r = v.vinRes, ok = (t) => '<div class="alert a-ok" role="status" style="margin:8px 0 0">' + t + '</div>',
+    warn = (t) => '<div class="alert a-warn" role="status" style="margin:8px 0 0">' + t + '</div>';
+  let msg = '';
+  if (r === 'loading') msg = '<span class="muted" style="display:block;margin-top:8px">Lecture du VIN…</span>';
+  else if (r && r.valid === false) msg = warn(esc((r.errors || [])[0] || 'VIN illisible.'));
+  else if (r && r.picked) {
+    const m = v.idx.models.find((x) => vehKey(x) === r.picked);
+    msg = ok('VIN lu : ' + esc(vehMaker(m.maker) + ' ' + vehModelLabel(m)) + (r.year ? ' · année ' + r.year : '') + '. Choisissez le moteur si vous le connaissez.');
+  } else if (r && r.level === 'exact') msg = warn('VIN lu : ' + esc((r.candidates[0] || {}).label || '') + ' — pas de pièces de ce modèle dans le catalogue.');
+  else if (r && (r.level === 'model' || r.level === 'make')) {
+    const keys = new Set(v.idx.models.map(vehKey)), list = r.candidates.filter((c) => keys.has(c.model_key));
+    const btn = (c) => { const m = v.idx.models.find((x) => vehKey(x) === c.model_key);
+      return '<button class="btn" type="button" data-action="vehVinPick" data-arg="' + esc(c.model_key) + '">' + esc(vehModelLabel(m)) + '</button>'; };
+    msg = warn('VIN lu : ' + esc(vehMaker(r.maker)) + (r.year ? ' · année ' + r.year : '') + ' — ' +
+      (list.length ? 'choisissez le modèle :' : 'aucun de ses modèles possibles n\'a de pièces dans le catalogue.') +
+      (list.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + list.slice(0, 12).map(btn).join('') + '</div>' +
+        (list.length > 12 ? '<span class="t2">… et ' + (list.length - 12) + ' autres : choisissez dans la liste Modèle.</span>' : '') : ''));
+  } else if (r && r.maker) msg = warn('Constructeur : ' + esc(vehMaker(r.maker)) + ' — ce véhicule n\'est pas dans le catalogue. Choisissez la marque et le modèle à la main, ou cherchez directement une pièce.');
+  else if (r) msg = warn('Constructeur non reconnu : choisissez la marque et le modèle à la main.');
+  return '<form data-submit="vehVin" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px">' +
+    '<div class="field" style="min-width:260px"><label for="veh-vin">VIN (n° de châssis)</label><input class="input mono" id="veh-vin" name="vin" maxlength="30" autocomplete="off" spellcheck="false" placeholder="17 caractères" value="' + esc(v.vin) + '" data-input="vehVinText" style="text-transform:uppercase"></div>' +
+    '<button class="btn" type="submit"' + (r === 'loading' ? ' disabled' : '') + '>Lire le VIN</button></form>' + msg;
 }
 
 function viewVehicle(v) {
@@ -3583,14 +3637,41 @@ viewCatalogue = function () {
 const vehReset = (v) => { v.vt = 'unknown'; v.fam = ''; v.q = ''; v.page = 0; };
 Object.assign(C, {
   vehMaker: (val) => { const v = vehUi(); v.maker = val; v.model = ''; vehReset(v); },
-  vehModel: (val) => { const v = vehUi(); v.model = val; vehReset(v); },
-  vehEngine: (val) => { const v = vehUi(); v.vt = val; v.page = 0; },
+  vehModel: (val) => { const v = vehUi(); v.model = val; vehReset(v); vehVinSave(v); },
+  vehEngine: (val) => { const v = vehUi(); v.vt = val; v.page = 0; vehVinSave(v); },
   vehFam: (val) => { const v = vehUi(); v.fam = val; v.page = 0; },
 });
-Object.assign(I, { vehQ: (val) => { const v = vehUi(); v.q = val; v.page = 0; } });
+Object.assign(I, {
+  vehQ: (val) => { const v = vehUi(); v.q = val; v.page = 0; },
+  vehVinText: (val) => { vehUi().vin = val; return false; },   // kept across redraws (photos, rows), no redraw while typing
+});
 Object.assign(A, {
   vehPage: (el) => { vehUi().page = Math.max(0, Number(el.dataset.arg) || 0); },
-  vehClear: () => { const v = vehUi(); v.maker = ''; v.model = ''; vehReset(v); },
+  vehClear: () => { const v = vehUi(); v.maker = ''; v.model = ''; vehReset(v); v.vin = ''; v.vinRes = null; v.vinLookup = null; },
+  vehVinPick: (el) => { const v = vehUi(); if (vehVinApply(v, el.dataset.arg)) { v.vinRes = Object.assign({}, v.vinRes, { picked: el.dataset.arg }); vehVinSave(v); } },
+});
+Object.assign(F, {
+  vehVin: (form, fd) => {
+    const v = vehUi(), vin = String(fd.get('vin') || '').trim();
+    v.vin = vin;
+    if (!vin || v.vinRes === 'loading') return;
+    v.vinRes = 'loading';
+    (async () => {
+      try {
+        const r = await doli('caruno/vehicles/decode', { method: 'POST', body: { vin } });
+        v.vinRes = r || { valid: false, errors: ['Lecture du VIN indisponible sur ce serveur.'] };
+        v.vinLookup = (r && r.lookup_id) || null;
+        if (r && r.valid && r.level !== 'none' && v.idx.models.some((m) => m.maker === (r.maker === 'MINI' ? 'BMW' : r.maker))) {
+          v.maker = r.maker === 'MINI' ? 'BMW' : r.maker; v.model = ''; vehReset(v);   // make known: its models in the list
+        }
+        if (r && r.level === 'exact' && r.candidates.length === 1 && vehVinApply(v, r.candidates[0].model_key)) {
+          v.vinRes = Object.assign({}, r, { picked: r.candidates[0].model_key });
+          vehVinSave(v);
+        }
+      } catch (e) { v.vinRes = { valid: false, errors: [e.message] }; }
+      render();
+    })();
+  },
 });
 
 /* =================================================================== TABLEAU DE BORD : CAISSE EN HAUT, GRAPHIQUES */

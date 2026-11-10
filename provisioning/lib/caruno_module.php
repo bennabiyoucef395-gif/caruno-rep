@@ -29,6 +29,11 @@ if ($on) {
 	$res = activateModule('modCaruno');
 	$err = !empty($res['errors']) ? implode(' ; ', $res['errors']) : '';
 	if ($err) { printf("%-9s %s\n", 'ERROR', 'CARUNO module: '.$err); exit(1); }
+	// activateModule() skips init() when the module is already active: run it so new tables of sql/ are created
+	// (CREATE TABLE of an existing table is ignored, data kept).
+	require_once DOL_DOCUMENT_ROOT.'/custom/caruno/core/modules/modCaruno.class.php';
+	$mod = new modCaruno($db);
+	if ($mod->init() <= 0) { printf("%-9s %s\n", 'ERROR', 'CARUNO module init: '.$mod->error); exit(1); }
 	$hooks = $db->query("SELECT value FROM ".MAIN_DB_PREFIX."const WHERE name = 'MAIN_MODULE_CARUNO_HOOKS' AND entity IN (0, ".((int) $conf->entity).")");
 	$h = $hooks ? $db->fetch_object($hooks) : null;
 	printf("%-9s %s\n", $active ? 'UNCHANGED' : 'CHANGED', 'CARUNO module active, hooks: '.($h ? $h->value : '(none)'));

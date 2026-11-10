@@ -13,6 +13,11 @@ admin="${ADMIN_LOGIN:-admin}"
 src="$here/../dolibarr-modules/caruno"
 
 if [ "$action" = on ]; then
+  # VIN rules for the add-on, generated from scripts/parts/vin_decoder.py (the only source): data/vin_rules.json.
+  pb="${PARTS_OUT:-C:/Users/TRETEC/caruno-data/parts-build}"
+  extra=(); [ -f "$pb/models.csv" ] && extra=(/pb/models.csv /pb/manufacturers.csv)
+  MSYS_NO_PATHCONV=1 docker run --rm --network none -v "$(cd "$here/../scripts/parts" && { pwd -W 2>/dev/null || pwd; }):/parts:ro" \
+    -v "$(cd "$src/data" && { pwd -W 2>/dev/null || pwd; }):/out" -v "$pb:/pb:ro" python:3.12-slim python -I /parts/vin_rules.py /out "${extra[@]}"
   # Copy the files (tar keeps the tree; the custom folder is the instance's, on disk), readable by the web server.
   tar -C "$src" -cf - . | docker exec -i -u root "$app" sh -c 'rm -rf /var/www/html/custom/caruno && mkdir -p /var/www/html/custom/caruno && tar -C /var/www/html/custom/caruno -xf - && chown -R www-data:www-data /var/www/html/custom/caruno'
   echo "COPIED    dolibarr-modules/caruno -> $app:/var/www/html/custom/caruno"

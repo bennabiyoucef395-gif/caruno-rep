@@ -13,6 +13,8 @@
 #   vdb       (re)load the vdb_* tables from the downloaded VehiclesDB release
 #   vmm       (re)load the vmm_* tables from the downloaded vehicle-makes-models release
 #   nhtsa     (re)load nhtsa_wmi and regenerate scripts/parts/wmi_nhtsa.py
+#   views     sql/40_reference_engines.sql: reference engines per catalogue model (vmm, REFERENCE ONLY)
+#   missing   $VREF_OUT/review/moteurs_manquants.csv: reference engines our catalogue does not offer for the model
 #   test      sql/90_checks.sql
 #   all       every step above, in order
 #
@@ -121,9 +123,28 @@ step_nhtsa() {
   echo "scripts/parts/wmi_nhtsa.py regenerated"
 }
 
+step_missing() {
+  mkdir -p "$out/review"
+  { printf '\xef\xbb\xbf'   # UTF-8 BOM for Excel
+    echo "SELECT k.name AS marque, m.name AS modele, IFNULL(m.generation, '') AS generation,
+                 CONCAT_WS('-', m.year_from, m.year_to) AS annees, s.label AS moteur_reference,
+                 CONCAT(s.hp_min, IF(s.hp_max > s.hp_min, CONCAT('-', s.hp_max), ''), ' ch') AS puissance,
+                 s.vmm_variants AS variantes
+          FROM reference_engine_summary s
+          JOIN caruno_parts.models m ON m.id = s.caruno_model_id
+          JOIN caruno_parts.manufacturers k ON k.id = m.manufacturer_id
+          WHERE NOT s.in_catalogue AND s.fuel IS NOT NULL
+          ORDER BY k.name, m.name, m.year_from, s.displacement_l, s.label;" \
+      | sql_root -B "$db" | sed 's/\t/;/g'
+  } > "$out/review/moteurs_manquants.csv"
+  echo "$(($(wc -l < "$out/review/moteurs_manquants.csv") - 1)) reference engines missing from the catalogue -> $out/review/moteurs_manquants.csv"
+}
+
 for step in "$@"; do
   case "$step" in
-    all) set -- download schema vdb vmm nhtsa test; for s in "$@"; do "$0" "$s"; done; exit 0 ;;
+    all) set -- download schema vdb vmm nhtsa views test missing; for s in "$@"; do "$0" "$s"; done; exit 0 ;;
+    views) sql_root "$db" < "$here/sql/40_reference_engines.sql" ;;
+    missing) step_missing ;;
     download) step_download ;;
     schema) step_schema ;;
     vdb) step_vdb ;;

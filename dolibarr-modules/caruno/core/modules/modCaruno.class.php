@@ -7,8 +7,11 @@
  * "Read supplier prices" (produit > product_advance > read_supplier_prices) — the sellers. Dolibarr's own setting only
  * hides them in its web pages, not in the API used by the CARUNO counter app.
  *
- * No table, no menu, no page: one hook on the API (class/actions_caruno.class.php).
- * Installed and activated by provisioning/40-caruno-module.sh.
+ * Vehicles (API caruno/vehicles/..., class/api_caruno.class.php): VIN decoding (class/caruno_vin.class.php, rules from
+ * scripts/parts/vin_decoder.py), with every search saved in llx_caruno_vin_lookup and customers' vehicles in
+ * llx_caruno_vehicle (sql/). Reads the catalogue databases caruno_parts and vehicle_ref (read-only grant to the
+ * Dolibarr database account: provisioning/41-caruno-catalogue-access.sh).
+ * No menu, no page. Installed and activated by provisioning/40-caruno-module.sh.
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 
@@ -25,7 +28,7 @@ class modCaruno extends DolibarrModules
 		$this->description = 'CARUNO : les prix d\'achat restent sur le serveur (API) pour les utilisateurs sans le droit « Lire les prix fournisseurs ».';
 		$this->descriptionlong = $this->description;
 		$this->editor_name = 'CARUNO';
-		$this->version = '1.0.0';
+		$this->version = '1.1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'generic';
 		$this->module_parts = array('hooks' => array('api'));
@@ -49,6 +52,11 @@ class modCaruno extends DolibarrModules
 
 	public function init($options = '')
 	{
+		// Tables of sql/ (CREATE TABLE ignored when the table already exists: data kept on re-activation).
+		$result = $this->_load_tables('/caruno/sql/');
+		if ($result < 0) {
+			return -1;
+		}
 		return $this->_init(array(), $options);
 	}
 

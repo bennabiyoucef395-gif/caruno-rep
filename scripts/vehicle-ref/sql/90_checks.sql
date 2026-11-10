@@ -39,3 +39,11 @@ SELECT 'VehiclesDB' AS src, k.name AS make, COUNT(*) AS models FROM vdb_models m
 UNION ALL
 SELECT 'vehicle-makes-models', k.name, COUNT(*) FROM vmm_generations g JOIN vmm_models m ON m.id = g.model_id JOIN vmm_makes k ON k.id = m.make_id
  WHERE k.name IN ('Volkswagen', 'Audi', 'BMW', 'Mercedes-Benz', 'Škoda', 'SEAT') GROUP BY k.name;
+
+-- Reference engines (views from 40_reference_engines.sql): the label wins over vmm's wrong fuel column.
+SELECT 'problem: a TDI reference engine read as petrol' AS check_name,
+       (SELECT COUNT(*) FROM reference_engines WHERE family = 'TDI' AND fuel <> 'diesel') AS n
+UNION ALL
+SELECT 'problem: Golf 7 has no 2.0 TDI (diesel) reference engine',
+       (SELECT COUNT(*) = 0 FROM reference_engine_summary s JOIN caruno_parts.models m ON m.id = s.caruno_model_id
+        WHERE m.name = 'Golf 7' AND s.label = '2.0 TDI (diesel)');

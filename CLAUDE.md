@@ -91,6 +91,13 @@ not in Dolibarr (blueprint §B). Today only on the **test** instance.
   different parts (`MIN_PARTS`). Unproven rows stay at model level with their note.
 - `fitment.model_id` is always set; `vehicle_type_id` is set when the engine is proven. Source, confidence
   and the original note are kept on every row. A composite key forbids a vehicle type of another model.
+  State on 2026-11-10: 89 engines, 428 vehicle types, 34,279 fitment rows, 3,019 at vehicle-type level,
+  899 with an engine note kept at model level (unproven).
+- Engine options for customers (`get_engine_options`) come only from these vehicle types (our catalogue notes,
+  later seller confirmations), **never from vehicle_ref / vehicle-makes-models** (reference only, see below).
+- Checked with Golf 7 and A4 B8 (`sql/90_checks.sql`, `tests.sh`): e.g. Golf 7 + 2.0 TDI gets no oil filter (the
+  catalogue lists Golf 7 filters for the 1.2 / 1.4 TSI only); "Je ne sais pas" + oil filter = `moteur_requis`;
+  A4 B8 + 2.0 TFSI + filter known at model level = `a_confirmer`; brake discs/pads = `compatible` either way.
 
 ### What the customer sees (`scripts/parts/sql/40_functions.sql`)
 - `get_engine_options(model_id)` → JSON list of the model's vehicle types, always ending with
@@ -131,6 +138,13 @@ licence and checksum of what is loaded. The read-only account `caruno_parts` has
 - `vmm_*` = vehicle-makes-models (github.com/gor3a/vehicle-makes-models), tables as is. Data ODbL (share-alike) copied
   from autoevolution.com: **internal only** — used to check our generation years, never shown to customers, never
   published. **Customer engine options come from our own data (catalogue notes + confirmed engines), never from vmm.**
+- Reference engines (views `reference_engines`, `reference_engine_summary`, `sql/40_reference_engines.sql`, step
+  `views`): the vmm engines of each catalogue model through `model_links`, as "2.0 TDI (diesel)" + power range +
+  `in_catalogue` (our vehicle_types already offer that size and fuel). **Reference only: never an engine option,
+  never a fitment.** vmm's columns are often wrong ("2.0L TDI" filed as Gasoline 1395 cc): size and type are read
+  from the label first (VW group "2.0L TDI", BMW "320d", Mercedes "C 220 CDI"), with our fuel rules.
+  Step `missing` writes `review/moteurs_manquants.csv`: reference engines our catalogue does not offer (the catalogue
+  rarely names the engine for BMW, Mercedes, Seat, Toyota).
 - `nhtsa_wmi` = NHTSA vPIC WMI codes (public domain) for the makes in `scripts/vehicle-ref/nhtsa_wmi.py`; the `nhtsa`
   step also regenerates `scripts/parts/wmi_nhtsa.py`. Few non-US makes (no Dacia, Chery...).
 - VIN decoder: `scripts/parts/vin_decoder.py` (moved from the source folder). The hand-written `WMI` table is checked
@@ -143,6 +157,35 @@ licence and checksum of what is loaded. The read-only account `caruno_parts` has
   `caruno_parts.models.vdb_model_slug` / `vmm_generation_id` (reference columns, no foreign key) and
   `vehicle_ref.model_links` (every matched generation, `is_main`). Checked by `scripts/parts/tests.sh`.
   Year check (2026-11-10): our years kept; the 25 differences come from split or incomplete vmm rows.
+
+## Vehicles API (CARUNO add-on, test instance)
+Decided 2026-11-10: the API lives in the add-on (`dolibarr-modules/caruno`, Restler, prefix `/api/index.php/caruno/`),
+no separate backend. One shop for now, no customer accounts (the seller saves the vehicle on the customer record);
+answers are shaped for several shops later (list of shops per part).
+- The add-on reads `caruno_parts` (SELECT, EXECUTE) and `vehicle_ref` (SELECT) through Dolibarr's own database account:
+  `provisioning/41-caruno-catalogue-access.sh` (test only unless `CARUNO_FORCE=1`). No catalogue there -> 503.
+- VIN decoder in PHP (`class/caruno_vin.class.php`) = port of `scripts/parts/vin_decoder.py`, which stays the only source:
+  `scripts/parts/vin_rules.py` writes `data/vin_rules.json` (+ `vin_cases.json`, the Python answers for the test VINs);
+  `40-caruno-module.sh` regenerates them before installing. Re-run the installer after changing the decoder.
+- **Every VIN search is saved** (`llx_caruno_vin_lookup`, Dolibarr database, so in the shop backup): VIN, seller,
+  customer, decoder result, then the model / engine the seller chose (`.../choice`). Internal data: a VIN identifies
+  a car and its owner; never published. Models stored by name (`VW|Golf 7|`), never by caruno_parts id (changes at rebuild).
+  Customer vehicles: `llx_caruno_vehicle`. The installer runs the module's `init()` so new tables of `sql/` are created.
+- Routes so far: `POST vehicles/decode`, `POST vehicles/decode/{id}/choice`, `GET vehicles/lookups` (admin),
+  `GET models/{id}/engines` (= `get_engine_options`), `POST|GET customers/{id}/vehicles` (Dolibarr rights
+  societe creer / lire). A saved vehicle answers with its *current* catalogue ids (`model_id`, `vehicle_type_id`, found
+  again by name after a rebuild); a car not in the catalogue keeps its VehiclesDB model (`in_catalogue` false).
+  Test customer "TEST VEHICULES (tests API)", created once by the test, found by name.
+- `GET vehicles/{id}/parts?category=&all=`: statuses from `compatible_parts()` (never re-implemented), label from the
+  best evidence row: confirmed = "Compatible", probable for this engine = "Compatible (moteur)", probable for the model
+  = "Compatible (modèle)", `a_confirmer` = "À confirmer"; `moteur_requis` not listed (`engine_needed` count + message
+  "Précisez le moteur…"); `unverified` not shown. Shops = same rule as the vitrine: `en_ligne` = 1, for sale,
+  stock > 0, public price = latest level-1 price (prices by level are on) else base price; 0 = "Sur devis". Never the
+  exact stock nor a purchase price. Default: only parts a shop has; `all=1` also the others (shops empty).
+  Car not in the catalogue -> 200 with an empty list. Dolibarr (utf8mb4_unicode_ci) and the catalogue (uca1400_ai_ci)
+  have different collations: never join them directly, pass the refs as literals.
+  The test publishes 2 Golf 7 brake parts with stock (level-1 price written like the app, `multiprices`) and restores them.
+  Test: `provisioning/tests/vehicles-api.mjs` (Golf 7, A4 B8, W204, Skoda, BMW, Renault Arkana, Dacia, NHTSA, unknown, typos).
 
 ## Online shop (vitrine)
 - App page "Magasin en ligne" (caruno-app `web/tools/actions-enligne.js`): product extra field `en_ligne`

@@ -45,7 +45,8 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
 ## Parts catalogue (`caruno_parts`)
 
 Shared reference data (vehicles, parts, OEM numbers, fitment), in its own database `caruno_parts`,
-not in Dolibarr (blueprint §B). Today only on the **test** instance.
+not in Dolibarr (blueprint §B). Built on the **test** instance only (`build.sh` refuses the shop); the shop gets a copy of
+the tested database (release dump, see Vehicles API) — never a rebuild in the shop.
 
 - Build from scratch: `scripts/parts/build.sh all` (or one step: `data schema base categories engines links functions test`).
   Source: `C:\Users\TRETEC\Documents\bdd pieces auto` (catalogue-pieces.xlsx, modeles.xlsx);
@@ -131,7 +132,7 @@ static JSON files built from them instead (`$PARTS_OUT/json`; `PARTS_JSON_DIR=<d
 ## Vehicle reference data (`vehicle_ref`)
 
 Outside reference data in its own database `vehicle_ref`, **never mixed into `caruno_parts` tables** (caruno_parts.models
-only gets reference columns). Today only on the **test** instance. Build: `scripts/vehicle-ref/build.sh all`
+only gets reference columns). Built on the **test** instance only; the shop gets the tested copy. Build: `scripts/vehicle-ref/build.sh all`
 (steps `download schema vdb vmm nhtsa test`; refuses a non-test container unless `VREF_FORCE=1`). Downloads and review
 files: `C:\Users\TRETEC\caruno-data\vehicle-ref` (`download/<source>/<release>`, `review/`). Table `sources` = release,
 licence and checksum of what is loaded. The read-only account `caruno_parts` has SELECT on it.
@@ -163,7 +164,16 @@ licence and checksum of what is loaded. The read-only account `caruno_parts` has
   `vehicle_ref.model_links` (every matched generation, `is_main`). Checked by `scripts/parts/tests.sh`.
   Year check (2026-11-10): our years kept; the 25 differences come from split or incomplete vmm rows.
 
-## Vehicles API (CARUNO add-on, test instance)
+## Vehicles API (CARUNO add-on — test, and the shop since 2026-11-11)
+**Installed in the shop on 2026-11-11** (Task 4, after the user's "production"): backup
+`pre-vehicles-install-20261111-135525` (RESULT=OK), catalogue loaded from the rehearsed release
+`C:\Users\TRETEC\caruno-data\releases\catalogue-2026-11-11` (SHA256SUMS + expected-counts.txt, 15 counts identical),
+read grant, add-on 1.0.0 -> 1.1.0 (price-protection hook kept), no existing Dolibarr table changed (412 tables).
+Rehearsed first on a disposable restore with a tested rollback: add-on files of commit `bd8d51f` + `lib/caruno_module.php`,
+then REVOKE + DROP DATABASE caruno_parts, vehicle_ref (the VIN field hides itself). Every later change of the add-on,
+the catalogue or the app goes to the shop the same way: backup + rehearsal + plan + the user's "production".
+The shop admin has no API key: an API login would write one, so read-only checks on 8080 are done without login
+(route answers 401 instead of 404, SQL as the Dolibarr account, decoder via `php -r` in the container).
 Decided 2026-11-10: the API lives in the add-on (`dolibarr-modules/caruno`, Restler, prefix `/api/index.php/caruno/`),
 no separate backend. One shop for now, no customer accounts (the seller saves the vehicle on the customer record);
 answers are shaped for several shops later (list of shops per part).
@@ -194,8 +204,8 @@ answers are shaped for several shops later (list of shops per part).
   The test publishes 2 Golf 7 brake parts with stock (level-1 price written like the app, `multiprices`) and restores them.
 - Counter app (caruno-app `web/tools/actions-vehicle.js`): "VIN (n° de châssis)" field in the Catalogue's vehicle box.
   Exact match -> model selected, engine stays "Je ne sais pas"; several -> buttons; maker not in the catalogue -> message;
-  every model / engine the seller then picks is saved with the search. Hidden when the server lacks the routes (the
-  shop server today), so the live app on 8082 is unchanged for the shop. Browser test: `web/tools/e2e-vin.mjs` (test 8081).
+  every model / engine the seller then picks is saved with the search. Hidden when the server lacks the routes or the
+  catalogue (`vehicles/status`). Visible in the shop since 2026-11-11. Browser test: `web/tools/e2e-vin.mjs` (test 8081).
   Node for the browser tests: `C:\Users\TRETEC\tools\node-v22.23.4-win-x64\node.exe` (not on PATH).
   Test: `provisioning/tests/vehicles-api.mjs` (Golf 7, A4 B8, W204, Skoda, BMW, Renault Arkana, Dacia, NHTSA, unknown, typos).
 
@@ -207,3 +217,12 @@ answers are shaped for several shops later (list of shops per part).
   `scripts/vitrine/export.sh` (SQL in the db container + documents folder on disk; no Dolibarr key in the page).
   Published: parts online + on sale + stock > 0 + price > 0; name, ref, OEM, public price, family, photo.
   Never: purchase price, exact stock, the TIBAO brand. The vitrine shows the last export: re-run it after changes.
+
+## Open items (to do)
+- **Change the shop database password** (account `dolibarr`): its hash was shown in a tool output on 2026-11-11
+  (restore rehearsal). Change it in MariaDB + `instances/hanout-vw/instance.env` + Dolibarr `conf.php`, with a backup first.
+- **Plan to publish products** (`en_ligne` = On, for sale, stock > 0, price or "Sur devis") so compatible parts show as
+  available: on 2026-11-11 only 1 shop product was published and in stock (0 of the Golf 7 brake parts).
+- Remaining master-prompt tasks, in order: Task 1 (customer vehicles without parts) -> Task 3 (VIN learning + Toyota)
+  -> Task 2 (complete vehicle tree) -> Task 5 (seller fitment confirmation) -> Task 6 (Arabic in the Catalogue)
+  -> Task 7 (cleanup + pull requests). Task 4 (shop install) done 2026-11-11.

@@ -11,7 +11,12 @@ Design reference: `doc/02-professional-erp-blueprint.md`.
   built like a shop: `APP_CONTAINER=caruno-test-dolibarr-1` for `10-configure.sh`, `16-counter-client.sh`,
   `20-import-products.sh`, `25-import-photos.sh`, `30-product-names.sh`; `HANOUT_ENV_FILE=…/instances/test/instance.env` for `15-roles.sh`.
   Tests find their fixtures by reference / marker (TEST-STK-001/002, `caruno:comptoir`), never by fixed id.
-- Before changing shop data: `scripts/backup-instance.sh <label>` (verified). Test data cleaned from the shop on
+- Before changing shop data: `scripts/backup-instance.sh <label>` (verified; never pipe its output: the exit code and
+  `RESULT=OK` are the proof). `documents` / `custom` are Windows folders bind-mounted in the container: archived from
+  the disk (58k product photos: ~10 s; through the container 25+ min with false "file changed" errors); each archive's
+  file count is checked. Restore proof (2026-11-11, backup `pre-vehicles-20261111-094049`): disposable project
+  `hanout-restoretest` on 127.0.0.1:18080, internal network, row counts identical (103 tables, 148,768 rows), then
+  removed. Folders `*-INCOMPLETE` in caruno-backups = failed attempts, never use them. Test data cleaned from the shop on
   2026-11-07 (parts to the CARUNO bin, test clients closed); list in the `pre-cleanup` backup folder.
 - Counter customer: marked `ref_ext = caruno:comptoir` (`provisioning/16-counter-client.sh`), carries the shop profile
   (`caruno-profil.json`: name, address, logo, WhatsApp, RC/NIF/AI/NIS). The front finds it by this marker (fallback id 5) and
